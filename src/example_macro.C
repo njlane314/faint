@@ -13,12 +13,12 @@ void example_macro()
     throw std::runtime_error("Failed to load libfaint_root library");
   }
 
-  analysis::study::Options options;
+  faint::study::Options options;
   options.beam = "numi-fhc";
   options.periods = {"run1"};
-  options.ntuple_dir = analysis::study::ntuple_directory();
+  options.ntuple_dir = faint::study::ntuple_directory();
 
-  auto study = analysis::study::Study::open(analysis::study::run_config_path(), options);
+  auto study = faint::study::Study::open(faint::study::run_config_path(), options);
 
   std::cout << "Loaded beam " << study.beam() << " for";
   for (const auto& p : study.periods()) {

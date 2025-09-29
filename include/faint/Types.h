@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace analysis {
+namespace faint {
 
 enum class Origin : unsigned int { kUnknown = 0, kData, kMonteCarlo, kExternal, kDirt };
 enum class Role { kData, kNominal, kVariation };

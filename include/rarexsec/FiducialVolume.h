@@ -1,7 +1,7 @@
 #ifndef ANALYSIS_FIDUCIALVOLUME_H
 #define ANALYSIS_FIDUCIALVOLUME_H
 
-namespace analysis {
+namespace faint {
 
 namespace fiducial {
 
@@ -42,6 +42,6 @@ inline bool is_in_reco_volume(const X &x, const Y &y, const Z &z) {
 
 } // namespace fiducial
 
-} // namespace analysis
+} // namespace faint
 
 #endif

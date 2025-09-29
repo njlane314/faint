@@ -7,7 +7,7 @@
 #include <map>
 #include <mutex>
 
-namespace analysis {
+namespace faint {
 
 ROOT::RDF::RNode TruthClassifier::process(ROOT::RDF::RNode df,
                                           Origin origin) const {
@@ -263,4 +263,4 @@ ROOT::RDF::RNode TruthClassifier::assignChannelDefinitions(
   return pure_sig_df;
 }
 
-} // namespace analysis
+} // namespace faint

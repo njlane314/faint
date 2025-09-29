@@ -8,7 +8,7 @@
 
 #include <faint/EventProcessor.h>
 
-namespace analysis {
+namespace faint {
 
 class TruthClassifier : public EventProcessor {
 public:
@@ -25,6 +25,6 @@ private:
 // ---------- Backward-compat (remove when migrated) ----------
 using TruthChannelProcessor = TruthClassifier;
 
-} // namespace analysis
+} // namespace faint
 
 #endif

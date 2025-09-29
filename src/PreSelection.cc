@@ -4,7 +4,7 @@
 
 #include "ROOT/RVec.hxx"
 
-namespace analysis {
+namespace faint {
 
 ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
                                        Origin origin) const {
@@ -145,4 +145,4 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
   return next_ ? next_->process(node, origin) : node;
 }
 
-} // namespace analysis
+} // namespace faint

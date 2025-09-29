@@ -8,7 +8,7 @@
 #include <faint/data/EventProcessor.h>
 #include <faint/data/Types.h>
 
-namespace analysis {
+namespace faint {
 
 class Weighter : public EventProcessor {
 public:
@@ -71,7 +71,7 @@ private:
   double total_run_pot_;
   long   total_run_triggers_;
 };
-
-} // namespace analysis
+  
+} // namespace faint
 
 #endif

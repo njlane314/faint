@@ -10,7 +10,7 @@
 #include <faint/utils/Logger.h>
 #include <faint/data/SampleDefinition.h>
 
-namespace analysis {
+namespace faint {
 
 using json = nlohmann::json;
 
