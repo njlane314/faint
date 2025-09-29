@@ -1,6 +1,6 @@
 #include "faint/PreSelection.h"
 
-#include "rarexsec/FiducialVolume.h"
+#include "faint/FiducialVolume.h"
 
 #include "ROOT/RVec.hxx"
 

@@ -1,6 +1,6 @@
 #include "faint/TruthClassifier.h"
 
-#include "rarexsec/FiducialVolume.h"
+#include "faint/FiducialVolume.h"
 
 #include <cmath>
 #include <iostream>
