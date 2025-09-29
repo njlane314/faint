@@ -78,6 +78,7 @@ ifndef ROOTCLING
   ROOTCLING := $(shell command -v rootcint 2> /dev/null)
 endif
 
+ROOT_PREFIX :=
 ifeq ($(ROOTCONFIG),)
   $(warning ROOT not found. Dictionary library will not be built.)
   USE_ROOT := no
@@ -88,6 +89,7 @@ else
   ROOT_VERSION := $(shell $(ROOTCONFIG) --version)
   $(info Found ROOT version $(ROOT_VERSION) in $(ROOT))
   USE_ROOT := yes
+  ROOT_PREFIX := $(shell $(ROOTCONFIG) --prefix)
   ROOT_CXXFLAGS := $(shell $(ROOTCONFIG) --cflags)
   ROOT_LDFLAGS := $(shell $(ROOTCONFIG) --ldflags)
   ROOT_LIBS := $(shell $(ROOTCONFIG) --libs)
@@ -97,6 +99,22 @@ EXTRA_INC ?=
 EXTRA_CXXFLAGS ?=
 EXTRA_LDFLAGS ?=
 EXTRA_LIBS ?=
+
+NLOHMANN_JSON_INC ?=
+ifeq ($(strip $(NLOHMANN_JSON_INC)),)
+  ROOT_BIN_INCLUDE := $(if $(ROOTCONFIG),$(abspath $(dir $(ROOTCONFIG))../include))
+  NLOHMANN_JSON_SEARCH_DIRS := \
+    $(if $(ROOT_PREFIX),$(ROOT_PREFIX)/include) \
+    $(ROOT_BIN_INCLUDE) \
+    /usr/include \
+    /usr/local/include
+  NLOHMANN_JSON_HEADER := $(firstword $(foreach d,$(filter-out ,$(NLOHMANN_JSON_SEARCH_DIRS)),$(wildcard $(d)/nlohmann/json.hpp)))
+  ifneq ($(NLOHMANN_JSON_HEADER),)
+    EXTRA_INC += -I$(patsubst %/nlohmann/json.hpp,%,$(NLOHMANN_JSON_HEADER))
+  endif
+else
+  EXTRA_INC += -I$(strip $(NLOHMANN_JSON_INC))
+endif
 
 OPTFLAGS := -O3
 ifeq ($(MAKECMDGOALS),debug)
