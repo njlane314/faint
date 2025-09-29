@@ -9,7 +9,7 @@
 #include "ROOT/RDataFrame.hxx"
 #include "nlohmann/json.hpp"
 
-#include <faint/utils/Logger.h>
+#include <faint/Logger.h>
 #include <faint/data/IEventProcessor.h>
 #include <faint/data/SampleTypes.h>
 #include <faint/data/VariableRegistry.h>
