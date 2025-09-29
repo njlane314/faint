@@ -9,6 +9,8 @@
 
 #include "ROOT/RDataFrame.hxx"
 
+#include <nlohmann/json_fwd.hpp>
+
 #include "faint/PreSelection.h"
 #include "faint/Run.h"
 #include "faint/RunCatalog.h"
@@ -17,10 +19,6 @@
 #include "faint/TruthClassifier.h"
 #include "faint/Variables.h"
 #include "faint/Weighter.h"
-
-namespace nlohmann {
-class json;
-}
 
 namespace faint {
 
@@ -62,12 +60,12 @@ class SampleSet {
   long total_triggers_;
 
   Map samples_;
-  std::vector<std::unique_ptr<IEventProcessor>> processors_;
+  std::vector<std::unique_ptr<EventProcessor>> processors_;
   std::unordered_map<SampleKey, const Run*> run_cache_;
 
   void build();
   void add_run(const Run& rc);
-  std::unique_ptr<IEventProcessor> build_pipeline(const nlohmann::json& sample);
+  std::unique_ptr<EventProcessor> build_pipeline(const nlohmann::json& sample);
   void snapshot_impl(const std::string& filter, const std::string& out,
                      const std::vector<std::string>& cols) const;
 };

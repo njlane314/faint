@@ -9,7 +9,7 @@ namespace faint {
 namespace {
 
 ROOT::RDF::RNode open_frame(const std::string& base_dir, const std::string& rel,
-                            IEventProcessor& processor, SampleOrigin origin) {
+                            EventProcessor& processor, SampleOrigin origin) {
   auto path = base_dir + "/" + rel;
   ROOT::RDataFrame df("nuselection/EventSelectionFilter", path);
   return processor.process(df, origin);
@@ -44,7 +44,7 @@ ROOT::RDF::RNode exclude_truth(ROOT::RDF::RNode df,
 
 Sample::Sample(const nlohmann::json& j, const nlohmann::json& all,
                const std::string& base_dir, const VariableRegistry& vars,
-               IEventProcessor& processor)
+               EventProcessor& processor)
     : key_{j.at("sample_key").get<std::string>()},
       origin_{[&]() {
         auto ts = j.at("sample_type").get<std::string>();
@@ -119,7 +119,7 @@ SampleVariation Sample::parse_variation(const std::string& s) const {
 
 ROOT::RDF::RNode Sample::build(const std::string& base_dir,
                                const VariableRegistry& vars,
-                               IEventProcessor& processor,
+                               EventProcessor& processor,
                                const std::string& rel,
                                const nlohmann::json& all) {
   auto df = open_frame(base_dir, rel, processor, origin_);
