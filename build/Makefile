@@ -5,6 +5,18 @@ BUILD_DIR := $(TOP_DIR)/build
 OBJ_DIR := $(BUILD_DIR)/obj
 LIB_DIR := $(BUILD_DIR)/lib
 
+SCRIPTDIR   := $(TOP_DIR)/scripts
+VERSION     ?= $(shell cd $(TOP_DIR) && git describe --tags --always --dirty 2>/dev/null || echo 0.0.0)
+GIT_REV     := $(shell cd $(TOP_DIR) && git rev-parse --short HEAD 2>/dev/null || echo unknown)
+# Extract c++ standard from CXXFLAGS or default:
+CXX_STD_STR ?= $(or $(patsubst -std=%,%,$(filter -std=%,$(CXXFLAGS))),c++17)
+USE_ROOT    ?= yes   # your project uses ROOT; set 'no' if ever optional
+
+CONFIG_IN   := $(SCRIPTDIR)/rarexsec-config.in
+CONFIG_OUT  := $(BUILD_DIR)/bin/rarexsec-config
+ROOT_WRAPPER:= $(SCRIPTDIR)/rarexsec-root.sh
+SETUP_MACRO := $(SCRIPTDIR)/setup_rarexsec.C
+
 PROJECT_SHARED_LIB_NAME := rarexsec
 ROOT_SHARED_LIB_NAME := rarexsec_root
 SHARED_LIB := $(LIB_DIR)/lib$(PROJECT_SHARED_LIB_NAME)
@@ -54,8 +66,10 @@ endif
 ifneq (,$(wildcard $(TOP_DIR)/.VERSION))
   PROJECT_VERSION := $(shell cat $(TOP_DIR)/.VERSION)
 else
-  PROJECT_VERSION := $(GIT_REVISION)
+  PROJECT_VERSION := $(VERSION)
 endif
+
+GIT_REV := $(GIT_REVISION)
 
 ROOTCONFIG := $(shell command -v root-config 2> /dev/null)
 ROOT := $(shell command -v root 2> /dev/null)
@@ -122,6 +136,7 @@ ALL_TARGETS := $(SHARED_LIB).$(SOEXT) $(LIB_DIR)/lib$(PROJECT_SHARED_LIB_NAME).a
 ifeq ($(USE_ROOT),yes)
   ALL_TARGETS += $(ROOT_SHARED_LIB).$(SOEXT)
 endif
+ALL_TARGETS += $(CONFIG_OUT)
 
 .PHONY: all debug shared static rootlib install run clean distclean print
 
@@ -137,6 +152,17 @@ debug: $(ALL_TARGETS)
 
 $(LIB_DIR) $(OBJ_DIR):
 	@$(MKDIR) $@
+
+$(BUILD_DIR)/bin:
+	@$(MKDIR) $@
+
+$(CONFIG_OUT): $(CONFIG_IN) | $(BUILD_DIR)/bin
+	sed -e 's|@@VERSION@@|$(VERSION)|g' \
+	    -e 's|@@GIT_REVISION@@|$(GIT_REV)|g' \
+	    -e 's|@@CXX_STD@@|$(CXX_STD_STR)|g' \
+	    -e 's|@@USE_ROOT@@|$(USE_ROOT)|g' \
+	    $< > $@
+	chmod +x $@
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cc | $(OBJ_DIR)
 	@$(MKDIR) $(dir $@)
@@ -173,22 +199,27 @@ INSTALL_LIBDIR := $(PREFIX)/lib
 INSTALL_INCDIR := $(PREFIX)/include
 
 install: all
-	@$(MKDIR) $(INSTALL_LIBDIR) $(INSTALL_INCDIR)
+	@$(MKDIR) $(INSTALL_LIBDIR) $(INSTALL_INCDIR) $(PREFIX)/bin $(PREFIX)/scripts
 	@cp -a $(SHARED_LIB).$(SOEXT) $(INSTALL_LIBDIR)/
 	@cp -a $(LIB_DIR)/lib$(PROJECT_SHARED_LIB_NAME).a $(INSTALL_LIBDIR)/
 ifeq ($(USE_ROOT),yes)
 	@cp -a $(ROOT_SHARED_LIB).$(SOEXT) $(INSTALL_LIBDIR)/
 endif
 	@rsync -a --delete $(INCLUDE_DIR)/ $(INSTALL_INCDIR)/
+	@cp -a $(CONFIG_OUT) $(PREFIX)/bin/
+	@cp -a $(ROOT_WRAPPER) $(PREFIX)/bin/rarexsec-root
+	@cp -a $(SETUP_MACRO) $(PREFIX)/scripts/
 	@echo "Installed to $(PREFIX)"
 	@echo "  - libs:    $(INSTALL_LIBDIR)"
 	@echo "  - headers: $(INSTALL_INCDIR)"
+	@echo "  - scripts: $(PREFIX)/bin"
+	@echo "  - macros:  $(PREFIX)/scripts"
 
 run: $(SHARED_LIB).$(SOEXT)
 	@test -n "$(ROOT)" || (echo "ROOT executable not found" && exit 1)
 	@root -l -q -e 'gSystem->Load("$(abspath $(SHARED_LIB)).$(SOEXT)"); \
-	                 gSystem->AddIncludePath("-I$(abspath $(INCLUDE_DIR))"); \
-	                 gROOT->ProcessLine(".x $(MACRO)$(ARGS)");'
+                         gSystem->AddIncludePath("-I$(abspath $(INCLUDE_DIR))"); \
+                         gROOT->ProcessLine(".x $(SETUP_MACRO)$(ARGS)");'
 
 print:
 	@echo "CXX           = $(CXX)"
@@ -201,7 +232,7 @@ print:
 	@echo "SOEXT         = $(SOEXT)"
 
 clean:
-	$(RMDIR) $(OBJ_DIR) $(LIB_DIR)
+	$(RMDIR) $(OBJ_DIR) $(LIB_DIR) $(BUILD_DIR)/bin
 
 distclean: clean
 	$(RMDIR) $(PREFIX)
