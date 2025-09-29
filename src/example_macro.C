@@ -5,7 +5,7 @@
 
 #include "TSystem.h"
 
-#include <faint/study.h>
+#include <faint/Campaign.h>
 
 void example_macro()
 {
@@ -13,24 +13,24 @@ void example_macro()
     throw std::runtime_error("Failed to load libfaint_root library");
   }
 
-  faint::study::Options options;
+  faint::campaign::Options options;
   options.beam = "numi-fhc";
   options.periods = {"run1"};
-  options.ntuple_dir = faint::study::ntuple_directory();
+  options.ntuple_dir = faint::campaign::ntuple_directory();
 
-  auto study = faint::study::Study::open(faint::study::run_config_path(), options);
+  auto campaign = faint::campaign::Campaign::open(faint::campaign::run_config_path(), options);
 
-  std::cout << "Loaded beam " << study.beam() << " for";
-  for (const auto& p : study.periods()) {
+  std::cout << "Loaded beam " << campaign.beam() << " for";
+  for (const auto& p : campaign.periods()) {
     std::cout << ' ' << p;
   }
-  std::cout << " with " << study.sample_keys().size() << " samples." << std::endl;
+  std::cout << " with " << campaign.sample_keys().size() << " samples." << std::endl;
 
-  for (const auto& key : study.sample_keys()) {
-    auto final_count = study.final(key).Count();
+  for (const auto& key : campaign.sample_keys()) {
+    auto final_count = campaign.final(key).Count();
     std::cout << "Final selection entries for " << key << ": " << final_count.GetValue() << std::endl;
   }
 
-  std::cout << "Total POT: " << study.pot() << std::endl;
-  std::cout << "Total triggers: " << study.triggers() << std::endl;
+  std::cout << "Total POT: " << campaign.pot() << std::endl;
+  std::cout << "Total triggers: " << campaign.triggers() << std::endl;
 }
