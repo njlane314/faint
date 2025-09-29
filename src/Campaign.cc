@@ -1,9 +1,12 @@
 #include "faint/Campaign.h"
 
 #include <algorithm>
+#include <fstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
+#include <nlohmann/json.hpp>
 
 namespace faint {
 namespace campaign {
@@ -16,9 +19,33 @@ std::string run_config_path() {
 }
 
 std::string ntuple_directory() {
-    const char* env = gSystem->Getenv("FAINT_NTUPLES");
-    if (!env) throw std::runtime_error("Set FAINT_NTUPLES to the directory containing faint ntuples");
-    return env;
+    if (const char* env = gSystem->Getenv("FAINT_NTUPLES")) {
+        if (env[0] != '\0') return env;
+    }
+
+    const auto config_path = run_config_path();
+    std::ifstream input(config_path);
+    if (!input.is_open()) {
+        throw std::runtime_error("Could not open run configuration to determine ntuple directory: " + config_path);
+    }
+
+    try {
+        const auto data = nlohmann::json::parse(input);
+        const auto samples_it = data.find("samples");
+        if (samples_it != data.end() && samples_it->is_object()) {
+            const auto& samples = *samples_it;
+            if (samples.contains("ntupledir")) {
+                return samples.at("ntupledir").get<std::string>();
+            }
+        }
+        if (data.contains("ntuple_base_directory")) {
+            return data.at("ntuple_base_directory").get<std::string>();
+        }
+    } catch (const std::exception& e) {
+        throw std::runtime_error(std::string{"Failed to parse run configuration while determining ntuple directory: "} + e.what());
+    }
+
+    throw std::runtime_error("Run configuration does not provide an ntuple directory and FAINT_NTUPLES is unset");
 }
 
 Campaign Campaign::open(const std::string& run_config_json, Options opt, Variables vars) {
