@@ -108,13 +108,13 @@ $(ROOT_DICT_OBJ): $(SRC_DIR)/rarexsecLinkDef.h \
 	$(INCLUDE_DIR)/rarexsec/MuonSelector.h \
 	$(INCLUDE_DIR)/rarexsec/TruthClassifier.h
 	$(RM) $(ROOT_DICT_SRC) $(ROOT_DICT_PCM)
-        $(ROOTCLING) -f $(ROOT_DICT_SRC) -c -I$(INCLUDE_DIR) \
-                rarexsec/EventProcessor.h \
-                rarexsec/PreSelection.h \
-                rarexsec/MuonSelector.h \
-                rarexsec/TruthClassifier.h \
-                $(SRC_DIR)/rarexsecLinkDef.h
-        $(CXX) $(ROOT_CXXFLAGS) $(CXXFLAGS) -I$(INCLUDE_DIR) -fPIC -o $@ -c $(ROOT_DICT_SRC)
+	$(ROOTCLING) -f $(ROOT_DICT_SRC) -c -I$(INCLUDE_DIR) \
+		rarexsec/EventProcessor.h \
+		rarexsec/PreSelection.h \
+		rarexsec/MuonSelector.h \
+		rarexsec/TruthClassifier.h \
+		$(SRC_DIR)/rarexsecLinkDef.h
+	$(CXX) $(ROOT_CXXFLAGS) $(CXXFLAGS) -I$(INCLUDE_DIR) -fPIC -o $@ -c $(ROOT_DICT_SRC)
 
 $(ROOT_SHARED_LIB): $(SHARED_LIB) $(ROOT_DICT_OBJ)
 	$(CXX) $(ROOT_CXXFLAGS) $(CXXFLAGS) -shared -o $@ $(ROOT_DICT_OBJ) -L. -l$(PROJECT_SHARED_LIB_NAME) $(ROOT_LDFLAGS) $(ROOT_LIBS)
