@@ -1,12 +1,11 @@
 #include <iostream>
-#include <memory>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #include "TSystem.h"
 
-#include <rarexsec/MuonSelector.h>
-#include <rarexsec/PreSelection.h>
-#include <rarexsec/TruthClassifier.h>
+#include <rarexsec/study.h>
 
 void example_macro()
 {
@@ -14,12 +13,24 @@ void example_macro()
     throw std::runtime_error("Failed to load librexsec_root library");
   }
 
-  auto preselection = std::make_unique<analysis::PreSelection>();
-  auto muon = std::make_unique<analysis::MuonSelector>();
-  auto truth = std::make_unique<analysis::TruthClassifier>();
+  analysis::study::Options options;
+  options.beam = "numi-fhc";
+  options.periods = {"run1"};
+  options.ntuple_dir = analysis::study::ntuple_directory();
 
-  muon->chain_processor(std::move(truth));
-  preselection->chain_processor(std::move(muon));
+  auto study = analysis::study::Study::open(analysis::study::run_config_path(), options);
 
-  std::cout << "rarexsec selectors chained successfully." << std::endl;
+  std::cout << "Loaded beam " << study.beam() << " for";
+  for (const auto& p : study.periods()) {
+    std::cout << ' ' << p;
+  }
+  std::cout << " with " << study.sample_keys().size() << " samples." << std::endl;
+
+  for (const auto& key : study.sample_keys()) {
+    auto final_count = study.final(key).Count();
+    std::cout << "Final selection entries for " << key << ": " << final_count.GetValue() << std::endl;
+  }
+
+  std::cout << "Total POT: " << study.pot() << std::endl;
+  std::cout << "Total triggers: " << study.triggers() << std::endl;
 }
