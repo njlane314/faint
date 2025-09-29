@@ -1,5 +1,7 @@
 #include "faint/TruthClassifier.h"
 
+#include "rarexsec/FiducialVolume.h"
+
 #include <cmath>
 #include <iostream>
 #include <map>
@@ -67,9 +69,10 @@ ROOT::RDF::RNode TruthClassifier::processNonMc(ROOT::RDF::RNode df,
 ROOT::RDF::RNode TruthClassifier::defineCounts(ROOT::RDF::RNode df) const {
   auto fid_df = df.Define(
       "in_fiducial",
-      "(neutrino_vertex_x > 5 && neutrino_vertex_x < 251) &&"
-      "(neutrino_vertex_y > -110 && neutrino_vertex_y < 110) &&"
-      "(neutrino_vertex_z > 20 && neutrino_vertex_z < 986)");
+      [](const auto &x, const auto &y, const auto &z) {
+        return fiducial::is_in_truth_volume(x, y, z);
+      },
+      {"neutrino_vertex_x", "neutrino_vertex_y", "neutrino_vertex_z"});
 
   auto strange_df = fid_df.Define(
       "mc_n_strange",
