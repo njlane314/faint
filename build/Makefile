@@ -207,9 +207,9 @@ ifeq ($(USE_ROOT),yes)
 $(ROOT_DICT_OBJ): $(SRC_DIR)/rarexsecLinkDef.h $(ROOT_DICT_HEADERS) | $(OBJ_DIR)
 	@$(MKDIR) $(dir $@)
 	$(RM) $(ROOT_DICT_SRC) $(ROOT_DICT_PCM)
-        $(ROOTCLING) -f $(ROOT_DICT_SRC) -c -I$(INCLUDE_DIR) $(ROOTCLING_CXXFLAGS) $(EXTRA_INC) \
-        $(ROOT_DICT_HEADERS_REL) \
-        $(SRC_DIR)/rarexsecLinkDef.h
+	$(ROOTCLING) -f $(ROOT_DICT_SRC) -c -I$(INCLUDE_DIR) $(ROOTCLING_CXXFLAGS) $(EXTRA_INC) \
+	$(ROOT_DICT_HEADERS_REL) \
+	$(SRC_DIR)/rarexsecLinkDef.h
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $(ROOT_DICT_SRC) -o $@
 
 $(ROOT_SHARED_LIB).$(SOEXT): $(SHARED_LIB).$(SOEXT) $(ROOT_DICT_OBJ) | $(LIB_DIR)
