@@ -1,6 +1,7 @@
 #ifndef ANALYSIS_TYPES_H
 #define ANALYSIS_TYPES_H
 
+#include <functional>
 #include <string>
 
 namespace faint {
@@ -22,6 +23,30 @@ enum class Variation : unsigned int {
     kWireModAngleYZ
 };
 
+using SampleOrigin = Origin;
+using SampleVariation = Variation;
+
+class SampleKey {
+  public:
+    SampleKey() = default;
+    explicit SampleKey(std::string key) : key_(std::move(key)) {}
+
+    const std::string &str() const noexcept { return key_; }
+
+    bool empty() const noexcept { return key_.empty(); }
+
+    friend bool operator==(const SampleKey &lhs, const SampleKey &rhs) noexcept {
+        return lhs.key_ == rhs.key_;
+    }
+
+    friend bool operator<(const SampleKey &lhs, const SampleKey &rhs) noexcept {
+        return lhs.key_ < rhs.key_;
+    }
+
+  private:
+    std::string key_;
+};
+
 inline std::string to_key(Variation var) {
     switch (var) {
         case Variation::kCV:              return "CV";
@@ -38,6 +63,15 @@ inline std::string to_key(Variation var) {
     }
 }
 
-} 
+}
+
+namespace std {
+template <>
+struct hash<faint::SampleKey> {
+    std::size_t operator()(const faint::SampleKey &key) const noexcept {
+        return std::hash<std::string>{}(key.str());
+    }
+};
+}
 
 #endif

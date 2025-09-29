@@ -12,11 +12,11 @@
 #include "ROOT/RDataFrame.hxx"
 #include "TSystem.h"
 
-#include <faint/Types.h>
-#include <faint/Variables.h>
-#include <faint/data/RunCatalog.h>
-#include <faint/data/Sample.h>
-#include <faint/data/SampleSet.h>
+#include "faint/Sample.h"
+#include "faint/SampleSet.h"
+#include "faint/Types.h"
+#include "faint/Variables.h"
+#include "faint/RunCatalog.h"
 
 namespace faint {
 namespace campaign {

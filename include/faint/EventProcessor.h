@@ -5,7 +5,7 @@
 
 #include "ROOT/RDataFrame.hxx"
 
-#include <faint/Types.h>
+#include "faint/Types.h"
 
 namespace faint {
 

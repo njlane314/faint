@@ -6,7 +6,7 @@
 #include <unordered_set>
 #include <vector>
 
-#include <faint/data/Types.h>
+#include "faint/Types.h"
 
 namespace faint {
 
@@ -55,14 +55,14 @@ public:
 
 private:
   static std::unordered_set<std::string> collect_base_vars() {
-    std::unordered_set<std::string> vars{().begin(), ().end()};
-    vars.insert(reco_var().begin(),  reco_var().end());
-    vars.insert(track_var().begin(),  track_var().end());
+    std::unordered_set<std::string> vars(base_var().begin(), base_var().end());
+    vars.insert(reco_var().begin(), reco_var().end());
+    vars.insert(track_var().begin(), track_var().end());
     vars.insert(proc_evt_var().begin(), proc_evt_var().end());
-    vars.insert(image_var().begin(),     image_var().end());
-    vars.insert(flash_var().begin(),     flash_var().end());
-    vars.insert(energy_var().begin(),    energy_var().end());
-    vars.insert(slice_var().begin(),     slice_var().end());
+    vars.insert(image_var().begin(), image_var().end());
+    vars.insert(flash_var().begin(), flash_var().end());
+    vars.insert(energy_var().begin(), energy_var().end());
+    vars.insert(slice_var().begin(), slice_var().end());
     return vars;
   }
 

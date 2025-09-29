@@ -3,8 +3,8 @@
 
 #include "ROOT/RVec.hxx"
 
-#include <faint/EventProcessor.h>
-#include <faint/Types.h>
+#include "faint/EventProcessor.h"
+#include "faint/Types.h"
 
 namespace faint {
 

@@ -6,7 +6,7 @@
 #include <map>
 #include <mutex>
 
-#include <faint/EventProcessor.h>
+#include "faint/EventProcessor.h"
 
 namespace faint {
 

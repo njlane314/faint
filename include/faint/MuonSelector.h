@@ -5,7 +5,7 @@
 
 #include "ROOT/RVec.hxx"
 
-#include <faint/EventProcessor.h>
+#include "faint/EventProcessor.h"
 
 namespace faint {
 
