@@ -150,6 +150,11 @@ ROOT_DICT_SRC := $(OBJ_DIR)/$(ROOT_SHARED_LIB_NAME)_dict.cxx
 ROOT_DICT_OBJ := $(OBJ_DIR)/$(ROOT_SHARED_LIB_NAME)_dict.o
 ROOT_DICT_PCM := $(OBJ_DIR)/$(ROOT_SHARED_LIB_NAME)_dict_rdict.pcm
 
+# rootcling has limited support for grouped short options (e.g. "-std" or "-m64").
+# Filter those flags from the ROOT-generated CXX flags before invoking rootcling to
+# avoid confusing its argument parser while still preserving other necessary flags.
+ROOTCLING_CXXFLAGS := $(filter-out -std=% -m%,$(ROOT_CXXFLAGS) $(EXTRA_CXXFLAGS))
+
 ALL_TARGETS := $(SHARED_LIB).$(SOEXT) $(LIB_DIR)/lib$(PROJECT_SHARED_LIB_NAME).a
 ifeq ($(USE_ROOT),yes)
   ALL_TARGETS += $(ROOT_SHARED_LIB).$(SOEXT)
@@ -202,9 +207,9 @@ ifeq ($(USE_ROOT),yes)
 $(ROOT_DICT_OBJ): $(SRC_DIR)/rarexsecLinkDef.h $(ROOT_DICT_HEADERS) | $(OBJ_DIR)
 	@$(MKDIR) $(dir $@)
 	$(RM) $(ROOT_DICT_SRC) $(ROOT_DICT_PCM)
-	$(ROOTCLING) -f $(ROOT_DICT_SRC) -c -I$(INCLUDE_DIR) $(ROOT_CXXFLAGS) $(EXTRA_INC) $(EXTRA_CXXFLAGS) \
-	$(ROOT_DICT_HEADERS_REL) \
-	$(SRC_DIR)/rarexsecLinkDef.h
+        $(ROOTCLING) -f $(ROOT_DICT_SRC) -c -I$(INCLUDE_DIR) $(ROOTCLING_CXXFLAGS) $(EXTRA_INC) \
+        $(ROOT_DICT_HEADERS_REL) \
+        $(SRC_DIR)/rarexsecLinkDef.h
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $(ROOT_DICT_SRC) -o $@
 
 $(ROOT_SHARED_LIB).$(SOEXT): $(SHARED_LIB).$(SOEXT) $(ROOT_DICT_OBJ) | $(LIB_DIR)
