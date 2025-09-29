@@ -69,7 +69,7 @@ ROOT::RDF::RNode TruthClassifier::processNonMc(ROOT::RDF::RNode df,
 ROOT::RDF::RNode TruthClassifier::defineCounts(ROOT::RDF::RNode df) const {
   auto fid_df = df.Define(
       "in_fiducial",
-      [](double x, double y, double z) {
+      [](float x, float y, float z) {
         return fiducial::is_in_truth_volume(x, y, z);
       },
       {"neutrino_vertex_x", "neutrino_vertex_y", "neutrino_vertex_z"});
