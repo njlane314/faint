@@ -39,6 +39,8 @@ std::string run_config_path();
 
 std::string ntuple_directory();
 
+std::string ntuple_directory(const std::string& run_config_json);
+
 struct Options {
     std::string beam;
     std::vector<std::string> periods;
