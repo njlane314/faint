@@ -8,7 +8,7 @@
 #include <faint/data/EventProcessor.h>
 #include <faint/data/Types.h>
 
-namespace analysis {
+namespace faint {
 
 class Weighter : public EventProcessor {
 public:
@@ -75,6 +75,6 @@ private:
 // ---------- Backward-compat (remove when migrated) ----------
 using WeightProcessor = Weighter;
 
-} // namespace analysis
+} // namespace faint
 
 #endif

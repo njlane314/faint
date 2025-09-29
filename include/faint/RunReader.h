@@ -11,7 +11,7 @@
 #include <faint/utils/Logger.h>
 #include <faint/data/Run.h>  
 
-namespace analysis {
+namespace faint {
 
 class RunReader {
 public:

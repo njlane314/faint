@@ -7,7 +7,7 @@
 
 #include <faint/EventProcessor.h>
 
-namespace analysis {
+namespace faint {
 
 class MuonSelector : public EventProcessor {
 public:
@@ -18,6 +18,6 @@ private:
   ROOT::RDF::RNode extract_features(ROOT::RDF::RNode df) const;
 };
 
-} // namespace analysis
+} // namespace faint
 
 #endif

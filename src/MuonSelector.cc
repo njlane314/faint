@@ -4,7 +4,7 @@
 
 #include "ROOT/RVec.hxx"
 
-namespace analysis {
+namespace faint {
 
 ROOT::RDF::RNode MuonSelector::process(ROOT::RDF::RNode df,
                                        Origin origin) const {
@@ -110,4 +110,4 @@ ROOT::RDF::RNode MuonSelector::extract_features(ROOT::RDF::RNode df) const {
   return mu_df;
 }
 
-} // namespace analysis
+} // namespace faint

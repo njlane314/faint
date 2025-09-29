@@ -8,7 +8,7 @@
 #include <faint/core/AnalysisKey.h>
 #include <faint/data/SampleTypes.h>
 
-namespace analysis {
+namespace faint {
 
 struct Dataset {
     SampleOrigin origin_;

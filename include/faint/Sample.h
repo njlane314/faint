@@ -14,7 +14,7 @@
 #include <faint/data/SampleTypes.h>
 #include <faint/data/VariableRegistry.h>
 
-namespace analysis {
+namespace faint {
 
 inline ROOT::RDF::RNode open_frame(const std::string &base_dir, 
                                    const std::string &rel,

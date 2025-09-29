@@ -24,7 +24,7 @@
 #include <faint/data/VariableRegistry.h>
 #include <faint/data/WeightProcessor.h>
 
-namespace analysis {
+namespace faint {
 
 class SampleSet {
   public:
