@@ -15,7 +15,7 @@ public:
 
   virtual ROOT::RDF::RNode process(ROOT::RDF::RNode df, Origin origin) const = 0;
 
-  void chain_processor(std::unique_ptr<EventProcessor> next) { next_ = std::move(next); }
+  void chain_processor(std::unique_ptr<EventProcessor> next);
 
 protected:
   std::unique_ptr<EventProcessor> next_;

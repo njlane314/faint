@@ -62,17 +62,17 @@ public:
 
     void snapshot_final(const std::string& out_file, const std::vector<std::string>& columns = {}) const;
 
-    double pot() const noexcept { return set().total_pot(); }
+    double pot() const noexcept;
 
-    long triggers() const noexcept { return set().total_triggers(); }
+    long triggers() const noexcept;
 
-    const std::string& beam() const noexcept { return opt_.beam; }
+    const std::string& beam() const noexcept;
 
-    const std::vector<std::string>& periods() const noexcept { return opt_.periods; }
+    const std::vector<std::string>& periods() const noexcept;
 
-    const SampleSet& samples() const { return set(); }
+    const SampleSet& samples() const;
 
-    const RunCatalog& runs() const { return runs_; }
+    const RunCatalog& runs() const;
 
 private:
     RunCatalog runs_;
@@ -80,7 +80,7 @@ private:
     Options opt_;
     std::unique_ptr<SampleSet> set_;
 
-    const SampleSet& set() const { return *set_; }
+    const SampleSet& set() const;
 
     const Sample* find_sample(std::string_view key) const;
 };
