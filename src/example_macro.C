@@ -9,10 +9,6 @@
 
 void example_macro()
 {
-  if (gSystem->Load("libfaint_root")) {
-    throw std::runtime_error("Failed to load libfaint_root library");
-  }
-
   faint::study::Options options;
   options.beam = "numi-fhc";
   options.periods = {"run1"};
