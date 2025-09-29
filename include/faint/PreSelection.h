@@ -12,7 +12,8 @@ namespace faint {
 // previously split across Reconstruction and NuMuCCSelectionProcessor.
 class PreSelection : public EventProcessor {
 public:
-  ROOT::RDF::RNode process(ROOT::RDF::RNode df, Origin origin) const override;
+  ROOT::RDF::RNode process(ROOT::RDF::RNode df,
+                           SampleOrigin origin) const override;
 };
 
 } // namespace faint

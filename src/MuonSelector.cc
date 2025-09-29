@@ -7,7 +7,7 @@
 namespace faint {
 
 ROOT::RDF::RNode MuonSelector::process(ROOT::RDF::RNode df,
-                                       Origin origin) const {
+                                       SampleOrigin origin) const {
   if (!df.HasColumn("track_shower_scores")) {
     auto no_mu_df = df.Define("n_muons_tot", []() { return 0UL; })
                         .Define("has_muon", []() { return false; });

@@ -14,9 +14,9 @@
 
 #include <faint/Types.h>
 #include <faint/Variables.h>
-#include <faint/data/RunCatalog.h>
-#include <faint/data/Sample.h>
-#include <faint/data/SampleSet.h>
+#include <faint/RunCatalog.h>
+#include <faint/Sample.h>
+#include <faint/SampleSet.h>
 
 namespace faint {
 namespace campaign {
@@ -50,13 +50,17 @@ class Campaign {
 public:
     static Campaign open(const std::string& run_config_json, Options opt, Variables vars = Variables{});
 
-    std::vector<std::string> sample_keys(Origin origin_filter = Origin::kUnknown) const;
+    std::vector<std::string> sample_keys(
+        SampleOrigin origin_filter = SampleOrigin::kUnknown) const;
 
-    ROOT::RDF::RNode df(std::string_view sample_key, Variation v = Variation::kCV) const;
+    ROOT::RDF::RNode df(std::string_view sample_key,
+                        SampleVariation v = SampleVariation::kCV) const;
 
-    ROOT::RDF::RNode final(std::string_view key, Variation v = Variation::kCV) const;
+    ROOT::RDF::RNode final(std::string_view key,
+                           SampleVariation v = SampleVariation::kCV) const;
 
-    ROOT::RDF::RNode quality(std::string_view key, Variation v = Variation::kCV) const;
+    ROOT::RDF::RNode quality(std::string_view key,
+                             SampleVariation v = SampleVariation::kCV) const;
 
     void snapshot_where(const std::string& filter, const std::string& out_file, const std::vector<std::string>& columns = {}) const;
 

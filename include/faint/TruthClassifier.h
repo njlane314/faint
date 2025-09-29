@@ -12,10 +12,12 @@ namespace faint {
 
 class TruthClassifier : public EventProcessor {
 public:
-  ROOT::RDF::RNode process(ROOT::RDF::RNode df, Origin origin) const override;
+  ROOT::RDF::RNode process(ROOT::RDF::RNode df,
+                           SampleOrigin origin) const override;
 
 private:
-  ROOT::RDF::RNode processNonMc(ROOT::RDF::RNode df, Origin origin) const;
+  ROOT::RDF::RNode processNonMc(ROOT::RDF::RNode df,
+                                SampleOrigin origin) const;
   ROOT::RDF::RNode defineCounts(ROOT::RDF::RNode df) const;
   ROOT::RDF::RNode assignInclusiveChannels(ROOT::RDF::RNode df) const;
   ROOT::RDF::RNode assignExclusiveChannels(ROOT::RDF::RNode df) const;

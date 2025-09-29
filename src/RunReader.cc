@@ -4,7 +4,7 @@
 #include <stdexcept>
 #include <utility>
 
-#include "faint/utils/Logger.h"
+#include "faint/Log.h"
 
 namespace faint {
 

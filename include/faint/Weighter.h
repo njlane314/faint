@@ -14,7 +14,8 @@ public:
   Weighter(const nlohmann::json& cfg, double total_run_pot,
            long total_run_triggers);
 
-  ROOT::RDF::RNode process(ROOT::RDF::RNode df, Origin origin) const override;
+  ROOT::RDF::RNode process(ROOT::RDF::RNode df,
+                           SampleOrigin origin) const override;
 
 private:
   double sample_pot_;

@@ -3,7 +3,7 @@
 #include <set>
 #include <utility>
 
-#include "faint/utils/Logger.h"
+#include "faint/Log.h"
 
 namespace faint {
 

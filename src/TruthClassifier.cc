@@ -10,8 +10,8 @@
 namespace faint {
 
 ROOT::RDF::RNode TruthClassifier::process(ROOT::RDF::RNode df,
-                                          Origin origin) const {
-  if (origin != Origin::kMonteCarlo) {
+                                          SampleOrigin origin) const {
+  if (origin != SampleOrigin::kMonteCarlo) {
     return this->processNonMc(df, origin);
   }
 
@@ -24,15 +24,15 @@ ROOT::RDF::RNode TruthClassifier::process(ROOT::RDF::RNode df,
 }
 
 ROOT::RDF::RNode TruthClassifier::processNonMc(ROOT::RDF::RNode df,
-                                               Origin origin) const {
+                                               SampleOrigin origin) const {
   auto mode_df = df.Define("genie_int_mode", []() { return -1; });
 
   auto incl_df = mode_df.Define("incl_channel", [c = origin]() {
-    if (c == Origin::kData)
+    if (c == SampleOrigin::kData)
       return 0;
-    if (c == Origin::kExternal)
+    if (c == SampleOrigin::kExternal)
       return 1;
-    if (c == Origin::kDirt)
+    if (c == SampleOrigin::kDirt)
       return 2;
     return 99;
   });
@@ -41,11 +41,11 @@ ROOT::RDF::RNode TruthClassifier::processNonMc(ROOT::RDF::RNode df,
       incl_df.Define("inclusive_strange_channels", "incl_channel");
 
   auto excl_df = incl_alias_df.Define("excl_channel", [c = origin]() {
-    if (c == Origin::kData)
+    if (c == SampleOrigin::kData)
       return 0;
-    if (c == Origin::kExternal)
+    if (c == SampleOrigin::kExternal)
       return 1;
-    if (c == Origin::kDirt)
+    if (c == SampleOrigin::kDirt)
       return 2;
     return 99;
   });
@@ -54,9 +54,9 @@ ROOT::RDF::RNode TruthClassifier::processNonMc(ROOT::RDF::RNode df,
       excl_df.Define("exclusive_strange_channels", "excl_channel");
 
   auto chan_df = excl_alias_df.Define("channel_def", [c = origin]() {
-    if (c == Origin::kData)
+    if (c == SampleOrigin::kData)
       return 0;
-    if (c == Origin::kExternal || c == Origin::kDirt)
+    if (c == SampleOrigin::kExternal || c == SampleOrigin::kDirt)
       return 1;
     return 99;
   });

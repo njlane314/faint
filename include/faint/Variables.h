@@ -22,7 +22,7 @@ class Variables {
 
   static const std::string& single_knob_var();
 
-  static std::vector<std::string> event_var(Origin origin);
+  static std::vector<std::string> event_var(SampleOrigin origin);
 
  private:
   static std::unordered_set<std::string> collect_base_vars();

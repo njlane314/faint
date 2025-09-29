@@ -7,7 +7,7 @@
 namespace faint {
 
 ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
-                                       Origin origin) const {
+                                       SampleOrigin origin) const {
   ROOT::RDF::RNode node = df;
 
   if (!node.HasColumn("num_slices") && node.HasColumn("nslice"))
@@ -66,7 +66,7 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
         {"pfp_generations"});
   }
 
-  if (origin == Origin::kMonteCarlo) {
+  if (origin == SampleOrigin::kMonteCarlo) {
     if (node.HasColumn("software_trigger_pre_ext")) {
       node = node.Define(
           "software_trigger",
@@ -97,7 +97,8 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
       "pass_pre",
       [origin](float pe_beam, float pe_veto, bool swtrig) {
         const bool dataset_gate =
-            (origin == Origin::kMonteCarlo || origin == Origin::kDirt)
+            (origin == SampleOrigin::kMonteCarlo ||
+             origin == SampleOrigin::kDirt)
                 ? (pe_beam > 0.f && pe_veto < 20.f)
                 : true;
         return dataset_gate && swtrig;

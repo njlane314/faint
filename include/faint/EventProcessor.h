@@ -13,7 +13,8 @@ class EventProcessor {
 public:
   virtual ~EventProcessor() = default;
 
-  virtual ROOT::RDF::RNode process(ROOT::RDF::RNode df, Origin origin) const = 0;
+  virtual ROOT::RDF::RNode process(ROOT::RDF::RNode df,
+                                   SampleOrigin origin) const = 0;
 
   void chain_processor(std::unique_ptr<EventProcessor> next);
 

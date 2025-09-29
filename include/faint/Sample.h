@@ -9,9 +9,9 @@
 #include "ROOT/RDataFrame.hxx"
 #include "nlohmann/json.hpp"
 
-#include <faint/data/IEventProcessor.h>
-#include <faint/data/SampleTypes.h>
-#include <faint/data/VariableRegistry.h>
+#include "faint/EventProcessor.h"
+#include "faint/Types.h"
+#include "faint/Variables.h"
 
 namespace faint {
 
@@ -21,6 +21,17 @@ class Sample {
          const std::string& base_dir, const VariableRegistry& vars,
          IEventProcessor& processor);
 
+  const SampleKey& key() const noexcept { return key_; }
+  SampleOrigin origin() const noexcept { return origin_; }
+  double pot() const noexcept { return pot_; }
+  long triggers() const noexcept { return triggers_; }
+
+  ROOT::RDF::RNode nominal() const { return nominal_node_; }
+  const std::map<SampleVariation, ROOT::RDF::RNode>& variations() const {
+    return variations_;
+  }
+
+ private:
   void validate(const std::string& base_dir) const;
 
   SampleKey key_;
@@ -33,10 +44,8 @@ class Sample {
   double pot_{0.0};
   long triggers_{0};
 
-  ROOT::RDF::RNode node_;
+  ROOT::RDF::RNode nominal_node_;
   std::map<SampleVariation, ROOT::RDF::RNode> variations_;
-
- private:
   std::map<SampleVariation, std::string> variation_paths_;
 
   SampleVariation parse_variation(const std::string& s) const;
