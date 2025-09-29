@@ -1,9 +1,12 @@
 #include "faint/Campaign.h"
 
 #include <algorithm>
+#include <fstream>
 #include <stdexcept>
 #include <utility>
 #include <vector>
+
+#include <nlohmann/json.hpp>
 
 namespace faint {
 namespace campaign {
@@ -16,9 +19,31 @@ std::string run_config_path() {
 }
 
 std::string ntuple_directory() {
-    const char* env = gSystem->Getenv("FAINT_NTUPLES");
-    if (!env) throw std::runtime_error("Set FAINT_NTUPLES to the directory containing faint ntuples");
-    return env;
+    const auto config_path = run_config_path();
+    std::ifstream input(config_path);
+    if (!input.is_open()) {
+        throw std::runtime_error("Could not open run configuration: " + config_path);
+    }
+
+    try {
+        auto data = nlohmann::json::parse(input);
+        if (data.contains("samples")) {
+            data = data.at("samples");
+        }
+
+        if (!data.contains("ntupledir")) {
+            throw std::runtime_error("Run configuration missing 'ntupledir' entry");
+        }
+
+        auto dir = data.at("ntupledir").get<std::string>();
+        if (dir.empty()) {
+            throw std::runtime_error("Run configuration has empty 'ntupledir'");
+        }
+
+        return dir;
+    } catch (const nlohmann::json::exception& e) {
+        throw std::runtime_error(std::string{"Failed to parse run configuration: "} + e.what());
+    }
 }
 
 Campaign Campaign::open(const std::string& run_config_json, Options opt, Variables vars) {
