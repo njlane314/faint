@@ -7,18 +7,23 @@
 
 #include <faint/Campaign.h>
 
-void example_macro()
+void example_macro(const char* run_config = nullptr)
 {
   if (gSystem->Load("libfaint_root")) {
     throw std::runtime_error("Failed to load libfaint_root library");
   }
 
+  std::string config_path = run_config ? run_config : "";
+  if (config_path.empty()) {
+    config_path = faint::campaign::run_config_path();
+  }
+
   faint::campaign::Options options;
   options.beam = "numi-fhc";
   options.periods = {"run1"};
-  options.ntuple_dir = faint::campaign::ntuple_directory();
+  options.ntuple_dir = faint::campaign::ntuple_directory(config_path);
 
-  auto campaign = faint::campaign::Campaign::open(faint::campaign::run_config_path(), options);
+  auto campaign = faint::campaign::Campaign::open(config_path, options);
 
   std::cout << "Loaded beam " << campaign.beam() << " for";
   for (const auto& p : campaign.periods()) {

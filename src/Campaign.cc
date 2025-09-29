@@ -19,7 +19,11 @@ std::string run_config_path() {
 }
 
 std::string ntuple_directory() {
-    const auto config_path = run_config_path();
+    return ntuple_directory(run_config_path());
+}
+
+std::string ntuple_directory(const std::string& run_config_json) {
+    const auto& config_path = run_config_json;
     std::ifstream input(config_path);
     if (!input.is_open()) {
         throw std::runtime_error("Could not open run configuration: " + config_path);
