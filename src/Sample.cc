@@ -26,8 +26,10 @@ ROOT::RDF::RNode exclude_truth(ROOT::RDF::RNode df,
     bool found = false;
     for (const auto& s : all) {
       if (s.at("sample_key").get<std::string>() == k) {
-        if (s.contains("truth")) {
-          auto filter_str = s.at("truth").get<std::string>();
+        auto filter_str = s.contains("truth")
+                              ? s.at("truth").get<std::string>()
+                              : s.value("truth_filter", std::string{});
+        if (!filter_str.empty()) {
           df = df.Filter("!(" + filter_str + ")");
           found = true;
           break;
@@ -55,7 +57,12 @@ Sample::Sample(const nlohmann::json& j, const nlohmann::json& all,
         return SampleOrigin::kUnknown;
       }()},
       path_{j.value("relative_path", "")},
-      truth_{j.value("truth", "")},
+      truth_{[&]() {
+        if (j.contains("truth")) return j.at("truth").get<std::string>();
+        if (j.contains("truth_filter"))
+          return j.at("truth_filter").get<std::string>();
+        return std::string{};
+      }()},
       exclude_{j.value("exclusion_truth_filters", std::vector<std::string>{})},
       pot_{j.value("pot", 0.0)},
       triggers_{j.value("triggers", 0L)},
