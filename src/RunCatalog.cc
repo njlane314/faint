@@ -14,6 +14,24 @@ std::string make_key(const std::string& beam, const std::string& period) {
   return beam + ":" + period;
 }
 
+const nlohmann::json& runs_node(const nlohmann::json& data) {
+  const nlohmann::json* node = &data;
+  if (node->contains("samples")) {
+    node = &node->at("samples");
+  }
+
+  if (node->contains("run_configurations")) {
+    return node->at("run_configurations");
+  }
+  if (node->contains("beamlines")) {
+    return node->at("beamlines");
+  }
+
+  log::fatal("RunCatalog::from_json",
+             "Run configuration missing 'beamlines' or 'run_configurations' section");
+  throw std::runtime_error("unreachable");
+}
+
 }  // namespace
 
 const Run& RunCatalog::get(const std::string& beam,
@@ -27,10 +45,9 @@ const Run& RunCatalog::get(const std::string& beam,
 
 RunCatalog RunCatalog::from_json(const nlohmann::json& data) {
   RunCatalog catalog;
-  const std::string top =
-      data.contains("run_configurations") ? "run_configurations" : "beamlines";
-  for (const auto& [beam, runs] : data.at(top).items()) {
-    for (const auto& [period, details] : runs.items()) {
+  const auto& runs = runs_node(data);
+  for (const auto& [beam, periods] : runs.items()) {
+    for (const auto& [period, details] : periods.items()) {
       Run run(details, beam, period);
       run.validate();
       const auto key = run.label();

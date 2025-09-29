@@ -8,6 +8,28 @@
 
 namespace faint {
 
+namespace {
+
+const nlohmann::json& runs_node(const nlohmann::json& data) {
+  const nlohmann::json* node = &data;
+  if (node->contains("samples")) {
+    node = &node->at("samples");
+  }
+
+  if (node->contains("run_configurations")) {
+    return node->at("run_configurations");
+  }
+  if (node->contains("beamlines")) {
+    return node->at("beamlines");
+  }
+
+  log::fatal("RunReader::read",
+             "Run configuration missing 'beamlines' or 'run_configurations' section");
+  throw std::runtime_error("unreachable");
+}
+
+}  // namespace
+
 void RunReader::add(Run rc) {
   auto key = rc.label();
   if (configs_.count(key))
@@ -30,10 +52,9 @@ const std::map<std::string, Run>& RunReader::all() const noexcept {
 
 RunReader RunReader::read(const nlohmann::json& data) {
   RunReader out;
-  const std::string top =
-      data.contains("run_configurations") ? "run_configurations" : "beamlines";
-  for (auto const& [beam, runs] : data.at(top).items()) {
-    for (auto const& [period, details] : runs.items()) {
+  const auto& runs = runs_node(data);
+  for (auto const& [beam, periods] : runs.items()) {
+    for (auto const& [period, details] : periods.items()) {
       Run rc(details, beam, period);
       rc.validate();
       out.add(std::move(rc));
