@@ -23,7 +23,7 @@ std::string ntuple_directory() {
 
 Campaign Campaign::open(const std::string& run_config_json, Options opt, Variables vars) {
     Campaign s;
-    s.runs_ = RunCatalog::fromFile(run_config_json);
+    s.runs_ = RunCatalog::from_file(run_config_json);
     s.vars_ = std::move(vars);
     s.opt_ = std::move(opt);
     s.set_ = std::make_unique<SampleSet>(
@@ -31,36 +31,42 @@ Campaign Campaign::open(const std::string& run_config_json, Options opt, Variabl
     return s;
 }
 
-std::vector<std::string> Campaign::sample_keys(Origin origin_filter) const {
-    std::vector<std::string> out;
-    const auto& frames = const_cast<SampleSet&>(set()).frames();
-    for (auto const& kv : frames) {
-        const auto& key = kv.first;
-        const auto& sample = kv.second;
-        if (origin_filter == Origin::kUnknown || sample.origin_ == origin_filter) {
-            out.push_back(key.str());
-        }
+std::vector<std::string> Campaign::sample_keys(
+    SampleOrigin origin_filter) const {
+  std::vector<std::string> out;
+  const auto& frames = const_cast<SampleSet&>(set()).frames();
+  for (auto const& kv : frames) {
+    const auto& key = kv.first;
+    const auto& sample = kv.second;
+    if (origin_filter == SampleOrigin::kUnknown ||
+        sample.origin() == origin_filter) {
+      out.push_back(key.str());
     }
-    std::sort(out.begin(), out.end());
-    return out;
+  }
+  std::sort(out.begin(), out.end());
+  return out;
 }
 
-ROOT::RDF::RNode Campaign::df(std::string_view sample_key, Variation v) const {
-    const Sample* sample = find_sample(sample_key);
-    if (!sample) {
-        throw std::runtime_error(std::string("Sample not found: ") + std::string(sample_key));
-    }
-    if (v == Variation::kCV) return sample->node_;
-    auto it = sample->variations_.find(v);
-    return (it != sample->variations_.end()) ? it->second : sample->node_;
+ROOT::RDF::RNode Campaign::df(std::string_view sample_key,
+                              SampleVariation v) const {
+  const Sample* sample = find_sample(sample_key);
+  if (!sample) {
+    throw std::runtime_error(std::string("Sample not found: ") + std::string(sample_key));
+  }
+  if (v == SampleVariation::kCV) return sample->nominal();
+  const auto& variations = sample->variations();
+  auto it = variations.find(v);
+  return (it != variations.end()) ? it->second : sample->nominal();
 }
 
-ROOT::RDF::RNode Campaign::final(std::string_view key, Variation v) const {
-    return df(key, v).Filter(sel::Final);
+ROOT::RDF::RNode Campaign::final(std::string_view key,
+                                 SampleVariation v) const {
+  return df(key, v).Filter(sel::Final);
 }
 
-ROOT::RDF::RNode Campaign::quality(std::string_view key, Variation v) const {
-    return df(key, v).Filter(sel::Quality);
+ROOT::RDF::RNode Campaign::quality(std::string_view key,
+                                   SampleVariation v) const {
+  return df(key, v).Filter(sel::Quality);
 }
 
 void Campaign::snapshot_where(const std::string& filter,
@@ -92,10 +98,9 @@ const SampleSet& Campaign::set() const { return *set_; }
 
 const Sample* Campaign::find_sample(std::string_view key) const {
     const auto& frames = const_cast<SampleSet&>(set()).frames();
-    for (auto const& kv : frames) {
-        if (kv.first.str() == key) return &kv.second;
-    }
-    return nullptr;
+    const SampleKey sample_key{std::string(key)};
+    auto it = frames.find(sample_key);
+    return it != frames.end() ? &it->second : nullptr;
 }
 
 } // namespace campaign

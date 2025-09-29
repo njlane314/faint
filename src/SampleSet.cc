@@ -2,8 +2,8 @@
 
 #include <nlohmann/json.hpp>
 
+#include "faint/Log.h"
 #include "faint/MuonSelector.h"
-#include "faint/utils/Logger.h"
 
 namespace faint {
 
@@ -54,7 +54,7 @@ void SampleSet::print_branches() {
   for (auto& [sample_key, sample_def] : samples_) {
     log::debug("SampleSet::print_branches", "--- Sample:", sample_key.str(),
                "---");
-    auto branches = sample_def.nominal_node_.GetColumnNames();
+    auto branches = sample_def.nominal().GetColumnNames();
     for (const auto& branch : branches) {
       log::debug("SampleSet::print_branches", "  - ", branch);
     }
@@ -96,10 +96,11 @@ void SampleSet::add_run(const Run& rc) {
     processors_.push_back(std::move(pipeline));
 
     auto& proc = *processors_.back();
-    Samples sample{s, rc.samples, ntuple_dir_, variables_, proc};
+    Sample sample{s, rc.samples, ntuple_dir_, variables_, proc};
+    SampleKey key = sample.key();
 
-    run_cache_.emplace(sample.sample_key_, &rc);
-    samples_.emplace(sample.sample_key_, std::move(sample));
+    run_cache_.emplace(key, &rc);
+    samples_.emplace(std::move(key), std::move(sample));
   }
 }
 
@@ -123,7 +124,7 @@ void SampleSet::snapshot_impl(const std::string& filter, const std::string& out,
   bool first = true;
   ROOT::RDF::RSnapshotOptions opts;
   for (auto const& [key, sample] : samples_) {
-    auto df = sample.nominal_node_;
+    auto df = sample.nominal();
     if (!filter.empty()) df = df.Filter(filter);
     opts.fMode = first ? "RECREATE" : "UPDATE";
     df.Snapshot(key.c_str(), out, cols, opts);

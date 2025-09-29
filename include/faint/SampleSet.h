@@ -9,15 +9,14 @@
 
 #include "ROOT/RDataFrame.hxx"
 
-#include <faint/PreSelection.h>
-#include <faint/Run.h>
-#include <faint/RunReader.h>
-#include <faint/Sample.h>
-#include <faint/TruthClassifier.h>
-#include <faint/Weighter.h>
-#include <faint/core/AnalysisKey.h>
-#include <faint/core/SelectionQuery.h>
-#include <faint/Variables.h>
+#include "faint/PreSelection.h"
+#include "faint/Run.h"
+#include "faint/RunCatalog.h"
+#include "faint/Sample.h"
+#include "faint/SelectionQuery.h"
+#include "faint/TruthClassifier.h"
+#include "faint/Variables.h"
+#include "faint/Weighter.h"
 
 namespace nlohmann {
 class json;
@@ -27,7 +26,7 @@ namespace faint {
 
 class SampleSet {
  public:
-  using Map = std::map<SampleKey, Samples>;
+  using Map = std::map<SampleKey, Sample>;
 
   SampleSet(const RunCatalog& runs, VariableRegistry variables,
             const std::string& beam, std::vector<std::string> periods,

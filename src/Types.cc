@@ -1,28 +1,34 @@
 #include "faint/Types.h"
 
+#include <utility>
+
 namespace faint {
 
-std::string to_key(Variation var) {
+SampleKey::SampleKey(std::string value) : value_(std::move(value)) {}
+
+SampleKey::SampleKey(const char* value) : value_(value ? value : "") {}
+
+std::string to_key(SampleVariation var) {
   switch (var) {
-    case Variation::kCV:
+    case SampleVariation::kCV:
       return "CV";
-    case Variation::kLYAttenuation:
+    case SampleVariation::kLYAttenuation:
       return "LYAttenuation";
-    case Variation::kLYDown:
+    case SampleVariation::kLYDown:
       return "LYDown";
-    case Variation::kLYRayleigh:
+    case SampleVariation::kLYRayleigh:
       return "LYRayleigh";
-    case Variation::kRecomb2:
+    case SampleVariation::kRecomb2:
       return "Recomb2";
-    case Variation::kSCE:
+    case SampleVariation::kSCE:
       return "SCE";
-    case Variation::kWireModX:
+    case SampleVariation::kWireModX:
       return "WireModX";
-    case Variation::kWireModYZ:
+    case SampleVariation::kWireModYZ:
       return "WireModYZ";
-    case Variation::kWireModAngleXZ:
+    case SampleVariation::kWireModAngleXZ:
       return "WireModAngleXZ";
-    case Variation::kWireModAngleYZ:
+    case SampleVariation::kWireModAngleYZ:
       return "WireModAngleYZ";
     default:
       return "Unknown";

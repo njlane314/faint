@@ -5,14 +5,13 @@
 
 #include "ROOT/RDataFrame.hxx"
 
-#include <faint/core/AnalysisKey.h>
-#include <faint/data/SampleTypes.h>
+#include <faint/Types.h>
 
 namespace faint {
 
 struct Dataset {
     SampleOrigin origin_;
-    AnalysisRole role_;
+    SampleRole role_;
     mutable ROOT::RDF::RNode dataframe_;
 };
 

@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <utility>
 
-#include "faint/utils/Logger.h"
+#include "faint/Log.h"
 
 namespace faint {
 namespace {
@@ -59,7 +59,7 @@ Sample::Sample(const nlohmann::json& j, const nlohmann::json& all,
       exclude_{j.value("exclusion_truth_filters", std::vector<std::string>{})},
       pot_{j.value("pot", 0.0)},
       triggers_{j.value("triggers", 0L)},
-      node_{build(base_dir, vars, processor, path_, all)} {
+      nominal_node_{build(base_dir, vars, processor, path_, all)} {
   if (j.contains("detector_variations")) {
     for (auto& dv : j.at("detector_variations")) {
       SampleVariation dvt =
@@ -80,7 +80,7 @@ void Sample::validate(const std::string& base_dir) const {
   if (key_.str().empty())
     log::fatal("Sample::validate", "empty key_");
   if (origin_ == SampleOrigin::kUnknown)
-    log::fatal("Sample::validate", "unknown  for", key_.str());
+    log::fatal("Sample::validate", "unknown origin for", key_.str());
   if ((origin_ == SampleOrigin::kMonteCarlo || origin_ == SampleOrigin::kDirt) &&
       pot_ <= 0)
     log::fatal("Sample::validate", "invalid pot_ for MC/Dirt", key_.str());
