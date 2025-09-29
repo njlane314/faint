@@ -72,9 +72,6 @@ private:
   long   total_run_triggers_;
 };
 
-// ---------- Backward-compat (remove when migrated) ----------
-using WeightProcessor = Weighter;
-
 } // namespace analysis
 
 #endif
