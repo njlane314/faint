@@ -4,7 +4,7 @@
 
 #include "ROOT/RVec.hxx"
 
-namespace analysis {
+namespace faint {
 
 ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
                                        Origin origin) const {
@@ -43,7 +43,7 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
 
   node = node.Define(
       "in_reco_fiducial",
-      [](const auto &x, const auto &y, const auto &z) {
+      [](float x, float y, float z) {
         return fiducial::is_in_reco_volume(x, y, z);
       },
       {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y",
@@ -114,7 +114,7 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
 
   node = node.Define(
       "pass_fv",
-      [](const auto &x, const auto &y, const auto &z) {
+      [](float x, float y, float z) {
         return fiducial::is_in_reco_volume(x, y, z);
       },
       {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y",
@@ -145,4 +145,4 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
   return next_ ? next_->process(node, origin) : node;
 }
 
-} // namespace analysis
+} // namespace faint

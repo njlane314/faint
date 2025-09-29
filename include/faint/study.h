@@ -17,7 +17,7 @@
 #include <faint/data/Sample.h>
 #include <faint/data/SampleSet.h>
 
-namespace analysis {
+namespace faint {
 namespace study {
 
 namespace sel {

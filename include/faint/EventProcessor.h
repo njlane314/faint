@@ -7,7 +7,7 @@
 
 #include <faint/Types.h>
 
-namespace analysis {
+namespace faint {
 
 class EventProcessor {
 public:

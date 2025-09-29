@@ -8,7 +8,7 @@
 
 #include <faint/data/Types.h>
 
-namespace analysis {
+namespace faint {
 
 class Variables {
 public:
@@ -227,6 +227,6 @@ private:
 
 using VariableRegistry = Variables;
 
-} // namespace analysis
+} // namespace faint
 
 #endif
