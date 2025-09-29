@@ -49,7 +49,8 @@ class Sample {
   std::map<SampleVariation, std::string> variation_paths_;
 
   SampleVariation parse_variation(const std::string& s) const;
-  ROOT::RDF::RNode build(const std::string& base_dir, const VariableRegistry& vars,
+  ROOT::RDF::RNode build(const std::string& base_dir,
+                         [[maybe_unused]] const VariableRegistry& vars,
                          EventProcessor& processor, const std::string& rel,
                          const nlohmann::json& all);
 };
