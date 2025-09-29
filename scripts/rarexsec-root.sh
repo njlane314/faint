@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 set -e
+
 # Determine topdir from RAREXSEC or script path
 if [ -z "$RAREXSEC" ]; then
   TOPDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 else
   TOPDIR="$RAREXSEC"
 fi
+
 LIBDIR="${TOPDIR}/build/lib"
 INCDIR="${TOPDIR}/include"
 MACRO="${TOPDIR}/scripts/setup_rarexsec.C"
@@ -17,5 +19,11 @@ case "$(uname -s)" in
 esac
 export ROOT_INCLUDE_PATH="${INCDIR}:${ROOT_INCLUDE_PATH}"
 
-# Start ROOT, run setup, then forward any user macro call e.g. '-- -q my.C'
-root -l -q -e "setup_rarexsec(\"${LIBDIR}/librarexsec.$( [ \"$(uname -s)\" = Darwin ] && echo dylib || echo so )\",\"${INCDIR}\");" "$@"
+if [ "$(uname -s)" = "Darwin" ]; then
+  LIBEXT="dylib"
+else
+  LIBEXT="so"
+fi
+
+# Start ROOT, ensure the helper macro is loaded, then forward any user macro call
+root -l -q -e "gROOT->LoadMacro(\"${MACRO}\"); setup_rarexsec(\"${LIBDIR}/librarexsec.${LIBEXT}\",\"${INCDIR}\");" "$@"
