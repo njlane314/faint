@@ -104,7 +104,7 @@ void SampleSet::add_run(const Run& rc) {
   }
 }
 
-std::unique_ptr<IEventProcessor> SampleSet::build_pipeline(
+  std::unique_ptr<EventProcessor> SampleSet::build_pipeline(
     const nlohmann::json& sample) {
   auto weighter =
       std::make_unique<Weighter>(sample, total_pot_, total_triggers_);

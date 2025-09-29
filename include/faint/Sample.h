@@ -19,7 +19,7 @@ class Sample {
  public:
   Sample(const nlohmann::json& j, const nlohmann::json& all,
          const std::string& base_dir, const VariableRegistry& vars,
-         IEventProcessor& processor);
+         EventProcessor& processor);
 
   const SampleKey& key() const noexcept { return key_; }
   SampleOrigin origin() const noexcept { return origin_; }
@@ -50,7 +50,7 @@ class Sample {
 
   SampleVariation parse_variation(const std::string& s) const;
   ROOT::RDF::RNode build(const std::string& base_dir, const VariableRegistry& vars,
-                         IEventProcessor& processor, const std::string& rel,
+                         EventProcessor& processor, const std::string& rel,
                          const nlohmann::json& all);
 };
 
