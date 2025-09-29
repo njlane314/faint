@@ -9,20 +9,20 @@
 
 #include "ROOT/RDataFrame.hxx"
 
-#include <rarexsec/core/AnalysisKey.h>
-#include <rarexsec/data/BlipProcessor.h>
-#include <rarexsec/data/IEventProcessor.h>
-#include <rarexsec/utils/Logger.h>
-#include <rarexsec/data/MuonSelectionProcessor.h>
-#include <rarexsec/data/NuMuCCSelectionProcessor.h>
-#include <rarexsec/data/PreselectionProcessor.h>
-#include <rarexsec/data/ReconstructionProcessor.h>
-#include <rarexsec/data/RunCatalog.h>
-#include <rarexsec/data/Samples.h>
-#include <rarexsec/core/SelectionQuery.h>
-#include <rarexsec/data/TruthChannelProcessor.h>
-#include <rarexsec/data/VariableRegistry.h>
-#include <rarexsec/data/WeightProcessor.h>
+#include <faint/core/AnalysisKey.h>
+#include <faint/data/BlipProcessor.h>
+#include <faint/data/IEventProcessor.h>
+#include <faint/utils/Logger.h>
+#include <faint/data/MuonSelectionProcessor.h>
+#include <faint/data/NuMuCCSelectionProcessor.h>
+#include <faint/data/PreselectionProcessor.h>
+#include <faint/data/ReconstructionProcessor.h>
+#include <faint/data/RunCatalog.h>
+#include <faint/data/Samples.h>
+#include <faint/core/SelectionQuery.h>
+#include <faint/data/TruthChannelProcessor.h>
+#include <faint/data/VariableRegistry.h>
+#include <faint/data/WeightProcessor.h>
 
 namespace analysis {
 

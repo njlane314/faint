@@ -9,10 +9,10 @@
 #include "ROOT/RDataFrame.hxx"
 #include "nlohmann/json.hpp"
 
-#include <rarexsec/utils/Logger.h>
-#include <rarexsec/data/IEventProcessor.h>
-#include <rarexsec/data/SampleTypes.h>
-#include <rarexsec/data/VariableRegistry.h>
+#include <faint/utils/Logger.h>
+#include <faint/data/IEventProcessor.h>
+#include <faint/data/SampleTypes.h>
+#include <faint/data/VariableRegistry.h>
 
 namespace analysis {
 

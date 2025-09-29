@@ -5,12 +5,12 @@
 
 #include "TSystem.h"
 
-#include <rarexsec/study.h>
+#include <faint/study.h>
 
 void example_macro()
 {
-  if (gSystem->Load("librarexsec_root")) {
-    throw std::runtime_error("Failed to load librexsec_root library");
+  if (gSystem->Load("libfaint_root")) {
+    throw std::runtime_error("Failed to load libfaint_root library");
   }
 
   analysis::study::Options options;

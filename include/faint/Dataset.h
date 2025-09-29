@@ -5,8 +5,8 @@
 
 #include "ROOT/RDataFrame.hxx"
 
-#include <rarexsec/core/AnalysisKey.h>
-#include <rarexsec/data/SampleTypes.h>
+#include <faint/core/AnalysisKey.h>
+#include <faint/data/SampleTypes.h>
 
 namespace analysis {
 

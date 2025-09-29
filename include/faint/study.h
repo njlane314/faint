@@ -1,5 +1,5 @@
-#ifndef RAREXSEC_STUDY_H
-#define RAREXSEC_STUDY_H
+#ifndef FAINT_STUDY_H
+#define FAINT_STUDY_H
 
 #include <algorithm>
 #include <memory>
@@ -11,11 +11,11 @@
 #include "ROOT/RDataFrame.hxx"
 #include "TSystem.h"
 
-#include <rarexsec/Types.h>
-#include <rarexsec/Variables.h>
-#include <rarexsec/data/RunCatalog.h>
-#include <rarexsec/data/Sample.h>
-#include <rarexsec/data/SampleSet.h>
+#include <faint/Types.h>
+#include <faint/Variables.h>
+#include <faint/data/RunCatalog.h>
+#include <faint/data/Sample.h>
+#include <faint/data/SampleSet.h>
 
 namespace analysis {
 namespace study {
@@ -35,15 +35,15 @@ inline constexpr const char* Weight = "nominal_event_weight";
 }
 
 inline std::string run_config_path() {
-    const char* env = gSystem->Getenv("RAREXSEC_RUN_CONFIG");
+    const char* env = gSystem->Getenv("FAINT_RUN_CONFIG");
     if (env) return env;
     std::string cwd = gSystem->pwd();
     return cwd + "/data/samples.json";
 }
 
 inline std::string ntuple_directory() {
-    const char* env = gSystem->Getenv("RAREXSEC_NTUPLES");
-    if (!env) throw std::runtime_error("Set RAREXSEC_NTUPLES to the directory containing rarexsec ntuples");
+    const char* env = gSystem->Getenv("FAINT_NTUPLES");
+    if (!env) throw std::runtime_error("Set FAINT_NTUPLES to the directory containing faint ntuples");
     return env;
 }
 

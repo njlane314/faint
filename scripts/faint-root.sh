@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set -e
 
-# Determine topdir from RAREXSEC or script path
-if [ -z "$RAREXSEC" ]; then
+# Determine topdir from FAINT or script path
+if [ -z "$FAINT" ]; then
   TOPDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 else
-  TOPDIR="$RAREXSEC"
+  TOPDIR="$FAINT"
 fi
 
 LIBDIR="${TOPDIR}/build/lib"
 INCDIR="${TOPDIR}/include"
-MACRO="${TOPDIR}/scripts/setup_rarexsec.C"
+MACRO="${TOPDIR}/scripts/setup_faint.C"
 
 # Ensure library path and includes are visible to ROOT
 case "$(uname -s)" in
@@ -26,4 +26,4 @@ else
 fi
 
 # Start ROOT, ensure the helper macro is loaded, then forward any user macro call
-root -l -q -e "gROOT->LoadMacro(\"${MACRO}\"); setup_rarexsec(\"${LIBDIR}/librarexsec.${LIBEXT}\",\"${INCDIR}\");" "$@"
+root -l -q -e "gROOT->LoadMacro(\"${MACRO}\"); setup_faint(\"${LIBDIR}/libfaint.${LIBEXT}\",\"${INCDIR}\");" "$@"

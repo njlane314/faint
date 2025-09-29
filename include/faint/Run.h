@@ -7,8 +7,8 @@
 
 #include <nlohmann/json.hpp>
 
-#include <rarexsec/utils/Logger.h>
-#include <rarexsec/data/SampleDefinition.h>
+#include <faint/utils/Logger.h>
+#include <faint/data/SampleDefinition.h>
 
 namespace analysis {
 

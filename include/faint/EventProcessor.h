@@ -5,7 +5,7 @@
 
 #include "ROOT/RDataFrame.hxx"
 
-#include <rarexsec/Types.h>
+#include <faint/Types.h>
 
 namespace analysis {
 

@@ -4,9 +4,9 @@
 #include <cmath>
 #include <nlohmann/json.hpp>
 
-#include <rarexsec/utils/Logger.h>
-#include <rarexsec/data/EventProcessor.h>
-#include <rarexsec/data/Types.h>
+#include <faint/utils/Logger.h>
+#include <faint/data/EventProcessor.h>
+#include <faint/data/Types.h>
 
 namespace analysis {
 

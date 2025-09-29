@@ -5,7 +5,7 @@
 
 #include "ROOT/RVec.hxx"
 
-#include <rarexsec/EventProcessor.h>
+#include <faint/EventProcessor.h>
 
 namespace analysis {
 

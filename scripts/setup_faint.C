@@ -1,4 +1,4 @@
-// scripts/setup_rarexsec.C
+// scripts/setup_faint.C
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -15,7 +15,7 @@ void load_header(const std::string& h) {
   }
 }
 
-void setup_rarexsec(const char* abs_lib_path = nullptr, const char* abs_inc_dir = nullptr) {
+void setup_faint(const char* abs_lib_path = nullptr, const char* abs_inc_dir = nullptr) {
   // Some ROOT 6 builds need libGraf preloaded for dictionaries
   if (gROOT->GetVersionInt() >= 60000) {
     if (gSystem->Load("libGraf") != 0) {
@@ -34,23 +34,23 @@ void setup_rarexsec(const char* abs_lib_path = nullptr, const char* abs_inc_dir 
     rc = gSystem->Load(abs_lib_path);
   }
   if (rc != 0) {
-    rc = gSystem->Load("librarexsec"); // fall back to soname
+    rc = gSystem->Load("libfaint"); // fall back to soname
   }
 
   if (rc == 0) {
-    std::cout << "Loaded rarexsec library.\n";
+    std::cout << "Loaded faint library.\n";
   } else {
     const char* env_var = gSystem->UnixPathName("/") ? "LD_LIBRARY_PATH" : "DYLD_LIBRARY_PATH";
-    std::cout << "Error loading rarexsec library. Add its directory to "
+    std::cout << "Error loading faint library. Add its directory to "
               << env_var
-              << " or pass an absolute path to setup_rarexsec().\n";
+              << " or pass an absolute path to setup_faint().\n";
   }
 
   // Pull in commonly used headers so macros can use the API immediately
-  load_header("rarexsec/data/Types.h");
-  load_header("rarexsec/data/SampleSet.h");
-  load_header("rarexsec/data/NuMuCCSelector.h");
-  load_header("rarexsec/data/TruthClassifier.h");
-  load_header("rarexsec/data/MuonSelector.h");
-  load_header("rarexsec/data/Weighter.h");
+  load_header("faint/data/Types.h");
+  load_header("faint/data/SampleSet.h");
+  load_header("faint/data/NuMuCCSelector.h");
+  load_header("faint/data/TruthClassifier.h");
+  load_header("faint/data/MuonSelector.h");
+  load_header("faint/data/Weighter.h");
 }
