@@ -4,11 +4,28 @@
 #include <iostream>
 #include <string>
 
+#include "TError.h"
 #include "TInterpreter.h"
 #include "TROOT.h"
 #include "TSystem.h"
 
 namespace {
+
+class ErrorLevelGuard {
+public:
+  explicit ErrorLevelGuard(int new_level)
+      : previous_level_(gErrorIgnoreLevel) {
+    gErrorIgnoreLevel = new_level;
+  }
+
+  ErrorLevelGuard(const ErrorLevelGuard&) = delete;
+  ErrorLevelGuard& operator=(const ErrorLevelGuard&) = delete;
+
+  ~ErrorLevelGuard() { gErrorIgnoreLevel = previous_level_; }
+
+private:
+  int previous_level_;
+};
 
 std::string get_env(const char* name) {
   if (name == nullptr) {
@@ -91,6 +108,7 @@ void load_header(const std::string& h) {
 }
 
 void setup_faint(const char* abs_lib_path = nullptr, const char* abs_inc_dir = nullptr) {
+  ErrorLevelGuard error_level_guard(kFatal);
   // Some ROOT 6 builds need libGraf preloaded for dictionaries
   if (gROOT->GetVersionInt() >= 60000) {
     if (gSystem->Load("libGraf") != 0) {
