@@ -1,4 +1,5 @@
 // scripts/setup_faint.C
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <string>
@@ -6,6 +7,80 @@
 #include "TInterpreter.h"
 #include "TROOT.h"
 #include "TSystem.h"
+
+namespace {
+
+std::string get_env(const char* name) {
+  if (name == nullptr) {
+    return {};
+  }
+  if (const char* value = gSystem->Getenv(name)) {
+    return value;
+  }
+  return {};
+}
+
+std::string parent_dir(std::string path) {
+  if (path.empty()) {
+    return {};
+  }
+
+  // Strip trailing separators to avoid returning the same directory.
+  while (!path.empty() && (path.back() == '/' || path.back() == '\\')) {
+    path.pop_back();
+  }
+
+  const std::string::size_type pos = path.find_last_of("/\\");
+  if (pos == std::string::npos) {
+    return {};
+  }
+  if (pos == 0) {
+    return path.substr(0, 1);
+  }
+  return path.substr(0, pos);
+}
+
+std::string infer_topdir() {
+  // Allow users to point to a custom installation prefix.
+  std::string from_env = get_env("FAINT");
+  if (!from_env.empty()) {
+    return from_env;
+  }
+  from_env = get_env("FAINT_PREFIX");
+  if (!from_env.empty()) {
+    return from_env;
+  }
+
+  // `Which` searches the ROOT macro path for this helper and returns the
+  // absolute location if it is discoverable.
+  if (char* located = gSystem->Which(gROOT->GetMacroPath(), "setup_faint.C")) {
+    std::string macro_path = located;
+    std::free(located);
+
+    const std::string macro_dir = parent_dir(macro_path);
+    if (!macro_dir.empty()) {
+      return parent_dir(macro_dir);
+    }
+  }
+
+  return {};
+}
+
+std::string join_path(const std::string& base, const std::string& leaf) {
+  if (base.empty()) {
+    return {};
+  }
+  if (!leaf.empty() && (leaf.front() == '/' || leaf.front() == '\\')) {
+    return leaf;
+  }
+
+  if (base.back() == '/' || base.back() == '\\') {
+    return base + leaf;
+  }
+  return base + "/" + leaf;
+}
+
+} // namespace
 void load_header(const std::string& h) {
   TInterpreter::EErrorCode ec;
   gInterpreter->ProcessLine( (std::string("#include <") + h + ">").c_str(), &ec );
@@ -23,15 +98,44 @@ void setup_faint(const char* abs_lib_path = nullptr, const char* abs_inc_dir = n
     }
   }
 
-  // Include dir (optional explicit arg)
+  const std::string topdir = infer_topdir();
+
+  std::string include_dir;
   if (abs_inc_dir && std::strlen(abs_inc_dir) > 0) {
-    gSystem->AddIncludePath( (std::string("-I") + abs_inc_dir).c_str() );
+    include_dir = abs_inc_dir;
+  } else {
+    include_dir = join_path(topdir, "include");
+  }
+  if (!include_dir.empty()) {
+    gSystem->AddIncludePath( (std::string("-I") + include_dir).c_str() );
+  } else {
+    std::cout << "Warning: could not determine the faint include directory. "
+              << "Pass it explicitly to setup_faint().\n";
   }
 
   // Load library (absolute path if given, else rely on DYLD/LD_LIBRARY_PATH)
   int rc = 1;
+  std::string lib_path;
+  bool attempted_absolute = false;
   if (abs_lib_path && std::strlen(abs_lib_path) > 0) {
-    rc = gSystem->Load(abs_lib_path);
+    lib_path = abs_lib_path;
+    attempted_absolute = true;
+    rc = gSystem->Load(lib_path.c_str());
+  } else {
+#ifdef __APPLE__
+    lib_path = join_path(topdir, "build/lib/libfaint.dylib");
+#else
+    lib_path = join_path(topdir, "build/lib/libfaint.so");
+#endif
+    if (!lib_path.empty()) {
+      attempted_absolute = true;
+      rc = gSystem->Load(lib_path.c_str());
+    }
+  }
+  if (rc != 0 && attempted_absolute && !lib_path.empty()) {
+    std::cout << "Warning: failed to load faint library from '"
+              << lib_path
+              << "'.\n";
   }
   if (rc != 0) {
     rc = gSystem->Load("libfaint"); // fall back to soname
@@ -47,10 +151,12 @@ void setup_faint(const char* abs_lib_path = nullptr, const char* abs_inc_dir = n
   }
 
   // Pull in commonly used headers so macros can use the API immediately
-  load_header("faint/Types.h");
-  load_header("faint/SampleSet.h");
-  load_header("faint/NuMuCCSelector.h");
-  load_header("faint/TruthClassifier.h");
-  load_header("faint/MuonSelector.h");
-  load_header("faint/Weighter.h");
+  if (!include_dir.empty()) {
+    load_header("faint/Types.h");
+    load_header("faint/SampleSet.h");
+    load_header("faint/NuMuCCSelector.h");
+    load_header("faint/TruthClassifier.h");
+    load_header("faint/MuonSelector.h");
+    load_header("faint/Weighter.h");
+  }
 }
