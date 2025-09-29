@@ -1,0 +1,60 @@
+{
+    "samples": {
+        "ntupledir": "/exp/uboone/data/users/nlane/ntuples",
+        "beamlines": {
+            "numi-fhc": {
+                "run1": {
+                    "nominal_pot": 3.922e+20,
+                    "samples": [
+                        {
+                            "sample_key": "mc_inclusive_run1_fhc",
+                            "sample_type": "mc",
+                            "exclusion_truth_filters": [
+                                "mc_strangeness_run1_fhc"
+                            ],
+                            "detector_variations": [
+                                {
+                                    "sample_key": "mc_inclusive_run1_fhc_detvar_cv",
+                                    "variation_type": "cv",
+                                    "relative_path": "mc_inclusive_run1_fhc_detvar_cv.root",
+                                    "pot": 3.0470412137616795e+20
+                                }
+                            ],
+                            "relative_path": "mc_inclusive_run1_fhc.root",
+                            "pot": 1.3308774439702065e+21
+                        },
+                        {
+                            "sample_key": "mc_strangeness_run1_fhc",
+                            "sample_type": "mc",
+                            "truth_filter": "(mc_n_strange > 0)",
+                            "detector_variations": [
+                                {
+                                    "sample_key": "mc_strangeness_run1_fhc_detvar_cv",
+                                    "variation_type": "cv",
+                                    "relative_path": "mc_strangeness_run1_fhc_detvar_cv.root",
+                                    "pot": 3.0470412137616795e+20
+                                }
+                            ],
+                            "relative_path": "mc_strangeness_run1_fhc.root",
+                            "pot": 1.4322894271958414e+23
+                        }
+                    ]
+                }
+            },
+            "numi-ext": {
+                "run1": {
+                    "ext_triggers": 40062895,
+                    "samples": [
+                        {
+                            "sample_key": "numi_ext_run1",
+                            "sample_type": "ext",
+                            "relative_path": "numi_ext_run1.root",
+                            "pot": 0.0,
+                            "triggers": 19565379
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}
