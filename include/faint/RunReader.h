@@ -8,7 +8,7 @@
 
 #include "nlohmann/json.hpp"
 
-#include <faint/utils/Logger.h>
+#include <faint/Logger.h>
 #include <faint/data/Run.h>  
 
 namespace faint {

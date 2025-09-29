@@ -12,7 +12,7 @@
 #include <faint/core/AnalysisKey.h>
 #include <faint/data/BlipProcessor.h>
 #include <faint/data/IEventProcessor.h>
-#include <faint/utils/Logger.h>
+#include <faint/Logger.h>
 #include <faint/data/MuonSelectionProcessor.h>
 #include <faint/data/NuMuCCSelectionProcessor.h>
 #include <faint/data/PreselectionProcessor.h>
