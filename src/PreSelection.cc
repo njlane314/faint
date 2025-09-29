@@ -1,5 +1,7 @@
 #include "rarexsec/PreSelection.h"
 
+#include "rarexsec/FiducialVolume.h"
+
 #include "ROOT/RVec.hxx"
 
 namespace analysis {
@@ -41,10 +43,11 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
 
   node = node.Define(
       "in_reco_fiducial",
-      "reco_neutrino_vertex_sce_x > 5 && reco_neutrino_vertex_sce_x < 251 && "
-      "reco_neutrino_vertex_sce_y > -110 && reco_neutrino_vertex_sce_y < 110 && "
-      "reco_neutrino_vertex_sce_z > 20 && reco_neutrino_vertex_sce_z < 986 && "
-      "(reco_neutrino_vertex_sce_z < 675 || reco_neutrino_vertex_sce_z > 775)");
+      [](const auto &x, const auto &y, const auto &z) {
+        return fiducial::is_in_reco_volume(x, y, z);
+      },
+      {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y",
+       "reco_neutrino_vertex_sce_z"});
 
   if (!node.HasColumn("n_pfps_gen2")) {
     node = node.Define(
@@ -111,9 +114,8 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
 
   node = node.Define(
       "pass_fv",
-      [](float x, float y, float z) {
-        return x > 5.f && x < 251.f && y > -110.f && y < 110.f &&
-               z > 20.f && z < 986.f && (z < 675.f || z > 775.f);
+      [](const auto &x, const auto &y, const auto &z) {
+        return fiducial::is_in_reco_volume(x, y, z);
       },
       {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y",
        "reco_neutrino_vertex_sce_z"});
