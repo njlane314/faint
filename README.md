@@ -10,6 +10,12 @@ Before building, ensure the following tools are available on your system:
 - A C++17-capable compiler such as GCC or Clang.
 - [ROOT 6](https://root.cern/) with the `root-config`, `rootcling` (or
   `rootcint`), and `root` executables on your `PATH`.
+- The [nlohmann/json](https://github.com/nlohmann/json) single-header
+  library.  Many ROOT builds, including those distributed through CVMFS,
+  already provide it.  If it is installed in a non-standard location, set the
+  `NLOHMANN_JSON_INC` environment variable (or make variable) to the directory
+  that contains the `nlohmann/json.hpp` header so the build system can locate
+  it.
 - Standard development utilities: `make`, `bash`, and `git`.
 
 You can quickly check that ROOT is discoverable with `root-config --version`.
