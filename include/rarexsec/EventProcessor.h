@@ -2,8 +2,10 @@
 #define ANALYSIS_EVENT_PROCESSOR_H
 
 #include <memory>
+
 #include "ROOT/RDataFrame.hxx"
-#include <rarexsec/data/Types.h>
+
+#include <rarexsec/Types.h>
 
 namespace analysis {
 
