@@ -31,7 +31,7 @@ CXX_STD ?= c++17
 UNKNOWN_REV := unknown version
 
 ROOTCXX := $(shell root-config --cxx 2> /dev/null)
-	CXX ?= $(if $(ROOTCXX),$(ROOTCXX),g++)
+CXX ?= $(if $(ROOTCXX),$(ROOTCXX),g++)
 
 UNAME_S := $(shell uname -s)
 ifeq ($(UNAME_S),Darwin)
@@ -52,15 +52,15 @@ ifndef GIT
   GIT_REVISION := $(UNKNOWN_REV)
 else
   GIT_REVPARSE_CODE := $(shell $(GIT) -C $(TOP_DIR) rev-parse 2> /dev/null && echo "$$?")
-	  ifeq ($(GIT_REVPARSE_CODE),0)
+  ifeq ($(GIT_REVPARSE_CODE),0)
     GIT_REVISION := $(shell $(GIT) -C $(TOP_DIR) rev-parse --short HEAD)
     GIT_DIFF_INDEX_CODE := $(shell $(GIT) -C $(TOP_DIR) diff-index --quiet HEAD 2> /dev/null; echo "$$?")
-	    ifneq ($(GIT_DIFF_INDEX_CODE),0)
+    ifneq ($(GIT_DIFF_INDEX_CODE),0)
       GIT_REVISION := $(GIT_REVISION)-dirty
-	    endif
-	  else
+    endif
+  else
     GIT_REVISION := $(UNKNOWN_REV)
-	  endif
+  endif
 endif
 
 ifneq (,$(wildcard $(TOP_DIR)/.VERSION))
@@ -86,7 +86,7 @@ else ifeq ($(ROOTCLING),)
   USE_ROOT := no
 else
   ROOT_VERSION := $(shell $(ROOTCONFIG) --version)
-	  $(info Found ROOT version $(ROOT_VERSION) in $(ROOT))
+  $(info Found ROOT version $(ROOT_VERSION) in $(ROOT))
   USE_ROOT := yes
   ROOT_CXXFLAGS := $(shell $(ROOTCONFIG) --cflags)
   ROOT_LDFLAGS := $(shell $(ROOTCONFIG) --ldflags)
@@ -107,8 +107,8 @@ USER_CXXFLAGS := $(CXXFLAGS)
 USER_LDFLAGS := $(LDFLAGS)
 
 BASE_CXXFLAGS := -std=$(CXX_STD) -Wall -Wextra -Wpedantic -fPIC -I$(INCLUDE_DIR) \
-	                  $(ROOT_CXXFLAGS) $(EXTRA_INC) $(EXTRA_CXXFLAGS) \
-	                  -DRAREXSEC_VERSION=\"$(PROJECT_VERSION)\"
+                  $(ROOT_CXXFLAGS) $(EXTRA_INC) $(EXTRA_CXXFLAGS) \
+                  -DRAREXSEC_VERSION=\"$(PROJECT_VERSION)\"
 CXXFLAGS := $(OPTFLAGS) $(BASE_CXXFLAGS) $(USER_CXXFLAGS)
 
 LINK_FLAGS := $(ROOT_LDFLAGS) $(EXTRA_LDFLAGS) $(USER_LDFLAGS)
