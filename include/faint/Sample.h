@@ -4,149 +4,168 @@
 #include <filesystem>
 #include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "ROOT/RDataFrame.hxx"
 #include "nlohmann/json.hpp"
 
-#include <faint/utils/Logger.h>
-#include <faint/data/IEventProcessor.h>
-#include <faint/data/SampleTypes.h>
-#include <faint/data/VariableRegistry.h>
+#include "faint/EventProcessor.h"
+#include "faint/Logger.h"
+#include "faint/Types.h"
+#include "faint/Variables.h"
 
 namespace faint {
 
-inline ROOT::RDF::RNode open_frame(const std::string &base_dir, 
-                                   const std::string &rel,
-                                   IEventProcessor &processor, 
+inline ROOT::RDF::RNode open_frame(const std::string& base_dir,
+                                   const std::string& rel,
+                                   EventProcessor& processor,
                                    SampleOrigin origin) {
-    auto path = base_dir + "/" + rel;
-    ROOT::RDataFrame df("nuselection/EventSelectionFilter", path);
-    return processor.process(df, origin);
+  auto path = base_dir + "/" + rel;
+  ROOT::RDataFrame df("nuselection/EventSelectionFilter", path);
+  return processor.process(df, origin);
 }
 
-inline ROOT::RDF::RNode filter_truth(ROOT::RDF::RNode df, const std::string &truth) {
-    return truth.empty() ? df : df.Filter(truth);
+inline ROOT::RDF::RNode filter_truth(ROOT::RDF::RNode df, const std::string& truth) {
+  return truth.empty() ? std::move(df) : df.Filter(truth);
 }
 
-inline ROOT::RDF::RNode exclude_truth(ROOT::RDF::RNode df, 
-                                      const std::vector<std::string> &keys,
-                                      const nlohmann::json &all) {
-    for (const auto &k : keys) {
-        bool found = false;
-        for (const auto &s : all) {
-            if (s.at("sample_key").get<std::string>() == k) {
-                if (s.contains("truth")) {
-                    auto filter_str = s.at("truth").get<std::string>();
-                    df = df.Filter("!(" + filter_str + ")");
-                    found = true;
-                    break;
-                }
-            }
+inline ROOT::RDF::RNode exclude_truth(ROOT::RDF::RNode df,
+                                      const std::vector<std::string>& keys,
+                                      const nlohmann::json& all) {
+  ROOT::RDF::RNode node = std::move(df);
+  for (const auto& key : keys) {
+    bool found = false;
+    for (const auto& sample_json : all) {
+      if (sample_json.at("sample_key").get<std::string>() == key) {
+        if (sample_json.contains("truth")) {
+          auto filter_str = sample_json.at("truth").get<std::string>();
+          node = node.Filter("!(" + filter_str + ")");
         }
-        if (!found) log::warn("Sample::exclude_truth", "Exclusion k not found or missing truth:", k);
+        found = true;
+        break;
+      }
     }
-    return df;
+    if (!found) {
+      log::warn("Sample::exclude_truth", "Exclusion key not found or missing truth:", key);
+    }
+  }
+  return node;
 }
 
 class Sample {
-  public:
-    SampleKey key_;
-    SampleOrigin origin_;
+ public:
+  SampleKey key_{};
+  SampleOrigin origin_{SampleOrigin::kUnknown};
 
-    std::string path_;
-    std::string truth_;
-    std::vector<std::string> exclude_;
+  std::string path_;
+  std::string truth_;
+  std::vector<std::string> exclude_;
 
-    double pot_{0.0};
-    long triggers_{0};
+  double pot_{0.0};
+  long triggers_{0};
 
-    ROOT::RDF::RNode node_;
-    std::map<SampleVariation, ROOT::RDF::RNode> variations_;
+  ROOT::RDF::RNode node_;
+  std::map<SampleVariation, ROOT::RDF::RNode> variations_;
 
-    Sample(const nlohmann::json &j, 
-           const nlohmann::json &all, 
-           const std::string &base_dir,
-           const VariableRegistry &vars, 
-           IEventProcessor &processor)
-        : key_{j.at("sample_key").get<std::string>()},
-          origin_{[&]() {
-              auto ts = j.at("sample_type").get<std::string>();
-              return (ts == "mc"     ? SampleOrigin::kMonteCarlo
-                      : ts == "data" ? SampleOrigin::kData
-                      : ts == "ext"  ? SampleOrigin::kExternal
-                      : ts == "dirt" ? SampleOrigin::kDirt
-                                      : SampleOrigin::kUnknown);
-          }()},
-          path_{j.value("relative_path", "")},
-          truth_{j.value("truth", "")},
-          exclude_{j.value("exclusion_truth_filters", std::vector<std::string>{})},
-          pot_{j.value("pot", 0.0)},
-          triggers_{j.value("triggers", 0L)},
-          node_{build(base_dir, vars, processor, path_, all)} {
-        if (j.contains("detector_variations")) {
-            for (auto &dv : j.at("detector_variations")) {
-                SampleVariation dvt = this->parse_variation(dv.at("variation_type").get<std::string>());
-                variation_paths_[dvt] = dv.at("relative_path").get<std::string>();
-            }
-        }
-        this->validate(base_dir);
-        if (origin_ == SampleOrigin::kMonteCarlo) {
-            for (auto &[v, path] : variation_paths_) {
-                variations_.emplace(v, this->build(base_dir, vars, processor, path, all));
-            }
-        }
+  Sample(const nlohmann::json& sample_json,
+         const nlohmann::json& all_samples,
+         const std::string& base_dir,
+         const VariableRegistry& vars,
+         EventProcessor& processor)
+      : key_{sample_json.at("sample_key").get<std::string>()},
+        origin_{[&]() {
+          auto type = sample_json.at("sample_type").get<std::string>();
+          if (type == "mc") return SampleOrigin::kMonteCarlo;
+          if (type == "data") return SampleOrigin::kData;
+          if (type == "ext") return SampleOrigin::kExternal;
+          if (type == "dirt") return SampleOrigin::kDirt;
+          return SampleOrigin::kUnknown;
+        }()},
+        path_{sample_json.value("relative_path", "")},
+        truth_{sample_json.value("truth", sample_json.value("truth_filter", ""))},
+        exclude_{sample_json.value("exclusion_truth_filters", std::vector<std::string>{})},
+        pot_{sample_json.value("pot", 0.0)},
+        triggers_{sample_json.value("triggers", 0L)},
+        node_{build(base_dir, vars, processor, path_, all_samples)} {
+    if (sample_json.contains("detector_variations")) {
+      for (const auto& detvar : sample_json.at("detector_variations")) {
+        auto variation = parse_variation(detvar.at("variation_type").get<std::string>());
+        variation_paths_[variation] = detvar.at("relative_path").get<std::string>();
+      }
     }
 
-    void validate(const std::string &base_dir) const {
-        if (key_.str().empty()) log::fatal("Sample::validate", "empty key_");
-        if (origin_ == SampleOrigin::kUnknown) log::fatal("Sample::validate", "unknown  for", key_.str());
-        if ((origin_ == SampleOrigin::kMonteCarlo || origin_ == SampleOrigin::kDirt) && pot_ <= 0) log::fatal("Sample::validate", "invalid pot_ for MC/Dirt", key_.str());
-        if (origin_ == SampleOrigin::kData && triggers_ <= 0) log::fatal("Sample::validate", "invalid triggers_ for Data", key_.str());
-        if (origin_ != SampleOrigin::kData && path_.empty()) log::fatal("Sample::validate", "missing path for", key_.str());
-        
-        if (!path_.empty()) {
-            auto p = std::filesystem::path(base_dir) / path_;
-            if (!std::filesystem::exists(p))
-                log::fatal("Sample::validate", "missing file", p.string());
-        }
+    validate(base_dir);
 
-        for (auto &[v, rp] : variation_paths_) {
-            auto vp = std::filesystem::path(base_dir) / rp;
-            if (!std::filesystem::exists(vp)) log::fatal("Sample::validate", "missing variation", rp);
-        }
+    if (origin_ == SampleOrigin::kMonteCarlo) {
+      for (auto& [variation, rel_path] : variation_paths_) {
+        variations_.emplace(variation, build(base_dir, vars, processor, rel_path, all_samples));
+      }
+    }
+  }
+
+  void validate(const std::string& base_dir) const {
+    if (key_.empty()) log::fatal("Sample::validate", "Empty sample key");
+    if (origin_ == SampleOrigin::kUnknown) log::fatal("Sample::validate", "Unknown sample origin for", key_.str());
+
+    if ((origin_ == SampleOrigin::kMonteCarlo || origin_ == SampleOrigin::kDirt) && pot_ <= 0.0) {
+      log::fatal("Sample::validate", "Non-positive POT for", key_.str());
     }
 
-  private:
-    std::map<SampleVariation, std::string> variation_paths_;
-
-    SampleVariation parse_variation(const std::string &s) const {
-        if (s == "cv") return SampleVariation::kCV;
-        if (s == "lyatt") return SampleVariation::kLYAttenuation;
-        if (s == "lydown") return SampleVariation::kLYDown;
-        if (s == "lyray") return SampleVariation::kLYRayleigh;
-        if (s == "recomb2") return SampleVariation::kRecomb2;
-        if (s == "sce") return SampleVariation::kSCE;
-        if (s == "wiremodx") return SampleVariation::kWireModX;
-        if (s == "wiremodyz") return SampleVariation::kWireModYZ;
-        if (s == "wiremodanglexz") return SampleVariation::kWireModAngleXZ;
-        if (s == "wiremodangleyz") return SampleVariation::kWireModAngleYZ;
-        log::fatal("Sample::parse_variation", "invalid detvar_type:", s);
-        return SampleVariation::kUnknown;
+    if (origin_ == SampleOrigin::kData && triggers_ <= 0L) {
+      log::fatal("Sample::validate", "Non-positive trigger count for", key_.str());
     }
 
-    ROOT::RDF::RNode build(const std::string& base_dir, 
-                           const VariableRegistry&, 
-                           IEventProcessor& processor,
-                           const std::string& rel, 
-                           const nlohmann::json& all) {
-        auto df = this->open_frame(base_dir, rel, processor, origin_);
-        df = this->filter_truth(df, truth_);
-        df = this->exclude_truth(df, exclude_, all);
-        return df;
+    if (origin_ != SampleOrigin::kData && path_.empty()) {
+      log::fatal("Sample::validate", "Missing relative path for", key_.str());
     }
+
+    if (!path_.empty()) {
+      auto full_path = std::filesystem::path(base_dir) / path_;
+      if (!std::filesystem::exists(full_path)) {
+        log::fatal("Sample::validate", "Missing sample file", full_path.string());
+      }
+    }
+
+    for (const auto& [variation, rel_path] : variation_paths_) {
+      auto variation_full_path = std::filesystem::path(base_dir) / rel_path;
+      if (!std::filesystem::exists(variation_full_path)) {
+        log::fatal("Sample::validate", "Missing variation file", rel_path);
+      }
+    }
+  }
+
+ private:
+  std::map<SampleVariation, std::string> variation_paths_;
+
+  SampleVariation parse_variation(const std::string& value) const {
+    if (value == "cv") return SampleVariation::kCV;
+    if (value == "lyatt") return SampleVariation::kLYAttenuation;
+    if (value == "lydown") return SampleVariation::kLYDown;
+    if (value == "lyray") return SampleVariation::kLYRayleigh;
+    if (value == "recomb2") return SampleVariation::kRecomb2;
+    if (value == "sce") return SampleVariation::kSCE;
+    if (value == "wiremodx") return SampleVariation::kWireModX;
+    if (value == "wiremodyz") return SampleVariation::kWireModYZ;
+    if (value == "wiremodanglexz") return SampleVariation::kWireModAngleXZ;
+    if (value == "wiremodangleyz") return SampleVariation::kWireModAngleYZ;
+    log::fatal("Sample::parse_variation", "Unsupported variation type", value);
+    return SampleVariation::kUnknown;
+  }
+
+  ROOT::RDF::RNode build(const std::string& base_dir,
+                         const VariableRegistry& vars,
+                         EventProcessor& processor,
+                         const std::string& rel,
+                         const nlohmann::json& all) {
+    auto node = open_frame(base_dir, rel, processor, origin_);
+    node = filter_truth(std::move(node), truth_);
+    node = exclude_truth(std::move(node), exclude_, all);
+    (void)vars;
+    return node;
+  }
 };
 
-}
+}  // namespace faint
 
 #endif

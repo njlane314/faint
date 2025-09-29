@@ -2,11 +2,12 @@
 #define ANALYSIS_WEIGHTER_H
 
 #include <cmath>
-#include <nlohmann/json.hpp>
 
-#include <faint/utils/Logger.h>
-#include <faint/data/EventProcessor.h>
-#include <faint/data/Types.h>
+#include "nlohmann/json.hpp"
+
+#include "faint/EventProcessor.h"
+#include "faint/Logger.h"
+#include "faint/Types.h"
 
 namespace faint {
 
