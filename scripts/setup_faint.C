@@ -47,10 +47,10 @@ void setup_faint(const char* abs_lib_path = nullptr, const char* abs_inc_dir = n
   }
 
   // Pull in commonly used headers so macros can use the API immediately
-  load_header("faint/data/Types.h");
-  load_header("faint/data/SampleSet.h");
-  load_header("faint/data/NuMuCCSelector.h");
-  load_header("faint/data/TruthClassifier.h");
-  load_header("faint/data/MuonSelector.h");
-  load_header("faint/data/Weighter.h");
+  load_header("faint/Types.h");
+  load_header("faint/SampleSet.h");
+  load_header("faint/NuMuCCSelector.h");
+  load_header("faint/TruthClassifier.h");
+  load_header("faint/MuonSelector.h");
+  load_header("faint/Weighter.h");
 }
