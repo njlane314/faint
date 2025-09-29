@@ -74,6 +74,22 @@ void Campaign::snapshot_final(const std::string& out_file,
     snapshot_where(sel::Final, out_file, columns);
 }
 
+double Campaign::pot() const noexcept { return set().total_pot(); }
+
+long Campaign::triggers() const noexcept { return set().total_triggers(); }
+
+const std::string& Campaign::beam() const noexcept { return opt_.beam; }
+
+const std::vector<std::string>& Campaign::periods() const noexcept {
+    return opt_.periods;
+}
+
+const SampleSet& Campaign::samples() const { return set(); }
+
+const RunCatalog& Campaign::runs() const { return runs_; }
+
+const SampleSet& Campaign::set() const { return *set_; }
+
 const Sample* Campaign::find_sample(std::string_view key) const {
     const auto& frames = const_cast<SampleSet&>(set()).frames();
     for (auto const& kv : frames) {

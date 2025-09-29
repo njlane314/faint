@@ -1,3 +1,9 @@
 #include "faint/EventProcessor.h"
 
-// Translation unit generated to accompany the header-only implementation.
+namespace faint {
+
+void EventProcessor::chain_processor(std::unique_ptr<EventProcessor> next) {
+  next_ = std::move(next);
+}
+
+}  // namespace faint
