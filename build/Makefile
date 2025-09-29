@@ -101,12 +101,13 @@ ROOT_DICT_SRC := $(ROOT_SHARED_LIB_NAME)_dict.cxx
 ROOT_DICT_OBJ := $(ROOT_SHARED_LIB_NAME)_dict.o
 ROOT_DICT_PCM := $(ROOT_SHARED_LIB_NAME)_dict_rdict.pcm
 
+
 $(ROOT_DICT_OBJ): $(SRC_DIR)/rarexsecLinkDef.h \
-        $(INCLUDE_DIR)/rarexsec/EventProcessor.h \
-        $(INCLUDE_DIR)/rarexsec/PreSelection.h \
-        $(INCLUDE_DIR)/rarexsec/MuonSelector.h \
-        $(INCLUDE_DIR)/rarexsec/TruthClassifier.h
-        $(RM) $(ROOT_DICT_SRC) $(ROOT_DICT_PCM)
+	$(INCLUDE_DIR)/rarexsec/EventProcessor.h \
+	$(INCLUDE_DIR)/rarexsec/PreSelection.h \
+	$(INCLUDE_DIR)/rarexsec/MuonSelector.h \
+	$(INCLUDE_DIR)/rarexsec/TruthClassifier.h
+	$(RM) $(ROOT_DICT_SRC) $(ROOT_DICT_PCM)
         $(ROOTCLING) -f $(ROOT_DICT_SRC) -c -I$(INCLUDE_DIR) \
                 rarexsec/EventProcessor.h \
                 rarexsec/PreSelection.h \
