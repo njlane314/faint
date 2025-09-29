@@ -149,6 +149,7 @@ ROOT_DICT_HEADERS := $(addprefix $(INCLUDE_DIR)/,$(ROOT_DICT_HEADERS_REL))
 ROOT_DICT_SRC := $(OBJ_DIR)/$(ROOT_SHARED_LIB_NAME)_dict.cxx
 ROOT_DICT_OBJ := $(OBJ_DIR)/$(ROOT_SHARED_LIB_NAME)_dict.o
 ROOT_DICT_PCM := $(OBJ_DIR)/$(ROOT_SHARED_LIB_NAME)_dict_rdict.pcm
+ROOT_DICT_PCM_OUT := $(LIB_DIR)/$(ROOT_SHARED_LIB_NAME)_dict_rdict.pcm
 
 # rootcling has limited support for grouped short options (e.g. "-std" or "-m64").
 # Filter those flags from the ROOT-generated CXX flags before invoking rootcling to
@@ -160,6 +161,9 @@ ifeq ($(USE_ROOT),yes)
   ALL_TARGETS += $(ROOT_SHARED_LIB).$(SOEXT)
 endif
 ALL_TARGETS += $(CONFIG_OUT)
+ifeq ($(USE_ROOT),yes)
+ALL_TARGETS += $(ROOT_DICT_PCM_OUT)
+endif
 
 .PHONY: all debug shared static rootlib install run clean distclean print
 
@@ -212,9 +216,13 @@ $(ROOT_DICT_OBJ): $(SRC_DIR)/faintLinkDef.h $(ROOT_DICT_HEADERS) | $(OBJ_DIR)
 	$(SRC_DIR)/faintLinkDef.h
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $(ROOT_DICT_SRC) -o $@
 
-$(ROOT_SHARED_LIB).$(SOEXT): $(SHARED_LIB).$(SOEXT) $(ROOT_DICT_OBJ) | $(LIB_DIR)
+$(ROOT_SHARED_LIB).$(SOEXT): $(SHARED_LIB).$(SOEXT) $(ROOT_DICT_OBJ) $(ROOT_DICT_PCM_OUT) | $(LIB_DIR)
 	$(CXX) $(SHARED_LDFLAGS) -o $@ $(ROOT_DICT_OBJ) -L$(LIB_DIR) -l$(PROJECT_SHARED_LIB_NAME) $(LINK_FLAGS) $(LDLIBS)
 	@echo "Built $@"
+
+$(ROOT_DICT_PCM_OUT): $(ROOT_DICT_OBJ) $(ROOT_DICT_PCM) | $(LIB_DIR)
+	@cp $(ROOT_DICT_PCM) $@
+	@echo "Updated $@"
 endif
 
 PREFIX ?= $(TOP_DIR)/install
