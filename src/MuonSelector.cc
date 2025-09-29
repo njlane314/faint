@@ -104,9 +104,14 @@ ROOT::RDF::RNode MuonSelector::extract_features(ROOT::RDF::RNode df) const {
                    .Define("muon_pfp_generation_v", filter_uint,
                            {"pfp_generations", "muon_mask"})
                    .Define("muon_track_costheta", filter_costheta,
-                           {"track_theta", "muon_mask"})
-                   .Define("n_muons_tot", "ROOT::VecOps::Sum(muon_mask)")
-                   .Define("has_muon", "n_muons_tot > 0");
+                           {"track_theta", "muon_mask"});
+
+  if (mu_df.HasColumn("n_muons_tot"))
+    mu_df = mu_df.Redefine("n_muons_tot", "ROOT::VecOps::Sum(muon_mask)");
+  else
+    mu_df = mu_df.Define("n_muons_tot", "ROOT::VecOps::Sum(muon_mask)");
+
+  mu_df = mu_df.Define("has_muon", "n_muons_tot > 0");
   return mu_df;
 }
 
