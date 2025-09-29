@@ -1,4 +1,4 @@
-#include "rarexsec/TruthClassifier.h"
+#include "faint/TruthClassifier.h"
 
 #include <cmath>
 #include <iostream>

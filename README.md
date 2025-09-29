@@ -44,12 +44,12 @@ and static libraries only; dictionary generation is skipped in that case.
 
 ## Running the example ROOT macro
 
-After building, the rarexsec libraries must be discoverable by ROOT.  The
-`scripts/rarexsec-root.sh` wrapper sets up the include and library paths and
+After building, the faint libraries must be discoverable by ROOT.  The
+`scripts/faint-root.sh` wrapper sets up the include and library paths and
 executes any macro you pass to it.  From the repository root run:
 
 ```bash
-./scripts/rarexsec-root.sh -b -q src/example_macro.C
+./scripts/faint-root.sh -b -q src/example_macro.C
 ```
 
 This command loads the generated libraries, configures ROOT include paths, and
@@ -60,9 +60,9 @@ Alternatively, you can call the setup macro manually from ROOT by providing the
 absolute library and include directories:
 
 ```bash
-root -l -q -e 'setup_rarexsec("$PWD/build/lib/librarexsec.so","$PWD/include")' src/example_macro.C
+root -l -q -e 'setup_faint("$PWD/build/lib/libfaint.so","$PWD/include")' src/example_macro.C
 ```
 
 Replace the library suffix with `.dylib` on macOS.  Once the environment is
-configured, any custom macro can use the headers under `include/rarexsec/` and
+configured, any custom macro can use the headers under `include/faint/` and
 link against the libraries in `build/lib/`.

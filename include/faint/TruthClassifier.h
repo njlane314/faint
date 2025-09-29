@@ -6,7 +6,7 @@
 #include <map>
 #include <mutex>
 
-#include <rarexsec/EventProcessor.h>
+#include <faint/EventProcessor.h>
 
 namespace analysis {
 

@@ -1,5 +1,5 @@
-#ifndef RAREXSEC_RUN_READER_H
-#define RAREXSEC_RUN_READER_H
+#ifndef FAINT_RUN_READER_H
+#define FAINT_RUN_READER_H
 
 #include <map>
 #include <fstream>
@@ -8,8 +8,8 @@
 
 #include "nlohmann/json.hpp"
 
-#include <rarexsec/utils/Logger.h>
-#include <rarexsec/data/Run.h>  
+#include <faint/utils/Logger.h>
+#include <faint/data/Run.h>  
 
 namespace analysis {
 

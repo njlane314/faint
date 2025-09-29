@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# rarexsec-config — print compiler/linker flags and paths for rarexsec
+# faint-config — print compiler/linker flags and paths for faint
 
-# Resolve topdir: prefer RAREXSEC env; else derive from this script location
-if [ -z "$RAREXSEC" ]; then
+# Resolve topdir: prefer FAINT env; else derive from this script location
+if [ -z "$FAINT" ]; then
   topdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 else
-  topdir=${RAREXSEC}
+  topdir=${FAINT}
 fi
 
 bindir=${topdir}/build/bin
@@ -27,9 +27,9 @@ if [ "$use_root" = "yes" ]; then
 fi
 
 cflags="${root_cflags} -std=${cxx_std} -I${incdir}"
-libs="-L${libdir} -lrarexsec ${root_libs}"
+libs="-L${libdir} -lfaint ${root_libs}"
 
-usage="Usage: rarexsec-config [--bindir] [--cflags] [--cxx-std] [--datadir] \
+usage="Usage: faint-config [--bindir] [--cflags] [--cxx-std] [--datadir] \
 [--libs] [--libdir] [--incdir] [--srcdir] [--topdir] [--use-root] \
 [--version] [--git-revision] [--help]"
 

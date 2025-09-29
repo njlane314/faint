@@ -3,8 +3,8 @@
 
 #include "ROOT/RVec.hxx"
 
-#include <rarexsec/EventProcessor.h>
-#include <rarexsec/Types.h>
+#include <faint/EventProcessor.h>
+#include <faint/Types.h>
 
 namespace analysis {
 

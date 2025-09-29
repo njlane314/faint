@@ -1,7 +1,7 @@
-#include "rarexsec/EventProcessor.h"
-#include "rarexsec/MuonSelector.h"
-#include "rarexsec/PreSelection.h"
-#include "rarexsec/TruthClassifier.h"
+#include "faint/EventProcessor.h"
+#include "faint/MuonSelector.h"
+#include "faint/PreSelection.h"
+#include "faint/TruthClassifier.h"
 
 #ifdef __CLING__
 #pragma link C++ namespace analysis;
