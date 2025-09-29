@@ -118,7 +118,7 @@ SampleVariation Sample::parse_variation(const std::string& s) const {
 }
 
 ROOT::RDF::RNode Sample::build(const std::string& base_dir,
-                               const VariableRegistry& vars,
+                               [[maybe_unused]] const VariableRegistry& vars,
                                EventProcessor& processor,
                                const std::string& rel,
                                const nlohmann::json& all) {
