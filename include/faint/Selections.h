@@ -34,6 +34,14 @@ struct TopologyCut {
   static constexpr float kMinClusterFraction = 0.5f;
 };
 
+struct MuonTrackCut {
+  static constexpr float kMinScore = 0.5f;
+  static constexpr float kMinLLR = 0.2f;
+  static constexpr float kMinLength = 10.0f;
+  static constexpr float kMaxDistance = 4.0f;
+  static constexpr unsigned kRequiredGeneration = 2u;
+};
+
 inline bool passes_pre_selection(SampleOrigin origin, float pe_beam,
                                  float pe_veto, bool software_trigger) {
   const bool requires_dataset_gate =
@@ -64,6 +72,17 @@ inline bool passes_topology_selection(float contained_fraction,
                                       float cluster_fraction) {
   return contained_fraction >= TopologyCut::kMinContainedFraction &&
          cluster_fraction >= TopologyCut::kMinClusterFraction;
+}
+
+inline bool passes_muon_track_selection(float score, float llr, float length,
+                                        float distance, unsigned generation,
+                                        bool fid_start, bool fid_end) {
+  return score > MuonTrackCut::kMinScore &&
+         llr > MuonTrackCut::kMinLLR &&
+         length > MuonTrackCut::kMinLength &&
+         distance < MuonTrackCut::kMaxDistance &&
+         generation == MuonTrackCut::kRequiredGeneration && fid_start &&
+         fid_end;
 }
 
 inline bool passes_final_selection(bool pre, bool flash, bool fiducial,
