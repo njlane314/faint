@@ -23,20 +23,6 @@
 namespace faint {
 namespace dataset {
 
-namespace sel {
-inline constexpr const char* Pre = selection::column::kPassPre;
-inline constexpr const char* Flash = selection::column::kPassFlash;
-inline constexpr const char* FV = selection::column::kPassFiducial;
-inline constexpr const char* Muon = selection::column::kPassMuon;
-inline constexpr const char* Topo = selection::column::kPassTopology;
-inline constexpr const char* Final = selection::column::kPassFinal;
-inline constexpr const char* Quality = selection::column::kQualityEvent;
-}
-
-namespace col {
-inline constexpr const char* Weight = "nominal_event_weight";
-}
-
 std::string run_config_path();
 
 std::string ntuple_directory();

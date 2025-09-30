@@ -18,6 +18,20 @@ inline constexpr const char *kPassFinal = "pass_final";
 inline constexpr const char *kQualityEvent = "quality_event";
 } // namespace column
 
+namespace sel {
+inline constexpr const char *Pre = column::kPassPre;
+inline constexpr const char *Flash = column::kPassFlash;
+inline constexpr const char *FV = column::kPassFiducial;
+inline constexpr const char *Muon = column::kPassMuon;
+inline constexpr const char *Topo = column::kPassTopology;
+inline constexpr const char *Final = column::kPassFinal;
+inline constexpr const char *Quality = column::kQualityEvent;
+} // namespace sel
+
+namespace col {
+inline constexpr const char *Weight = "nominal_event_weight";
+} // namespace col
+
 struct PreCut {
   static constexpr float kMinBeamPE = 0.f;
   static constexpr float kMaxVetoPE = 20.f;
