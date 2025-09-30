@@ -1,4 +1,4 @@
-#include "faint/ErrorBandBuilder.h"
+#include "faint/plot/ErrorBandBuilder.h"
 
 #include <cmath>
 #include <stdexcept>

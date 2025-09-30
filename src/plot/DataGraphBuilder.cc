@@ -1,4 +1,4 @@
-#include "faint/DataGraphBuilder.h"
+#include "faint/plot/DataGraphBuilder.h"
 
 #include <memory>
 

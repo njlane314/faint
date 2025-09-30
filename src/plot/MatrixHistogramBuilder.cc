@@ -1,4 +1,4 @@
-#include "faint/MatrixHistogramBuilder.h"
+#include "faint/plot/MatrixHistogramBuilder.h"
 
 #include <stdexcept>
 #include <utility>

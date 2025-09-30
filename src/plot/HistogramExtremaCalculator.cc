@@ -1,4 +1,4 @@
-#include "faint/HistogramExtremaCalculator.h"
+#include "faint/plot/HistogramExtremaCalculator.h"
 
 #include <algorithm>
 #include <limits>
