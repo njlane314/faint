@@ -1,4 +1,5 @@
 #include "faint/proc/MuonSelector.h"
+#include "faint/Samples.h"
 
 #include <cmath>
 #include <initializer_list>
@@ -13,7 +14,7 @@
 namespace faint {
 
 ROOT::RDF::RNode MuonSelector::process(ROOT::RDF::RNode df,
-                                       SampleOrigin origin) const {
+                                       sample::Origin origin) const {
   if (!df.HasColumn("track_shower_scores")) {
     auto no_mu_df = df.Define("n_muons_tot", []() { return 0UL; })
                         .Define("has_muon", []() { return false; });

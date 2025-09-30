@@ -1,4 +1,5 @@
 #include "faint/proc/PreSelection.h"
+#include "faint/Samples.h"
 
 #include "faint/Selections.h"
 
@@ -7,7 +8,7 @@
 namespace faint {
 
 ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
-                                       SampleOrigin origin) const {
+                                       sample::Origin origin) const {
   ROOT::RDF::RNode node = df;
 
   if (!node.HasColumn("num_slices") && node.HasColumn("nslice"))
@@ -66,7 +67,7 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
         {"pfp_generations"});
   }
 
-  if (origin == SampleOrigin::kMonteCarlo) {
+  if (origin == sample::Origin::kMonteCarlo) {
     if (node.HasColumn("software_trigger_pre_ext")) {
       node = node.Define(
           "software_trigger",

@@ -7,7 +7,6 @@
 #include "faint/Selection.h"
 #include "faint/plot/StackedHistogram.h"
 #include "faint/proc/TruthClassifier.h"
-#include "faint/Types.h"
 #include "faint/Variables.h"
 #include "faint/proc/Weighter.h"
 
@@ -19,10 +18,10 @@
 #pragma link C++ nestedclasses;
 #pragma link C++ nestedtypedefs;
 
-#pragma link C++ class faint::SampleKey+;
-#pragma link C++ enum faint::SampleOrigin;
-#pragma link C++ enum faint::SampleRole;
-#pragma link C++ enum faint::SampleVariation;
+#pragma link C++ class faint::sample::Key+;
+#pragma link C++ enum faint::sample::Origin;
+#pragma link C++ enum faint::sample::Role;
+#pragma link C++ enum faint::sample::Variation;
 
 #pragma link C++ class faint::dataset::Options+;
 #pragma link C++ class faint::dataset::Dataset+;

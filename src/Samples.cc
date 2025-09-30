@@ -8,13 +8,14 @@
 
 #include <nlohmann/json.hpp>
 
+#include "faint/Selection.h"
 #include "faint/proc/MuonSelector.h"
 
 namespace faint {
 namespace {
 
 ROOT::RDF::RNode open_frame(const std::string& base_dir, const std::string& rel,
-                            EventProcessor& processor, SampleOrigin origin) {
+                            EventProcessor& processor, sample::Origin origin) {
   auto path = base_dir + "/" + rel;
   ROOT::RDataFrame df("nuselection/EventSelectionFilter", path);
   return processor.process(df, origin);
@@ -64,11 +65,11 @@ Sample::Sample(const nlohmann::json& j, const nlohmann::json& all,
     : key_{j.at("sample_key").get<std::string>()},
       origin_{[&]() {
         auto ts = j.at("sample_type").get<std::string>();
-        if (ts == "mc") return SampleOrigin::kMonteCarlo;
-        if (ts == "data") return SampleOrigin::kData;
-        if (ts == "ext") return SampleOrigin::kExternal;
-        if (ts == "dirt") return SampleOrigin::kDirt;
-        return SampleOrigin::kUnknown;
+        if (ts == "mc") return sample::Origin::kMonteCarlo;
+        if (ts == "data") return sample::Origin::kData;
+        if (ts == "ext") return sample::Origin::kExternal;
+        if (ts == "dirt") return sample::Origin::kDirt;
+        return sample::Origin::kUnknown;
       }()},
       path_{j.value("relative_path", "")},
       truth_{[&]() {
@@ -83,13 +84,13 @@ Sample::Sample(const nlohmann::json& j, const nlohmann::json& all,
       nominal_node_{build(base_dir, vars, processor, path_, all)} {
   if (j.contains("detector_variations")) {
     for (auto& dv : j.at("detector_variations")) {
-      SampleVariation dvt =
+      sample::Variation dvt =
           parse_variation(dv.at("variation_type").get<std::string>());
       variation_paths_[dvt] = dv.at("relative_path").get<std::string>();
     }
   }
   validate(base_dir);
-  if (origin_ == SampleOrigin::kMonteCarlo) {
+  if (origin_ == sample::Origin::kMonteCarlo) {
     for (auto& [variation, rel_path] : variation_paths_) {
       variations_.emplace(variation,
                           build(base_dir, vars, processor, rel_path, all));
@@ -101,24 +102,24 @@ void Sample::validate(const std::string& base_dir) const {
   if (key_.str().empty()) {
     throw std::runtime_error("Sample::validate: empty key_");
   }
-  if (origin_ == SampleOrigin::kUnknown) {
+  if (origin_ == sample::Origin::kUnknown) {
     throw std::runtime_error("Sample::validate: unknown origin for " +
                              key_.str());
   }
-  if ((origin_ == SampleOrigin::kMonteCarlo || origin_ == SampleOrigin::kDirt) &&
+  if ((origin_ == sample::Origin::kMonteCarlo || origin_ == sample::Origin::kDirt) &&
       pot_ <= 0) {
     std::ostringstream msg;
     msg << "Sample::validate: invalid pot_ for MC/Dirt " << key_.str()
         << " (pot=" << pot_ << ")";
     throw std::runtime_error(msg.str());
   }
-  if (origin_ == SampleOrigin::kData && triggers_ <= 0) {
+  if (origin_ == sample::Origin::kData && triggers_ <= 0) {
     std::ostringstream msg;
     msg << "Sample::validate: invalid triggers_ for Data " << key_.str()
         << " (triggers=" << triggers_ << ")";
     throw std::runtime_error(msg.str());
   }
-  if (origin_ != SampleOrigin::kData && path_.empty()) {
+  if (origin_ != sample::Origin::kData && path_.empty()) {
     throw std::runtime_error("Sample::validate: missing path for " +
                              key_.str());
   }
@@ -139,17 +140,17 @@ void Sample::validate(const std::string& base_dir) const {
   }
 }
 
-SampleVariation Sample::parse_variation(const std::string& s) const {
-  if (s == "cv") return SampleVariation::kCV;
-  if (s == "lyatt") return SampleVariation::kLYAttenuation;
-  if (s == "lydown") return SampleVariation::kLYDown;
-  if (s == "lyray") return SampleVariation::kLYRayleigh;
-  if (s == "recomb2") return SampleVariation::kRecomb2;
-  if (s == "sce") return SampleVariation::kSCE;
-  if (s == "wiremodx") return SampleVariation::kWireModX;
-  if (s == "wiremodyz") return SampleVariation::kWireModYZ;
-  if (s == "wiremodanglexz") return SampleVariation::kWireModAngleXZ;
-  if (s == "wiremodangleyz") return SampleVariation::kWireModAngleYZ;
+sample::Variation Sample::parse_variation(const std::string& s) const {
+  if (s == "cv") return sample::Variation::kCV;
+  if (s == "lyatt") return sample::Variation::kLYAttenuation;
+  if (s == "lydown") return sample::Variation::kLYDown;
+  if (s == "lyray") return sample::Variation::kLYRayleigh;
+  if (s == "recomb2") return sample::Variation::kRecomb2;
+  if (s == "sce") return sample::Variation::kSCE;
+  if (s == "wiremodx") return sample::Variation::kWireModX;
+  if (s == "wiremodyz") return sample::Variation::kWireModYZ;
+  if (s == "wiremodanglexz") return sample::Variation::kWireModAngleXZ;
+  if (s == "wiremodangleyz") return sample::Variation::kWireModAngleYZ;
   throw std::runtime_error("Sample::parse_variation: invalid detvar_type: " + s);
 }
 
@@ -189,7 +190,7 @@ const std::vector<std::string>& SampleSet::periods() const noexcept {
   return periods_;
 }
 
-const Run* SampleSet::run_for(const SampleKey& sk) const {
+const Run* SampleSet::run_for(const sample::Key& sk) const {
   auto it = run_cache_.find(sk);
   return it != run_cache_.end() ? it->second : nullptr;
 }
@@ -199,7 +200,7 @@ void SampleSet::snapshot(const std::string& filter, const std::string& out,
   snapshot_impl(filter, out, cols);
 }
 
-void SampleSet::snapshot(const Selection& selection, const std::string& out,
+void SampleSet::snapshot(const selection::Selection& selection, const std::string& out,
                          const std::vector<std::string>& cols) const {
   snapshot_impl(selection.str(), out, cols);
 }
@@ -273,7 +274,7 @@ void SampleSet::add_run(const Run& rc) {
 
     auto& proc = *processors_.back();
     Sample sample{s, rc.samples, ntuple_dir_, variables_, proc};
-    SampleKey key = sample.key();
+    sample::Key key = sample.key();
 
     run_cache_.emplace(key, &rc);
     samples_.emplace(std::move(key), std::move(sample));

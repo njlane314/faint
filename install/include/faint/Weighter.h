@@ -5,7 +5,6 @@
 #include <nlohmann/json.hpp>
 
 #include <faint/EventProcessor.h>
-#include <faint/Types.h>
 
 namespace faint {
 
@@ -15,7 +14,7 @@ public:
            long total_run_triggers);
 
   ROOT::RDF::RNode process(ROOT::RDF::RNode df,
-                           SampleOrigin origin) const override;
+                           sample::Origin origin) const override;
 
 private:
   double sample_pot_;

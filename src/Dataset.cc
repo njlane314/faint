@@ -58,11 +58,11 @@ Dataset Dataset::open(const std::string& run_config_json, Options opt, Variables
 }
 
 std::vector<std::string> Dataset::sample_keys(
-    SampleOrigin origin_filter) const {
+    sample::Origin origin_filter) const {
     std::vector<std::string> out;
     out.reserve(datasets_.size());
     for (auto const& [key, variations] : datasets_) {
-        if (origin_filter == SampleOrigin::kUnknown ||
+        if (origin_filter == sample::Origin::kUnknown ||
             variations.nominal.origin == origin_filter) {
             out.push_back(key.str());
         }
@@ -72,24 +72,24 @@ std::vector<std::string> Dataset::sample_keys(
 }
 
 ROOT::RDF::RNode Dataset::df(std::string_view sample_key,
-                              SampleVariation v) const {
+                              sample::Variation v) const {
     const Variations* variations = find_dataset(sample_key);
     if (!variations) {
         throw std::runtime_error(std::string("Sample not found: ") + std::string(sample_key));
     }
-    if (v == SampleVariation::kCV) return variations->nominal.dataframe();
+    if (v == sample::Variation::kCV) return variations->nominal.dataframe();
     auto it = variations->variations.find(v);
     return (it != variations->variations.end()) ? it->second.dataframe()
                                                 : variations->nominal.dataframe();
 }
 
 ROOT::RDF::RNode Dataset::final(std::string_view key,
-                                 SampleVariation v) const {
+                                 sample::Variation v) const {
     return df(key, v).Filter(sel::Final);
 }
 
 ROOT::RDF::RNode Dataset::quality(std::string_view key,
-                                   SampleVariation v) const {
+                                   sample::Variation v) const {
     return df(key, v).Filter(sel::Quality);
 }
 
@@ -125,7 +125,7 @@ void Dataset::build_dataset_cache() {
     auto& frames = const_cast<SampleSet&>(set()).frames();
     for (auto& [key, sample] : frames) {
         Variations variations{
-            make_entry(sample, SampleVariation::kCV, sample.nominal()), {}
+            make_entry(sample, sample::Variation::kCV, sample.nominal()), {}
         };
         for (auto const& [variation, node] : sample.variations()) {
             variations.variations.emplace(variation, make_entry(sample, variation, node));
@@ -135,18 +135,18 @@ void Dataset::build_dataset_cache() {
 }
 
 const Dataset::Variations* Dataset::find_dataset(std::string_view key) const {
-    const SampleKey sample_key{std::string(key)};
+    const sample::Key sample_key{std::string(key)};
     auto it = datasets_.find(sample_key);
     return it != datasets_.end() ? &it->second : nullptr;
 }
 
-Dataset::Entry Dataset::make_entry(const Sample& sample, SampleVariation variation,
+Dataset::Entry Dataset::make_entry(const Sample& sample, sample::Variation variation,
                                    ROOT::RDF::RNode node) {
-    SampleRole role = SampleRole::kNominal;
-    if (variation != SampleVariation::kCV) {
-        role = SampleRole::kVariation;
-    } else if (sample.origin() == SampleOrigin::kData) {
-        role = SampleRole::kData;
+    sample::Role role = sample::Role::kNominal;
+    if (variation != sample::Variation::kCV) {
+        role = sample::Role::kVariation;
+    } else if (sample.origin() == sample::Origin::kData) {
+        role = sample::Role::kData;
     }
 
     return Entry{sample.origin(), role, std::move(node)};

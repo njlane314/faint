@@ -14,12 +14,12 @@
 
 #include "nlohmann/json.hpp"
 
-#include "faint/proc/EventProcessor.h"
-#include "faint/proc/PreSelection.h"
-#include "faint/Run.h"
-#include "faint/proc/TruthClassifier.h"
-#include "faint/Variables.h"
-#include "faint/proc/Weighter.h"
+#include <faint/EventProcessor.h>
+#include <faint/PreSelection.h>
+#include <faint/Run.h>
+#include <faint/TruthClassifier.h>
+#include <faint/Variables.h>
+#include <faint/Weighter.h>
 
 namespace faint::selection {
 class Selection;
