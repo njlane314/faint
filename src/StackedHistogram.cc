@@ -28,6 +28,16 @@ namespace plot {
 namespace {
 constexpr double kDefaultCanvasWidth = 800;
 constexpr double kDefaultCanvasHeight = 600;
+
+std::unique_ptr<TH1> CloneBackgroundHistogram(const TH1& histogram) {
+  TObject* cloned = histogram.Clone();
+  auto* cloned_hist = dynamic_cast<TH1*>(cloned);
+  if (!cloned_hist) {
+    throw std::runtime_error("Failed to clone background histogram");
+  }
+  cloned_hist->SetDirectory(nullptr);
+  return std::unique_ptr<TH1>(cloned_hist);
+}
 }  // namespace
 
 StackedHistogram::StackedHistogram(std::string plot_name,
@@ -36,6 +46,38 @@ StackedHistogram::StackedHistogram(std::string plot_name,
       output_directory_(std::move(output_directory)) {}
 
 StackedHistogram::~StackedHistogram() = default;
+
+StackedHistogram::BackgroundComponent::BackgroundComponent() = default;
+
+StackedHistogram::BackgroundComponent::BackgroundComponent(
+    std::string label, std::unique_ptr<TH1> histogram, Color_t color,
+    Style_t fill_style)
+    : label(std::move(label)),
+      histogram(std::move(histogram)),
+      color(color),
+      fill_style(fill_style) {}
+
+StackedHistogram::BackgroundComponent::BackgroundComponent(
+    const BackgroundComponent& other)
+    : label(other.label),
+      histogram(other.histogram ? CloneBackgroundHistogram(*other.histogram)
+                                : nullptr),
+      color(other.color),
+      fill_style(other.fill_style) {}
+
+StackedHistogram::BackgroundComponent&
+StackedHistogram::BackgroundComponent::operator=(
+    const BackgroundComponent& other) {
+  if (this == &other) {
+    return *this;
+  }
+  label = other.label;
+  histogram = other.histogram ? CloneBackgroundHistogram(*other.histogram)
+                              : nullptr;
+  color = other.color;
+  fill_style = other.fill_style;
+  return *this;
+}
 
 void StackedHistogram::set_x_axis_title(std::string title) {
   x_axis_title_ = std::move(title);
@@ -83,9 +125,8 @@ void StackedHistogram::add_background(const TH1& hist, std::string label,
   });
   suffix += "_" + std::to_string(backgrounds_.size());
 
-  backgrounds_.push_back(BackgroundComponent{std::move(label),
-                                             clone_histogram(hist, suffix), color,
-                                             fill_style});
+  backgrounds_.emplace_back(std::move(label),
+                            clone_histogram(hist, suffix), color, fill_style);
 }
 
 void StackedHistogram::clear_backgrounds() { backgrounds_.clear(); }
