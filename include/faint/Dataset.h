@@ -115,6 +115,8 @@ public:
     const Map& datasets() const noexcept { return datasets_; }
 
 private:
+    Dataset(RunReader runs, Options opt, Variables vars);
+
     RunReader runs_;
     Variables vars_;
     Options opt_;
