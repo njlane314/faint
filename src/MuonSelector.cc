@@ -111,7 +111,24 @@ ROOT::RDF::RNode MuonSelector::extract_features(ROOT::RDF::RNode df) const {
   else
     mu_df = mu_df.Define("n_muons_tot", "ROOT::VecOps::Sum(muon_mask)");
 
-  mu_df = mu_df.Define("has_muon", "n_muons_tot > 0");
+  if (mu_df.HasColumn("pass_mu"))
+    mu_df = mu_df.Redefine("pass_mu", "n_muons_tot > 0");
+  else
+    mu_df = mu_df.Define("pass_mu", "n_muons_tot > 0");
+
+  if (mu_df.HasColumn("pass_final"))
+    mu_df = mu_df.Redefine(
+        "pass_final",
+        "pass_pre && pass_flash && pass_fv && pass_mu && pass_topo");
+  else
+    mu_df = mu_df.Define(
+        "pass_final",
+        "pass_pre && pass_flash && pass_fv && pass_mu && pass_topo");
+
+  if (mu_df.HasColumn("has_muon"))
+    mu_df = mu_df.Redefine("has_muon", "n_muons_tot > 0");
+  else
+    mu_df = mu_df.Define("has_muon", "n_muons_tot > 0");
   return mu_df;
 }
 
