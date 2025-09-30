@@ -24,9 +24,6 @@ private:
   ROOT::RDF::RNode assignChannelDefinitions(ROOT::RDF::RNode df) const;
 };
 
-// ---------- Backward-compat (remove when migrated) ----------
-using TruthChannelProcessor = TruthClassifier;
-
 } // namespace faint
 
 #endif
