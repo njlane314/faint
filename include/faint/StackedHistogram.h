@@ -32,6 +32,22 @@ class StackedHistogram {
   StackedHistogram(std::string plot_name, std::string output_directory = "plots");
   ~StackedHistogram();
 
+  struct BackgroundComponent {
+    BackgroundComponent();
+    BackgroundComponent(std::string label, std::unique_ptr<TH1> histogram,
+                        Color_t color, Style_t fill_style);
+    BackgroundComponent(const BackgroundComponent& other);
+    BackgroundComponent& operator=(const BackgroundComponent& other);
+    BackgroundComponent(BackgroundComponent&&) noexcept = default;
+    BackgroundComponent& operator=(BackgroundComponent&&) noexcept = default;
+    ~BackgroundComponent() = default;
+
+    std::string label;
+    std::unique_ptr<TH1> histogram;
+    Color_t color{kGray + 1};
+    Style_t fill_style{1001};
+  };
+
   void set_x_axis_title(std::string title);
   void set_y_axis_title(std::string title);
   void set_log_y(bool value);
@@ -66,13 +82,6 @@ class StackedHistogram {
   void draw_and_save(const std::string& format = "png");
 
  private:
-  struct BackgroundComponent {
-    std::string label;
-    std::unique_ptr<TH1> histogram;
-    Color_t color{kGray + 1};
-    Style_t fill_style{1001};
-  };
-
   struct DataComponent {
     std::string label;
     std::unique_ptr<TH1> histogram;
