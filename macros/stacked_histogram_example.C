@@ -5,6 +5,7 @@
 
 #include <faint/Dataset.h>
 #include <faint/Log.h>
+#include <faint/Selection.h>
 #include <faint/Types.h>
 #include <faint/plot/StackedHistogram.h>
 
@@ -63,7 +64,7 @@ void stacked_histogram_example() {
         const std::string hist_name = "hist_" + key;
         auto node = dataset.final(key);
         auto hist = node.Histo1D(make_hist_model(hist_name, key), "track_length",
-                                 faint::dataset::col::Weight);
+                                 faint::selection::column::kNominalWeight);
         const Color_t color = palette[color_index % palette.size()];
         ++color_index;
         plot.add_background(*hist, prettify_label(key), color, 1001);
@@ -81,7 +82,7 @@ void stacked_histogram_example() {
       auto node = dataset.final(key);
       auto hist =
           node.Histo1D(make_hist_model(hist_name, key), "track_length",
-                       faint::dataset::col::Weight);
+                       faint::selection::column::kNominalWeight);
       plot.set_data(*hist, "Data", kBlack, 20);
     }
 

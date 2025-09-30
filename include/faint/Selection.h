@@ -17,6 +17,7 @@ namespace column {
   inline constexpr const char *kPassTopology = "pass_topo";
   inline constexpr const char *kPassFinal = "pass_final";
   inline constexpr const char *kQualityEvent = "quality_event";
+  inline constexpr const char *kNominalWeight = "nominal_event_weight";
 } // namespace column
 
 struct PreCut {
