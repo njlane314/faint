@@ -9,7 +9,7 @@
 
 namespace faint {
 
-SampleSet::SampleSet(const RunCatalog& runs, VariableRegistry variables,
+SampleSet::SampleSet(const RunReader& runs, VariableRegistry variables,
                      const std::string& beam, std::vector<std::string> periods,
                      const std::string& ntuple_dir, bool blind)
     : runs_(runs),

@@ -52,7 +52,7 @@ std::string ntuple_directory(const std::string& run_config_json) {
 
 Dataset Dataset::open(const std::string& run_config_json, Options opt, Variables vars) {
     Dataset dataset;
-    dataset.runs_ = RunCatalog::from_file(run_config_json);
+    dataset.runs_ = RunReader::from_file(run_config_json);
     dataset.vars_ = std::move(vars);
     dataset.opt_ = std::move(opt);
     dataset.set_ = std::make_unique<SampleSet>(
@@ -121,7 +121,7 @@ const std::vector<std::string>& Dataset::periods() const noexcept {
 
 const SampleSet& Dataset::samples() const { return set(); }
 
-const RunCatalog& Dataset::runs() const { return runs_; }
+const RunReader& Dataset::runs() const { return runs_; }
 
 const SampleSet& Dataset::set() const { return *set_; }
 

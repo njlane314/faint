@@ -23,7 +23,7 @@ const nlohmann::json& runs_node(const nlohmann::json& data) {
     return node->at("beamlines");
   }
 
-  log::fatal("RunReader::read",
+  log::fatal("RunReader::from_json",
              "Run configuration missing 'beamlines' or 'run_configurations' section");
   throw std::runtime_error("unreachable");
 }
@@ -50,7 +50,7 @@ const std::map<std::string, Run>& RunReader::all() const noexcept {
   return configs_;
 }
 
-RunReader RunReader::read(const nlohmann::json& data) {
+RunReader RunReader::from_json(const nlohmann::json& data) {
   RunReader out;
   const auto& runs = runs_node(data);
   for (auto const& [beam, periods] : runs.items()) {
@@ -63,15 +63,15 @@ RunReader RunReader::read(const nlohmann::json& data) {
   return out;
 }
 
-RunReader RunReader::read(const std::string& path) {
+RunReader RunReader::from_file(const std::string& path) {
   std::ifstream f(path);
   if (!f.is_open())
-    log::fatal("RunReader::read", "Could not open config file:", path);
+    log::fatal("RunReader::from_file", "Could not open config file:", path);
   try {
     nlohmann::json data = nlohmann::json::parse(f);
-    return read(data);
+    return from_json(data);
   } catch (const std::exception& e) {
-    log::fatal("RunReader::read", "Parsing error:", e.what());
+    log::fatal("RunReader::from_file", "Parsing error:", e.what());
   }
   return {};
 }
