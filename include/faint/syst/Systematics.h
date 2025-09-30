@@ -34,7 +34,6 @@ struct SystematicDescriptor {
   std::string single_column;// single_unisim
 };
 
-// function name: lower_snake_case, noun phrase
 inline std::vector<SystematicDescriptor> systematic_list_from_variables() {
   std::vector<SystematicDescriptor> out;
 
@@ -74,14 +73,12 @@ inline std::vector<SystematicDescriptor> systematic_list_from_variables() {
 
 using SystematicTable = std::map<SystematicCategory, std::vector<SystematicDescriptor>>;
 
-// function (noun)
 inline const std::vector<SystematicDescriptor>& variable_registry_systematics() {
   static const std::vector<SystematicDescriptor> descriptors =
       systematic_list_from_variables();
   return descriptors;
 }
 
-// function (noun phrase)
 inline SystematicTable group_systematics_by_category() {
   SystematicTable grouped;
   for (const auto& descriptor : variable_registry_systematics())
@@ -89,7 +86,6 @@ inline SystematicTable group_systematics_by_category() {
   return grouped;
 }
 
-// function (noun phrase)
 inline std::vector<std::string> variable_registry_systematic_names() {
   std::vector<std::string> names;
   names.reserve(variable_registry_systematics().size());
@@ -98,21 +94,18 @@ inline std::vector<std::string> variable_registry_systematic_names() {
   return names;
 }
 
-// function (noun phrase)
 inline ROOT::RDF::RNode nominal_weight_node(ROOT::RDF::RNode df) {
   if (!df.HasColumn("nominal_event_weight"))
     return df.Define("nominal_event_weight", []() { return 1.0; });
   return df;
 }
 
-// helper variable (noun)
 static auto weight_product = [](double nom, double w) {
   const double ww  = (std::isfinite(w) && w > 0.0) ? w : 1.0;
   const double out = nom * ww;
   return (std::isfinite(out) && out >= 0.0) ? out : 1.0;
 };
 
-// function (noun phrase)
 inline ROOT::RDF::RNode universe_weight_node(ROOT::RDF::RNode df,
                                              const SystematicDescriptor& s,
                                              int universe_index) {
@@ -152,7 +145,6 @@ inline ROOT::RDF::RNode universe_weight_node(ROOT::RDF::RNode df,
   return node;
 }
 
-// function (noun)
 inline ROOT::RDF::RResultPtr<TH1D>
 cv_histogram(ROOT::RDF::RNode df,
              const ROOT::RDF::TH1DModel& model,
@@ -161,7 +153,6 @@ cv_histogram(ROOT::RDF::RNode df,
   return node.Histo1D(model, value_column, "__w");
 }
 
-// function (noun)
 inline std::vector<ROOT::RDF::RResultPtr<TH1D>>
 universe_histograms(ROOT::RDF::RNode df,
                     const SystematicDescriptor& s,
@@ -176,7 +167,6 @@ universe_histograms(ROOT::RDF::RNode df,
   return out;
 }
 
-// function (noun phrase)
 inline TMatrixD covariance_matrix_from_histograms(const TH1D* cv_hist,
                                                   const std::vector<const TH1D*>& uni_hists,
                                                   SystematicCategory kind) {
