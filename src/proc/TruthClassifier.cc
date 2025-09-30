@@ -1,4 +1,4 @@
-#include "faint/TruthClassifier.h"
+#include "faint/proc/TruthClassifier.h"
 
 #include "faint/FiducialVolume.h"
 
