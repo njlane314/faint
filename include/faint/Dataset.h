@@ -16,7 +16,7 @@
 
 #include <faint/Types.h>
 #include <faint/Variables.h>
-#include <faint/RunReader.h>
+#include <faint/Run.h>
 #include <faint/Sample.h>
 #include <faint/SampleSet.h>
 #include <faint/Selections.h>

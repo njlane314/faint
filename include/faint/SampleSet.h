@@ -13,7 +13,6 @@
 
 #include "faint/PreSelection.h"
 #include "faint/Run.h"
-#include "faint/RunReader.h"
 #include "faint/Sample.h"
 #include "faint/SelectionQuery.h"
 #include "faint/TruthClassifier.h"
