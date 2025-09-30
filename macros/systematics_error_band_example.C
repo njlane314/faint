@@ -10,7 +10,7 @@
 #include <faint/Log.h>
 #include <faint/Types.h>
 #include <faint/plot/ErrorBandBuilder.h>
-#include <faint/syst/SystematicsRdf.h>
+#include <faint/syst/Systematics.h>
 
 #include <algorithm>
 #include <iostream>
