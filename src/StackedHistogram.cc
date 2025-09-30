@@ -37,25 +37,25 @@ StackedHistogram::StackedHistogram(std::string plot_name,
 
 StackedHistogram::~StackedHistogram() = default;
 
-void StackedHistogram::setXAxisTitle(std::string title) {
+void StackedHistogram::set_x_axis_title(std::string title) {
   x_axis_title_ = std::move(title);
 }
 
-void StackedHistogram::setYAxisTitle(std::string title) {
+void StackedHistogram::set_y_axis_title(std::string title) {
   y_axis_title_ = std::move(title);
 }
 
-void StackedHistogram::setLogY(bool value) { use_log_y_ = value; }
+void StackedHistogram::set_log_y(bool value) { use_log_y_ = value; }
 
-void StackedHistogram::setYAxisRange(double minimum, double maximum) {
+void StackedHistogram::set_y_axis_range(double minimum, double maximum) {
   has_y_range_ = true;
   y_min_ = minimum;
   y_max_ = maximum;
 }
 
-void StackedHistogram::resetYAxisRange() { has_y_range_ = false; }
+void StackedHistogram::reset_y_axis_range() { has_y_range_ = false; }
 
-void StackedHistogram::setLegendPosition(double x1, double y1, double x2,
+void StackedHistogram::set_legend_position(double x1, double y1, double x2,
                                          double y2) {
   legend_x1_ = x1;
   legend_y1_ = y1;
@@ -63,19 +63,19 @@ void StackedHistogram::setLegendPosition(double x1, double y1, double x2,
   legend_y2_ = y2;
 }
 
-void StackedHistogram::setLegendColumns(int columns) {
+void StackedHistogram::set_legend_columns(int columns) {
   legend_columns_ = std::max(1, columns);
 }
 
-void StackedHistogram::setLegendTextSize(double size) { legend_text_size_ = size; }
+void StackedHistogram::set_legend_text_size(double size) { legend_text_size_ = size; }
 
-void StackedHistogram::setLegendHeader(std::optional<std::string> header) {
+void StackedHistogram::set_legend_header(std::optional<std::string> header) {
   legend_header_ = std::move(header);
 }
 
-void StackedHistogram::setAnnotateYields(bool value) { annotate_yields_ = value; }
+void StackedHistogram::set_annotate_yields(bool value) { annotate_yields_ = value; }
 
-void StackedHistogram::addBackground(const TH1& hist, std::string label,
+void StackedHistogram::add_background(const TH1& hist, std::string label,
                                      Color_t color, Style_t fill_style) {
   std::string suffix = label.empty() ? "background" : label;
   std::transform(suffix.begin(), suffix.end(), suffix.begin(), [](unsigned char ch) {
@@ -84,38 +84,38 @@ void StackedHistogram::addBackground(const TH1& hist, std::string label,
   suffix += "_" + std::to_string(backgrounds_.size());
 
   backgrounds_.push_back(BackgroundComponent{std::move(label),
-                                             cloneHistogram(hist, suffix), color,
+                                             clone_histogram(hist, suffix), color,
                                              fill_style});
 }
 
-void StackedHistogram::clearBackgrounds() { backgrounds_.clear(); }
+void StackedHistogram::clear_backgrounds() { backgrounds_.clear(); }
 
-void StackedHistogram::setData(const TH1& hist, std::string label, Color_t color,
+void StackedHistogram::set_data(const TH1& hist, std::string label, Color_t color,
                                Style_t marker_style) {
-  data_ = DataComponent{std::move(label), cloneHistogram(hist, "data"), color,
+  data_ = DataComponent{std::move(label), clone_histogram(hist, "data"), color,
                         marker_style};
 }
 
-void StackedHistogram::clearData() { data_.reset(); }
+void StackedHistogram::clear_data() { data_.reset(); }
 
-void StackedHistogram::setSignal(const TH1& hist, std::string label,
+void StackedHistogram::set_signal(const TH1& hist, std::string label,
                                  Color_t color, Style_t line_style,
                                  double scale, int line_width) {
-  signal_ = SignalComponent{std::move(label), cloneHistogram(hist, "signal"),
+  signal_ = SignalComponent{std::move(label), clone_histogram(hist, "signal"),
                             color, line_style, scale, line_width};
 }
 
-void StackedHistogram::clearSignal() { signal_.reset(); }
+void StackedHistogram::clear_signal() { signal_.reset(); }
 
-void StackedHistogram::addCut(double threshold, CutDirection direction,
+void StackedHistogram::add_cut(double threshold, CutDirection direction,
                               std::string label, Color_t color) {
   cuts_.push_back(Cut{threshold, direction, std::move(label), color});
 }
 
-void StackedHistogram::clearCuts() { cuts_.clear(); }
+void StackedHistogram::clear_cuts() { cuts_.clear(); }
 
 void StackedHistogram::draw(TCanvas& canvas) {
-  setGlobalStyle();
+  set_global_style();
 
   canvas.cd();
   canvas.Clear();
@@ -125,22 +125,22 @@ void StackedHistogram::draw(TCanvas& canvas) {
 
   THStack stack((plot_name_ + "_stack").c_str(), plot_name_.c_str());
 
-  std::vector<BackgroundComponent*> ordered_backgrounds;
-  ordered_backgrounds.reserve(backgrounds_.size());
+  std::vector<BackgroundComponent*> background_ordering;
+  background_ordering.reserve(backgrounds_.size());
   for (auto& background : backgrounds_) {
-    ordered_backgrounds.push_back(&background);
+    background_ordering.push_back(&background);
   }
 
-  std::stable_sort(ordered_backgrounds.begin(), ordered_backgrounds.end(),
+  std::stable_sort(background_ordering.begin(), background_ordering.end(),
                    [](const BackgroundComponent* lhs,
                       const BackgroundComponent* rhs) {
                      return lhs->histogram->Integral() <
                             rhs->histogram->Integral();
                    });
-  std::reverse(ordered_backgrounds.begin(), ordered_backgrounds.end());
+  std::reverse(background_ordering.begin(), background_ordering.end());
 
   double max_y = 0.0;
-  for (auto* component : ordered_backgrounds) {
+  for (auto* component : background_ordering) {
     auto* hist = component->histogram.get();
     hist->SetDirectory(nullptr);
     hist->SetFillColor(component->color);
@@ -151,8 +151,8 @@ void StackedHistogram::draw(TCanvas& canvas) {
     max_y = std::max(max_y, hist->GetMaximum());
   }
 
-  bool drew_stack = !ordered_backgrounds.empty();
-  if (drew_stack) {
+  bool has_stack = !background_ordering.empty();
+  if (has_stack) {
     stack.Draw("HIST");
   } else if (data_) {
     data_->histogram->Draw("E1");
@@ -166,16 +166,16 @@ void StackedHistogram::draw(TCanvas& canvas) {
     return;
   }
 
-  TH1* frame = drew_stack ? stack.GetHistogram() : nullptr;
+  TH1* frame = has_stack ? stack.GetHistogram() : nullptr;
   if (!frame) {
-    frame = drew_stack ? ordered_backgrounds.front()->histogram.get()
-                       : data_ ? data_->histogram.get()
-                               : signal_ ? signal_->histogram.get() : nullptr;
+    frame = has_stack ? background_ordering.front()->histogram.get()
+                      : data_ ? data_->histogram.get()
+                              : signal_ ? signal_->histogram.get() : nullptr;
   }
 
-  double total_background_yield = 0.0;
-  for (auto* component : ordered_backgrounds) {
-    total_background_yield += component->histogram->Integral(0, component->histogram->GetNbinsX() + 1);
+  double background_yield_total = 0.0;
+  for (auto* component : background_ordering) {
+    background_yield_total += component->histogram->Integral(0, component->histogram->GetNbinsX() + 1);
   }
 
   if (frame) {
@@ -244,7 +244,7 @@ void StackedHistogram::draw(TCanvas& canvas) {
     legend->SetHeader(legend_header_->c_str(), "C");
   }
 
-  auto make_label = [&](const std::string& base_label, double yield) {
+  auto label_builder = [&](const std::string& base_label, double yield) {
     if (!annotate_yields_) {
       return base_label;
     }
@@ -253,30 +253,30 @@ void StackedHistogram::draw(TCanvas& canvas) {
     if (!base_label.empty()) {
       ss << " ";
     }
-    ss << formatYield(yield, 2);
+    ss << format_yield(yield, 2);
     return ss.str();
   };
 
-  for (auto* component : ordered_backgrounds) {
+  for (auto* component : background_ordering) {
     legend->AddEntry(component->histogram.get(),
-                     make_label(component->label,
-                                component->histogram->Integral(0, component->histogram->GetNbinsX() + 1))
+                     label_builder(component->label,
+                                   component->histogram->Integral(0, component->histogram->GetNbinsX() + 1))
                          .c_str(),
                      "f");
   }
 
   if (signal_) {
     legend->AddEntry(signal_->histogram.get(),
-                     make_label(signal_->label,
-                                signal_->histogram->Integral(0, signal_->histogram->GetNbinsX() + 1))
+                     label_builder(signal_->label,
+                                   signal_->histogram->Integral(0, signal_->histogram->GetNbinsX() + 1))
                          .c_str(),
                      "l");
   }
 
   if (data_) {
     legend->AddEntry(data_->histogram.get(),
-                     make_label(data_->label,
-                                data_->histogram->Integral(0, data_->histogram->GetNbinsX() + 1))
+                     label_builder(data_->label,
+                                   data_->histogram->Integral(0, data_->histogram->GetNbinsX() + 1))
                          .c_str(),
                      "lep");
   }
@@ -285,10 +285,10 @@ void StackedHistogram::draw(TCanvas& canvas) {
   overlays_.push_back(std::unique_ptr<TObject>(legend.release()));
 
   if (frame) {
-    drawCuts(y_max, frame->GetXaxis()->GetXmin(), frame->GetXaxis()->GetXmax());
+    draw_cuts(y_max, frame->GetXaxis()->GetXmin(), frame->GetXaxis()->GetXmax());
   }
 
-  if (drew_stack) {
+  if (has_stack) {
     stack.SetMaximum(y_max);
     stack.SetMinimum(y_min);
   }
@@ -296,8 +296,8 @@ void StackedHistogram::draw(TCanvas& canvas) {
   if (frame) {
     std::ostringstream title;
     title << plot_name_;
-    if (annotate_yields_ && total_background_yield > 0.0) {
-      title << " (Bkg: " << formatYield(total_background_yield, 2) << ")";
+    if (annotate_yields_ && background_yield_total > 0.0) {
+      title << " (Bkg: " << format_yield(background_yield_total, 2) << ")";
     }
     const std::string text = title.str();
     auto watermark = std::make_unique<TLatex>(canvas.GetLeftMargin() + 0.01,
@@ -315,8 +315,8 @@ void StackedHistogram::draw(TCanvas& canvas) {
   canvas.Update();
 }
 
-void StackedHistogram::drawAndSave(const std::string& format) {
-  setGlobalStyle();
+void StackedHistogram::draw_and_save(const std::string& format) {
+  set_global_style();
   gROOT->SetBatch(kTRUE);
   if (gSystem) {
     gSystem->mkdir(output_directory_.c_str(), true);
@@ -334,7 +334,7 @@ void StackedHistogram::drawAndSave(const std::string& format) {
   } else {
     std::unique_ptr<TImage> image(TImage::Create());
     if (!image) {
-      faint::log::warn("StackedHistogram::drawAndSave", "Failed to create ROOT image object");
+      faint::log::warn("StackedHistogram::draw_and_save", "Failed to create ROOT image object");
       return;
     }
     image->FromPad(&canvas);
@@ -342,7 +342,7 @@ void StackedHistogram::drawAndSave(const std::string& format) {
   }
 }
 
-std::unique_ptr<TH1> StackedHistogram::cloneHistogram(const TH1& hist,
+std::unique_ptr<TH1> StackedHistogram::clone_histogram(const TH1& hist,
                                                        const std::string& suffix) const {
   std::string base_name = hist.GetName();
   if (base_name.empty()) {
@@ -358,7 +358,7 @@ std::unique_ptr<TH1> StackedHistogram::cloneHistogram(const TH1& hist,
   return std::unique_ptr<TH1>(cloned_hist);
 }
 
-std::string StackedHistogram::formatYield(double value, int precision) const {
+std::string StackedHistogram::format_yield(double value, int precision) const {
   std::ostringstream ss;
   ss.setf(std::ios::fixed);
   ss.precision(precision);
@@ -366,11 +366,11 @@ std::string StackedHistogram::formatYield(double value, int precision) const {
   return ss.str();
 }
 
-void StackedHistogram::setGlobalStyle() const {
+void StackedHistogram::set_global_style() const {
   faint::plot::apply_plot_style();
 }
 
-void StackedHistogram::drawCuts(double max_y, double x_min, double x_max) {
+void StackedHistogram::draw_cuts(double max_y, double x_min, double x_max) {
   if (cuts_.empty()) {
     return;
   }

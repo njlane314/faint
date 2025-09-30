@@ -16,12 +16,12 @@ public:
                            SampleOrigin origin) const override;
 
 private:
-  ROOT::RDF::RNode processNonMc(ROOT::RDF::RNode df,
+  ROOT::RDF::RNode process_non_mc(ROOT::RDF::RNode df,
                                 SampleOrigin origin) const;
-  ROOT::RDF::RNode defineCounts(ROOT::RDF::RNode df) const;
-  ROOT::RDF::RNode assignInclusiveChannels(ROOT::RDF::RNode df) const;
-  ROOT::RDF::RNode assignExclusiveChannels(ROOT::RDF::RNode df) const;
-  ROOT::RDF::RNode assignChannelDefinitions(ROOT::RDF::RNode df) const;
+  ROOT::RDF::RNode define_counts(ROOT::RDF::RNode df) const;
+  ROOT::RDF::RNode assign_inclusive_channels(ROOT::RDF::RNode df) const;
+  ROOT::RDF::RNode assign_exclusive_channels(ROOT::RDF::RNode df) const;
+  ROOT::RDF::RNode assign_channel_definitions(ROOT::RDF::RNode df) const;
 };
 
 } // namespace faint

@@ -12,22 +12,22 @@ namespace faint {
 ROOT::RDF::RNode TruthClassifier::process(ROOT::RDF::RNode df,
                                           SampleOrigin origin) const {
   if (origin != SampleOrigin::kMonteCarlo) {
-    return this->processNonMc(df, origin);
+    return this->process_non_mc(df, origin);
   }
 
-  auto counts_df = this->defineCounts(df);
-  auto incl_df = this->assignInclusiveChannels(counts_df);
-  auto excl_df = this->assignExclusiveChannels(incl_df);
-  auto chan_df = this->assignChannelDefinitions(excl_df);
+  auto count_frame = this->define_counts(df);
+  auto inclusive_frame = this->assign_inclusive_channels(count_frame);
+  auto exclusive_frame = this->assign_exclusive_channels(inclusive_frame);
+  auto channel_frame = this->assign_channel_definitions(exclusive_frame);
 
-  return next_ ? next_->process(chan_df, origin) : chan_df;
+  return next_ ? next_->process(channel_frame, origin) : channel_frame;
 }
 
-ROOT::RDF::RNode TruthClassifier::processNonMc(ROOT::RDF::RNode df,
-                                               SampleOrigin origin) const {
-  auto mode_df = df.Define("genie_int_mode", []() { return -1; });
+ROOT::RDF::RNode TruthClassifier::process_non_mc(ROOT::RDF::RNode df,
+                                                 SampleOrigin origin) const {
+  auto mode_frame = df.Define("genie_int_mode", []() { return -1; });
 
-  auto incl_df = mode_df.Define("incl_channel", [c = origin]() {
+  auto inclusive_frame = mode_frame.Define("incl_channel", [c = origin]() {
     if (c == SampleOrigin::kData)
       return 0;
     if (c == SampleOrigin::kExternal)
@@ -37,10 +37,10 @@ ROOT::RDF::RNode TruthClassifier::processNonMc(ROOT::RDF::RNode df,
     return 99;
   });
 
-  auto incl_alias_df =
-      incl_df.Define("inclusive_strange_channels", "incl_channel");
+  auto inclusive_alias_frame =
+      inclusive_frame.Define("inclusive_strange_channels", "incl_channel");
 
-  auto excl_df = incl_alias_df.Define("excl_channel", [c = origin]() {
+  auto exclusive_frame = inclusive_alias_frame.Define("excl_channel", [c = origin]() {
     if (c == SampleOrigin::kData)
       return 0;
     if (c == SampleOrigin::kExternal)
@@ -50,10 +50,10 @@ ROOT::RDF::RNode TruthClassifier::processNonMc(ROOT::RDF::RNode df,
     return 99;
   });
 
-  auto excl_alias_df =
-      excl_df.Define("exclusive_strange_channels", "excl_channel");
+  auto exclusive_alias_frame =
+      exclusive_frame.Define("exclusive_strange_channels", "excl_channel");
 
-  auto chan_df = excl_alias_df.Define("channel_def", [c = origin]() {
+  auto channel_frame = exclusive_alias_frame.Define("channel_def", [c = origin]() {
     if (c == SampleOrigin::kData)
       return 0;
     if (c == SampleOrigin::kExternal || c == SampleOrigin::kDirt)
@@ -61,29 +61,29 @@ ROOT::RDF::RNode TruthClassifier::processNonMc(ROOT::RDF::RNode df,
     return 99;
   });
 
-  auto chan_alias_df = chan_df.Define("channel_definitions", "channel_def");
+  auto channel_alias_frame = channel_frame.Define("channel_definitions", "channel_def");
 
-  return next_ ? next_->process(chan_alias_df, origin) : chan_alias_df;
+  return next_ ? next_->process(channel_alias_frame, origin) : channel_alias_frame;
 }
 
-ROOT::RDF::RNode TruthClassifier::defineCounts(ROOT::RDF::RNode df) const {
-  auto fid_df = df.Define(
+ROOT::RDF::RNode TruthClassifier::define_counts(ROOT::RDF::RNode df) const {
+  auto fiducial_frame = df.Define(
       "in_fiducial",
       [](float x, float y, float z) {
         return fiducial::is_in_truth_volume(x, y, z);
       },
       {"neutrino_vertex_x", "neutrino_vertex_y", "neutrino_vertex_z"});
 
-  auto strange_df = fid_df.Define(
+  auto strange_frame = fiducial_frame.Define(
       "mc_n_strange",
       "count_kaon_plus + count_kaon_minus + count_kaon_zero +"
       " count_lambda + count_sigma_plus + count_sigma_zero + count_sigma_minus");
 
-  auto pion_df = strange_df.Define("mc_n_pion",
+  auto pion_frame = strange_frame.Define("mc_n_pion",
                                    "count_pi_plus + count_pi_minus");
-  auto proton_df = pion_df.Define("mc_n_proton", "count_proton");
+  auto proton_frame = pion_frame.Define("mc_n_proton", "count_proton");
 
-  auto mode_df = proton_df.Define(
+  auto mode_frame = proton_frame.Define(
       "genie_int_mode",
       [](int mode) {
         struct ModeCounter {
@@ -124,12 +124,12 @@ ROOT::RDF::RNode TruthClassifier::defineCounts(ROOT::RDF::RNode df) const {
       },
       {"interaction_mode"});
 
-  return mode_df;
+  return mode_frame;
 }
 
 ROOT::RDF::RNode
-TruthClassifier::assignInclusiveChannels(ROOT::RDF::RNode df) const {
-  auto incl_chan_df = df.Define(
+TruthClassifier::assign_inclusive_channels(ROOT::RDF::RNode df) const {
+  auto inclusive_channel_frame = df.Define(
       "incl_channel",
       [](bool fv, int nu, int ccnc, int s, int npi, int np) {
         if (!fv)
@@ -156,14 +156,14 @@ TruthClassifier::assignInclusiveChannels(ROOT::RDF::RNode df) const {
       {"in_fiducial", "neutrino_pdg", "interaction_ccnc", "mc_n_strange",
        "mc_n_pion", "mc_n_proton"});
 
-  auto incl_alias_df =
-      incl_chan_df.Define("inclusive_strange_channels", "incl_channel");
-  return incl_alias_df;
+  auto inclusive_alias_frame =
+      inclusive_channel_frame.Define("inclusive_strange_channels", "incl_channel");
+  return inclusive_alias_frame;
 }
 
 ROOT::RDF::RNode
-TruthClassifier::assignExclusiveChannels(ROOT::RDF::RNode df) const {
-  auto excl_chan_df = df.Define(
+TruthClassifier::assign_exclusive_channels(ROOT::RDF::RNode df) const {
+  auto exclusive_channel_frame = df.Define(
       "excl_channel",
       [](bool fv, int nu, int ccnc, int s, int kp, int km, int k0, int lam,
          int sp, int s0, int sm) {
@@ -207,14 +207,14 @@ TruthClassifier::assignExclusiveChannels(ROOT::RDF::RNode df) const {
        "count_lambda", "count_sigma_plus", "count_sigma_zero",
        "count_sigma_minus"});
 
-  auto excl_alias_df =
-      excl_chan_df.Define("exclusive_strange_channels", "excl_channel");
-  return excl_alias_df;
+  auto exclusive_alias_frame =
+      exclusive_channel_frame.Define("exclusive_strange_channels", "excl_channel");
+  return exclusive_alias_frame;
 }
 
-ROOT::RDF::RNode TruthClassifier::assignChannelDefinitions(
+ROOT::RDF::RNode TruthClassifier::assign_channel_definitions(
     ROOT::RDF::RNode df) const {
-  auto chan_df = df.Define(
+  auto channel_frame = df.Define(
       "channel_definitions",
       [](bool fv, int nu, int ccnc, int s, int npi, int np, int npi0,
          int ngamma) {
@@ -248,11 +248,11 @@ ROOT::RDF::RNode TruthClassifier::assignChannelDefinitions(
       {"in_fiducial", "neutrino_pdg", "interaction_ccnc", "mc_n_strange",
        "mc_n_pion", "mc_n_proton", "count_pi_zero", "count_gamma"});
 
-  auto signal_df = chan_df.Define(
+  auto signal_frame = channel_frame.Define(
       "is_truth_signal", [](int ch) { return ch == 15 || ch == 16; },
       {"channel_definitions"});
 
-  auto pure_sig_df = signal_df.Define(
+  auto pure_signal_frame = signal_frame.Define(
       "pure_slice_signal",
       [](bool is_sig, float purity, float completeness) {
         return is_sig && purity > 0.5f && completeness > 0.1f;
@@ -260,7 +260,7 @@ ROOT::RDF::RNode TruthClassifier::assignChannelDefinitions(
       {"is_truth_signal", "neutrino_purity_from_pfp",
        "neutrino_completeness_from_pfp"});
 
-  return pure_sig_df;
+  return pure_signal_frame;
 }
 
 } // namespace faint
