@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -55,7 +56,21 @@ public:
     struct Entry {
         SampleOrigin origin{SampleOrigin::kUnknown};
         SampleRole role{SampleRole::kNominal};
-        mutable ROOT::RDF::RNode dataframe;
+
+        Entry() = default;
+
+        Entry(SampleOrigin origin, SampleRole role, ROOT::RDF::RNode node)
+            : origin(origin), role(role), dataframe_(std::move(node)) {}
+
+        ROOT::RDF::RNode dataframe() const {
+            if (!dataframe_) {
+                throw std::runtime_error("Dataset entry does not hold a dataframe");
+            }
+            return *dataframe_;
+        }
+
+    private:
+        mutable std::optional<ROOT::RDF::RNode> dataframe_;
     };
 
     struct Variations {
