@@ -7,7 +7,6 @@
 #include <TH2D.h>
 #include <TMatrixD.h>
 #include <faint/Dataset.h>
-#include <faint/Log.h>
 #include <faint/Types.h>
 #include <faint/plot/ErrorBandBuilder.h>
 #include <faint/syst/Systematics.h>

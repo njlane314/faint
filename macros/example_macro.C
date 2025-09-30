@@ -2,7 +2,6 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <TSystem.h>
 #include <faint/Dataset.h>
-#include <faint/Log.h>
 
 #include <iostream>
 #include <stdexcept>

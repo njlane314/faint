@@ -4,7 +4,6 @@
 #include <TH1D.h>
 
 #include <faint/Dataset.h>
-#include <faint/Log.h>
 #include <faint/Types.h>
 #include <faint/plot/StackedHistogram.h>
 

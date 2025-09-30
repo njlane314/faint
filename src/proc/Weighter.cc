@@ -1,8 +1,7 @@
 #include "faint/proc/Weighter.h"
 
 #include <cmath>
-
-#include "faint/Log.h"
+#include <iostream>
 
 namespace faint {
 
@@ -13,9 +12,7 @@ Weighter::Weighter(const nlohmann::json& cfg, double total_run_pot,
       total_run_pot_(total_run_pot),
       total_run_triggers_(total_run_triggers) {
   if (sample_pot_ <= 0.0 && sample_triggers_ <= 0L) {
-    log::warn("Weighter::Weighter",
-              "sample JSON has no or invalid 'pot' or 'triggers'; "
-              "base_event_weight will default to 1");
+    std::clog << "Weighter::Weighter: sample JSON has no or invalid 'pot' or 'triggers'; base_event_weight will default to 1\n";
   }
 }
 
