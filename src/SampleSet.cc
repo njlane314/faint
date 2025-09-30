@@ -45,9 +45,9 @@ void SampleSet::snapshot(const std::string& filter, const std::string& out,
   snapshot_impl(filter, out, cols);
 }
 
-void SampleSet::snapshot(const SelectionQuery& query, const std::string& out,
+void SampleSet::snapshot(const Selection& selection, const std::string& out,
                          const std::vector<std::string>& cols) const {
-  snapshot_impl(query.str(), out, cols);
+  snapshot_impl(selection.str(), out, cols);
 }
 
 void SampleSet::print_branches() {
