@@ -1,5 +1,7 @@
 #include "faint/SampleSet.h"
 
+#include <cassert>
+
 #include <nlohmann/json.hpp>
 
 #include "faint/Log.h"
@@ -61,9 +63,24 @@ void SampleSet::print_branches() {
   }
 }
 
+namespace {
+
+bool has_external_sample(const Run& run) {
+  for (const auto& sample : run.samples) {
+    if (sample.value("sample_type", "") == "ext") return true;
+  }
+  return false;
+}
+
+}  // namespace
+
 void SampleSet::build() {
-  const std::string ext_beam{"numi_ext"};
   std::vector<const Run*> to_process;
+  const auto& all_runs = runs_.all();
+
+#ifndef NDEBUG
+  long expected_total_triggers = 0;
+#endif
 
   for (auto& p : periods_) {
     const auto& rc = runs_.get(beam_, p);
@@ -71,14 +88,29 @@ void SampleSet::build() {
     total_triggers_ += rc.nominal_triggers;
     to_process.push_back(&rc);
 
-    auto key = ext_beam + ":" + p;
-    if (runs_.all().count(key)) {
-      const auto& er = runs_.get(ext_beam, p);
+#ifndef NDEBUG
+    expected_total_triggers += rc.nominal_triggers;
+#endif
+
+    for (const auto& [key, candidate] : all_runs) {
+      if (&candidate == &rc) continue;
+      if (candidate.run_period != p) continue;
+      if (!has_external_sample(candidate)) continue;
+
+      const auto& er = candidate;
       total_pot_ += er.nominal_pot;
       total_triggers_ += er.nominal_triggers;
       to_process.push_back(&er);
+
+#ifndef NDEBUG
+      expected_total_triggers += er.nominal_triggers;
+#endif
     }
   }
+
+#ifndef NDEBUG
+  assert(total_triggers_ == expected_total_triggers);
+#endif
 
   for (const Run* rc : to_process) add_run(*rc);
 }
