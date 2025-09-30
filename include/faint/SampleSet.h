@@ -13,7 +13,7 @@
 
 #include "faint/PreSelection.h"
 #include "faint/Run.h"
-#include "faint/RunCatalog.h"
+#include "faint/RunReader.h"
 #include "faint/Sample.h"
 #include "faint/SelectionQuery.h"
 #include "faint/TruthClassifier.h"
@@ -26,7 +26,7 @@ class SampleSet {
  public:
   using Map = std::map<SampleKey, Sample>;
 
-  SampleSet(const RunCatalog& runs, VariableRegistry variables,
+  SampleSet(const RunReader& runs, VariableRegistry variables,
             const std::string& beam, std::vector<std::string> periods,
             const std::string& ntuple_dir, bool blind = true);
 
@@ -48,7 +48,7 @@ class SampleSet {
   void print_branches();
 
  private:
-  const RunCatalog& runs_;
+  const RunReader& runs_;
   VariableRegistry variables_;
   std::string ntuple_dir_;
 

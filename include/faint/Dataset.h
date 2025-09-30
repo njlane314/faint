@@ -15,7 +15,7 @@
 
 #include <faint/Types.h>
 #include <faint/Variables.h>
-#include <faint/RunCatalog.h>
+#include <faint/RunReader.h>
 #include <faint/Sample.h>
 #include <faint/SampleSet.h>
 #include <faint/Selections.h>
@@ -96,12 +96,12 @@ public:
 
     const SampleSet& samples() const;
 
-    const RunCatalog& runs() const;
+    const RunReader& runs() const;
 
     const Map& datasets() const noexcept { return datasets_; }
 
 private:
-    RunCatalog runs_;
+    RunReader runs_;
     Variables vars_;
     Options opt_;
     std::unique_ptr<SampleSet> set_;
