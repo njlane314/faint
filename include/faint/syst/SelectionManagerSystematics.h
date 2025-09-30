@@ -1,11 +1,11 @@
-#ifndef FAINT_SYST_SELECTION_MANAGER_ADAPTER_H
-#define FAINT_SYST_SELECTION_MANAGER_ADAPTER_H
+#ifndef FAINT_SYST_SELECTION_MANAGER_SYSTEMATICS_H
+#define FAINT_SYST_SELECTION_MANAGER_SYSTEMATICS_H
 
 #include <map>
 #include <string>
 #include <vector>
 
-#include <faint/syst/systematics_registry.h>
+#include <faint/syst/SystematicsRegistry.h>
 
 namespace faint {
 namespace syst {
@@ -39,4 +39,4 @@ inline std::vector<std::string> selection_manager_systematic_names() {
 } // namespace syst
 } // namespace faint
 
-#endif // FAINT_SYST_SELECTION_MANAGER_ADAPTER_H
+#endif // FAINT_SYST_SELECTION_MANAGER_SYSTEMATICS_H

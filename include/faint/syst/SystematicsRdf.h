@@ -1,5 +1,5 @@
-#ifndef FAINT_SYSTEMATICS_RDF_H
-#define FAINT_SYSTEMATICS_RDF_H
+#ifndef FAINT_SYST_SYSTEMATICS_RDF_H
+#define FAINT_SYST_SYSTEMATICS_RDF_H
 
 #include <cmath>
 #include <string>
@@ -11,7 +11,7 @@
 #include "TH2D.h"
 #include "TMatrixD.h"
 
-#include <faint/syst/systematics_registry.h>
+#include <faint/syst/SystematicsRegistry.h>
 
 namespace faint {
 namespace syst {
@@ -160,4 +160,4 @@ inline TMatrixD covariance_matrix_from_histograms(const TH1D* cv_hist,
 } // namespace syst
 } // namespace faint
 
-#endif // FAINT_SYSTEMATICS_RDF_H
+#endif // FAINT_SYST_SYSTEMATICS_RDF_H
