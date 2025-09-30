@@ -1,8 +1,8 @@
-#include "faint/Types.h"
+#include "faint/Samples.h"
 
 #include <utility>
 
-namespace faint {
+namespace sample {
 
 SampleKey::SampleKey(std::string value) : value_(std::move(value)) {}
 
@@ -35,4 +35,4 @@ std::string to_key(SampleVariation var) {
   }
 }
 
-}  // namespace faint
+}  // namespace sample

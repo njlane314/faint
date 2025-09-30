@@ -10,7 +10,7 @@
 #include "nlohmann/json.hpp"
 
 #include "faint/EventProcessor.h"
-#include "faint/Types.h"
+#include "faint/Samples.h"
 #include "faint/Variables.h"
 
 namespace faint {

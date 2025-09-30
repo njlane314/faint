@@ -8,6 +8,7 @@
 
 #include "ROOT/RVec.hxx"
 #include "faint/FiducialVolume.h"
+#include "faint/Samples.h"
 #include "faint/Selections.h"
 
 namespace faint {

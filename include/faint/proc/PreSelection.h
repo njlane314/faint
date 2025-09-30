@@ -4,7 +4,6 @@
 #include "ROOT/RVec.hxx"
 
 #include <faint/proc/EventProcessor.h>
-#include <faint/Types.h>
 
 namespace faint {
 

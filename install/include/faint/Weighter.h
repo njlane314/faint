@@ -5,7 +5,6 @@
 #include <nlohmann/json.hpp>
 
 #include <faint/EventProcessor.h>
-#include <faint/Types.h>
 
 namespace faint {
 

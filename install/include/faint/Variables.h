@@ -6,9 +6,13 @@
 #include <unordered_set>
 #include <vector>
 
-#include <faint/Types.h>
+namespace sample {
+enum class SampleOrigin : unsigned int;
+}
 
-namespace faint {
+namespace faint { 
+
+using sample::SampleOrigin;
 
 class Variables {
  public:

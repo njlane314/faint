@@ -1,5 +1,6 @@
 #include "faint/proc/PreSelection.h"
 
+#include "faint/Samples.h"
 #include "faint/Selections.h"
 
 #include "ROOT/RVec.hxx"

@@ -13,7 +13,7 @@
 #include "ROOT/RDataFrame.hxx"
 #include "TSystem.h"
 
-#include <faint/Types.h>
+#include <faint/Samples.h>
 #include <faint/Variables.h>
 #include <faint/RunReader.h>
 #include <faint/Sample.h>

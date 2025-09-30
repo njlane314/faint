@@ -7,6 +7,7 @@
 #include <nlohmann/json.hpp>
 
 #include "faint/Log.h"
+#include "faint/Selection.h"
 #include "faint/proc/MuonSelector.h"
 
 namespace faint {

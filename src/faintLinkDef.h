@@ -7,7 +7,6 @@
 #include "faint/Selection.h"
 #include "faint/plot/StackedHistogram.h"
 #include "faint/proc/TruthClassifier.h"
-#include "faint/Types.h"
 #include "faint/Variables.h"
 #include "faint/proc/Weighter.h"
 

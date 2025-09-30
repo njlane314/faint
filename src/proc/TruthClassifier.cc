@@ -1,6 +1,7 @@
 #include "faint/proc/TruthClassifier.h"
 
 #include "faint/FiducialVolume.h"
+#include "faint/Samples.h"
 
 #include <cmath>
 #include <iostream>

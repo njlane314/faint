@@ -1,5 +1,7 @@
 #include "faint/Variables.h"
 
+#include "faint/Samples.h"
+
 #include <unordered_set>
 #include <utility>
 

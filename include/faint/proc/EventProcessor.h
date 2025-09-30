@@ -5,9 +5,13 @@
 
 #include "ROOT/RDataFrame.hxx"
 
-#include <faint/Types.h>
+namespace sample {
+enum class SampleOrigin : unsigned int;
+}
 
 namespace faint {
+
+using sample::SampleOrigin;
 
 class EventProcessor {
 public:

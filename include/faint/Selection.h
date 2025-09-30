@@ -4,7 +4,7 @@
 #include <string>
 
 #include <faint/FiducialVolume.h>
-#include <faint/Types.h>
+#include <faint/Samples.h>
 
 namespace faint {
 namespace selection {

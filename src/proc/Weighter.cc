@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "faint/Log.h"
+#include "faint/Samples.h"
 
 namespace faint {
 
