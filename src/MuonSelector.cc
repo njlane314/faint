@@ -3,6 +3,7 @@
 #include <cmath>
 
 #include "ROOT/RVec.hxx"
+#include "faint/FiducialVolume.h"
 
 namespace faint {
 
@@ -29,16 +30,11 @@ ROOT::RDF::RNode MuonSelector::build_mask(ROOT::RDF::RNode df) const {
          const ROOT::RVec<float> &end_y, const ROOT::RVec<float> &end_z,
          const ROOT::RVec<unsigned> &gens) {
         ROOT::RVec<bool> mask(scores.size());
-        const float min_x = 5.f, max_x = 251.f;
-        const float min_y = -110.f, max_y = 110.f;
-        const float min_z = 20.f, max_z = 986.f;
         for (size_t i = 0; i < scores.size(); ++i) {
-          const bool fid_start = start_x[i] > min_x && start_x[i] < max_x &&
-                                 start_y[i] > min_y && start_y[i] < max_y &&
-                                 start_z[i] > min_z && start_z[i] < max_z;
-          const bool fid_end = end_x[i] > min_x && end_x[i] < max_x &&
-                               end_y[i] > min_y && end_y[i] < max_y &&
-                               end_z[i] > min_z && end_z[i] < max_z;
+          const bool fid_start = fiducial::is_in_reco_volume(
+              start_x[i], start_y[i], start_z[i]);
+          const bool fid_end = fiducial::is_in_reco_volume(
+              end_x[i], end_y[i], end_z[i]);
           mask[i] = (scores[i] > 0.5f && llr[i] > 0.2f && lengths[i] > 10.0f &&
                      dists[i] < 4.0f && gens[i] == 2u && fid_start && fid_end);
         }
