@@ -11,9 +11,6 @@
 
 void example_macro() {
   try {
-    faint::log::init();
-    faint::log::set_level(faint::log::Level::kDebug);
-
     ROOT::EnableImplicitMT();
 
     if (gSystem->Load("libfaint_root")) {
