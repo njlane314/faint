@@ -8,6 +8,7 @@
 #include <vector>
 
 #include "Rtypes.h"
+#include "TAttLine.h"
 #include "TColor.h"
 
 class TCanvas;
