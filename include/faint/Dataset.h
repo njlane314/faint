@@ -18,7 +18,7 @@
 #include <faint/Variables.h>
 #include <faint/Run.h>
 #include <faint/Samples.h>
-#include <faint/Selections.h>
+#include <faint/Selection.h>
 
 namespace faint {
 namespace dataset {
