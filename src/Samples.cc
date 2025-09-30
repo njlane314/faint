@@ -7,9 +7,18 @@
 #include <nlohmann/json.hpp>
 
 #include "faint/Log.h"
+#include "faint/Selection.h"
 #include "faint/proc/MuonSelector.h"
+#include "faint/proc/PreSelection.h"
+#include "faint/proc/TruthClassifier.h"
+#include "faint/proc/Weighter.h"
 
 namespace faint {
+
+using sample::SampleKey;
+using sample::SampleOrigin;
+using sample::SampleVariation;
+
 namespace {
 
 ROOT::RDF::RNode open_frame(const std::string& base_dir, const std::string& rel,

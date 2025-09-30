@@ -6,7 +6,7 @@
 #include <faint/Dataset.h>
 #include <faint/Log.h>
 #include <faint/Selection.h>
-#include <faint/Types.h>
+#include <faint/Samples.h>
 #include <faint/plot/StackedHistogram.h>
 
 #include <algorithm>
@@ -58,7 +58,7 @@ void stacked_histogram_example() {
     const std::vector<Color_t> palette = default_palette();
     std::size_t color_index = 0;
 
-    auto add_background_samples = [&](faint::SampleOrigin origin) {
+    auto add_background_samples = [&](faint::sample::SampleOrigin origin) {
       auto keys = dataset.sample_keys(origin);
       for (const auto& key : keys) {
         const std::string hist_name = "hist_" + key;
@@ -71,11 +71,11 @@ void stacked_histogram_example() {
       }
     };
 
-    add_background_samples(faint::SampleOrigin::kMonteCarlo);
-    add_background_samples(faint::SampleOrigin::kExternal);
-    add_background_samples(faint::SampleOrigin::kDirt);
+    add_background_samples(faint::sample::SampleOrigin::kMonteCarlo);
+    add_background_samples(faint::sample::SampleOrigin::kExternal);
+    add_background_samples(faint::sample::SampleOrigin::kDirt);
 
-    auto data_keys = dataset.sample_keys(faint::SampleOrigin::kData);
+    auto data_keys = dataset.sample_keys(faint::sample::SampleOrigin::kData);
     if (!data_keys.empty()) {
       const auto& key = data_keys.front();
       const std::string hist_name = "data_" + key;

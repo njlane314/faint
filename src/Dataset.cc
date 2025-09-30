@@ -11,6 +11,11 @@
 namespace faint {
 namespace dataset {
 
+using sample::SampleKey;
+using sample::SampleOrigin;
+using sample::SampleRole;
+using sample::SampleVariation;
+
 Dataset::Dataset(RunReader runs, std::string ntuple_dir, Options opt, Variables vars)
     : runs_(std::move(runs)),
       vars_(std::move(vars)),

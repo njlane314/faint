@@ -12,7 +12,7 @@ namespace faint {
 class MuonSelector : public EventProcessor {
 public:
   ROOT::RDF::RNode process(ROOT::RDF::RNode df,
-                           SampleOrigin origin) const override;
+                           sample::SampleOrigin origin) const override;
 
 private:
   ROOT::RDF::RNode build_mask(ROOT::RDF::RNode df) const;

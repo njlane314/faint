@@ -14,7 +14,6 @@
 #include "ROOT/RDataFrame.hxx"
 #include "TSystem.h"
 
-#include <faint/Types.h>
 #include <faint/Variables.h>
 #include <faint/Run.h>
 #include <faint/Samples.h>
@@ -37,12 +36,12 @@ struct Options {
 class Dataset {
 public:
     struct Entry {
-        SampleOrigin origin{SampleOrigin::kUnknown};
-        SampleRole role{SampleRole::kNominal};
+        sample::SampleOrigin origin{sample::SampleOrigin::kUnknown};
+        sample::SampleRole role{sample::SampleRole::kNominal};
 
         Entry() = default;
 
-        Entry(SampleOrigin origin, SampleRole role, ROOT::RDF::RNode node)
+        Entry(sample::SampleOrigin origin, sample::SampleRole role, ROOT::RDF::RNode node)
             : origin(origin), role(role), dataframe_(std::move(node)) {}
 
         ROOT::RDF::RNode dataframe() const {
@@ -58,25 +57,25 @@ public:
 
     struct Variations {
         Entry nominal;
-        std::unordered_map<SampleVariation, Entry> variations;
+        std::unordered_map<sample::SampleVariation, Entry> variations;
     };
 
-    using Map = std::unordered_map<SampleKey, Variations>;
+    using Map = std::unordered_map<sample::SampleKey, Variations>;
 
     static Dataset open(const std::string& run_config_json, Options opt,
                         Variables vars = Variables{});
 
     std::vector<std::string> sample_keys(
-        SampleOrigin origin_filter = SampleOrigin::kUnknown) const;
+        sample::SampleOrigin origin_filter = sample::SampleOrigin::kUnknown) const;
 
     ROOT::RDF::RNode df(std::string_view sample_key,
-                        SampleVariation v = SampleVariation::kCV) const;
+                        sample::SampleVariation v = sample::SampleVariation::kCV) const;
 
     ROOT::RDF::RNode final(std::string_view key,
-                           SampleVariation v = SampleVariation::kCV) const;
+                           sample::SampleVariation v = sample::SampleVariation::kCV) const;
 
     ROOT::RDF::RNode quality(std::string_view key,
-                             SampleVariation v = SampleVariation::kCV) const;
+                             sample::SampleVariation v = sample::SampleVariation::kCV) const;
 
     void snapshot_where(const std::string& filter, const std::string& out_file,
                         const std::vector<std::string>& columns = {}) const;
@@ -113,7 +112,7 @@ private:
 
     const Variations* find_dataset(std::string_view key) const;
 
-    static Entry make_entry(const Sample& sample, SampleVariation variation,
+    static Entry make_entry(const Sample& sample, sample::SampleVariation variation,
                             ROOT::RDF::RNode node);
 };
 

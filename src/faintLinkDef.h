@@ -7,22 +7,22 @@
 #include "faint/Selection.h"
 #include "faint/plot/StackedHistogram.h"
 #include "faint/proc/TruthClassifier.h"
-#include "faint/Types.h"
 #include "faint/Variables.h"
 #include "faint/proc/Weighter.h"
 
 #ifdef __CLING__
 #pragma link C++ namespace faint;
 #pragma link C++ namespace faint::dataset;
+#pragma link C++ namespace faint::sample;
 #pragma link C++ namespace faint::plot;
 
 #pragma link C++ nestedclasses;
 #pragma link C++ nestedtypedefs;
 
-#pragma link C++ class faint::SampleKey+;
-#pragma link C++ enum faint::SampleOrigin;
-#pragma link C++ enum faint::SampleRole;
-#pragma link C++ enum faint::SampleVariation;
+#pragma link C++ class faint::sample::SampleKey+;
+#pragma link C++ enum faint::sample::SampleOrigin;
+#pragma link C++ enum faint::sample::SampleRole;
+#pragma link C++ enum faint::sample::SampleVariation;
 
 #pragma link C++ class faint::dataset::Options+;
 #pragma link C++ class faint::dataset::Dataset+;

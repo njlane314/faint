@@ -6,6 +6,8 @@
 
 namespace faint {
 
+using sample::SampleOrigin;
+
 ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
                                        SampleOrigin origin) const {
   ROOT::RDF::RNode node = df;

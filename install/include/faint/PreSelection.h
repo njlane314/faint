@@ -4,14 +4,13 @@
 #include "ROOT/RVec.hxx"
 
 #include <faint/EventProcessor.h>
-#include <faint/Types.h>
 
 namespace faint {
 
 class PreSelection : public EventProcessor {
 public:
   ROOT::RDF::RNode process(ROOT::RDF::RNode df,
-                           SampleOrigin origin) const override;
+                           sample::SampleOrigin origin) const override;
 };
 
 } // namespace faint

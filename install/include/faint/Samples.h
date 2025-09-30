@@ -13,14 +13,14 @@
 
 #include "nlohmann/json.hpp"
 
-#include "faint/proc/EventProcessor.h"
+#include "faint/EventProcessor.h"
+#include "faint/Run.h"
+#include "faint/SelectionQuery.h"
 #include "faint/Variables.h"
 
 namespace faint {
 
-class Run;
 class RunReader;
-class Selection;
 
 namespace sample {
 
@@ -139,7 +139,7 @@ class SampleSet {
 
   void snapshot(const std::string& filter, const std::string& out,
                 const std::vector<std::string>& cols = {}) const;
-  void snapshot(const Selection& selection, const std::string& out,
+  void snapshot(const SelectionQuery& query, const std::string& out,
                 const std::vector<std::string>& cols = {}) const;
 
   void print_branches();

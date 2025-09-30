@@ -9,6 +9,8 @@
 
 namespace faint {
 
+using sample::SampleOrigin;
+
 ROOT::RDF::RNode TruthClassifier::process(ROOT::RDF::RNode df,
                                           SampleOrigin origin) const {
   if (origin != SampleOrigin::kMonteCarlo) {

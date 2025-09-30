@@ -4,7 +4,7 @@
 #include <string>
 
 #include <faint/FiducialVolume.h>
-#include <faint/Types.h>
+#include <faint/Samples.h>
 
 namespace faint {
 namespace selection {
@@ -44,10 +44,10 @@ struct MuonTrackCut {
   static constexpr unsigned kRequiredGeneration = 2u;
 };
 
-inline bool passes_pre_selection(SampleOrigin origin, float pe_beam,
+inline bool passes_pre_selection(sample::SampleOrigin origin, float pe_beam,
                                  float pe_veto, bool software_trigger) {
   const bool requires_dataset_gate =
-      (origin == SampleOrigin::kMonteCarlo || origin == SampleOrigin::kDirt);
+      (origin == sample::SampleOrigin::kMonteCarlo || origin == sample::SampleOrigin::kDirt);
   const bool dataset_gate = requires_dataset_gate
                                 ? (pe_beam > PreCut::kMinBeamPE &&
                                    pe_veto < PreCut::kMaxVetoPE)

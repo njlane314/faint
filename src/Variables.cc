@@ -1,9 +1,13 @@
 #include "faint/Variables.h"
 
+#include "faint/Samples.h"
+
 #include <unordered_set>
 #include <utility>
 
 namespace faint {
+
+using sample::SampleOrigin;
 
 const Variables::KnobVariations& Variables::knob_var() {
   static const KnobVariations m = {

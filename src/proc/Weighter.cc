@@ -6,6 +6,8 @@
 
 namespace faint {
 
+using sample::SampleOrigin;
+
 Weighter::Weighter(const nlohmann::json& cfg, double total_run_pot,
                    long total_run_triggers)
     : sample_pot_(cfg.value("pot", 0.0)),

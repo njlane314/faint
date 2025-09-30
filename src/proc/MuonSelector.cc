@@ -12,6 +12,8 @@
 
 namespace faint {
 
+using sample::SampleOrigin;
+
 ROOT::RDF::RNode MuonSelector::process(ROOT::RDF::RNode df,
                                        SampleOrigin origin) const {
   if (!df.HasColumn("track_shower_scores")) {

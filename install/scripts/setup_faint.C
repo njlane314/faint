@@ -170,7 +170,7 @@ void setup_faint(const char* abs_lib_path = nullptr, const char* abs_inc_dir = n
 
   // Pull in commonly used headers so macros can use the API immediately
   if (!include_dir.empty()) {
-    load_header("faint/Types.h");
+    load_header("faint/Samples.h");
     load_header("faint/SampleSet.h");
     load_header("faint/PreSelection.h");
     load_header("faint/TruthClassifier.h");

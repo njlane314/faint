@@ -8,7 +8,7 @@
 #include <TMatrixD.h>
 #include <faint/Dataset.h>
 #include <faint/Log.h>
-#include <faint/Types.h>
+#include <faint/Samples.h>
 #include <faint/plot/ErrorBandBuilder.h>
 #include <faint/syst/Systematics.h>
 
@@ -22,7 +22,7 @@
 namespace {
 // Utility: find the first Monte Carlo sample key in the dataset.
 std::string find_mc_sample_key(const faint::dataset::Dataset& dataset) {
-  std::vector<std::string> keys = dataset.sample_keys(faint::SampleOrigin::kMonteCarlo);
+  std::vector<std::string> keys = dataset.sample_keys(faint::sample::SampleOrigin::kMonteCarlo);
   if (keys.empty()) {
     throw std::runtime_error("Dataset does not contain a Monte Carlo sample");
   }

@@ -6,9 +6,12 @@
 #include <unordered_set>
 #include <vector>
 
-#include <faint/Types.h>
-
 namespace faint {
+namespace sample {
+
+enum class SampleOrigin : unsigned int;
+
+}  // namespace sample
 
 class Variables {
  public:
@@ -22,7 +25,7 @@ class Variables {
 
   static const std::string& single_knob_var();
 
-  static std::vector<std::string> event_var(SampleOrigin origin);
+  static std::vector<std::string> event_var(sample::SampleOrigin origin);
 
  private:
   static std::unordered_set<std::string> collect_base_vars();
