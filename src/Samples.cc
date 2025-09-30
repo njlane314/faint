@@ -149,13 +149,12 @@ ROOT::RDF::RNode Sample::build(const std::string& base_dir,
 
 SampleSet::SampleSet(const RunReader& runs, VariableRegistry variables,
                      const std::string& beam, std::vector<std::string> periods,
-                     const std::string& ntuple_dir, bool blind)
+                     const std::string& ntuple_dir)
     : runs_(runs),
       variables_(std::move(variables)),
       ntuple_dir_(ntuple_dir),
       beam_(beam),
       periods_(std::move(periods)),
-      blind_(blind),
       total_pot_(0.0),
       total_triggers_(0) {
   build();

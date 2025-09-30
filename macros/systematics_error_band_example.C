@@ -57,8 +57,6 @@ void systematics_error_band_example() {
     faint::dataset::Options options;
     options.beam = "numi-fhc";
     options.periods = {"run1"};
-    options.ntuple_dir = faint::dataset::ntuple_directory();
-
     auto dataset = faint::dataset::Dataset::open(config_path, options);
 
     const auto sample_key = find_mc_sample_key(dataset);

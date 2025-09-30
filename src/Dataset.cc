@@ -11,12 +11,12 @@
 namespace faint {
 namespace dataset {
 
-Dataset::Dataset(RunReader runs, Options opt, Variables vars)
+Dataset::Dataset(RunReader runs, std::string ntuple_dir, Options opt, Variables vars)
     : runs_(std::move(runs)),
       vars_(std::move(vars)),
       opt_(std::move(opt)),
       set_(std::make_unique<SampleSet>(runs_, vars_, opt_.beam, opt_.periods,
-                                       opt_.ntuple_dir, opt_.blind)) {
+                                       ntuple_dir)) {
     build_dataset_cache();
 }
 
@@ -60,7 +60,9 @@ std::string ntuple_directory(const std::string& run_config_json) {
 }
 
 Dataset Dataset::open(const std::string& run_config_json, Options opt, Variables vars) {
-    return Dataset(RunReader(run_config_json), std::move(opt), std::move(vars));
+    auto ntuple_dir = ntuple_directory(run_config_json);
+    return Dataset(RunReader(run_config_json), std::move(ntuple_dir), std::move(opt),
+                   std::move(vars));
 }
 
 std::vector<std::string> Dataset::sample_keys(

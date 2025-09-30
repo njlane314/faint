@@ -46,8 +46,6 @@ std::string ntuple_directory(const std::string& run_config_json);
 struct Options {
     std::string beam;
     std::vector<std::string> periods;
-    std::string ntuple_dir;
-    bool blind{true};
 };
 
 class Dataset {
