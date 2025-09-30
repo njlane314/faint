@@ -5,7 +5,6 @@
 #include <stdexcept>
 #include <utility>
 
-#include "faint/Log.h"
 
 namespace faint {
 
@@ -24,9 +23,8 @@ const nlohmann::json& runs_node(const nlohmann::json& data) {
     return node->at("beamlines");
   }
 
-  log::fatal("RunReader::load_from_json",
-             "Run configuration missing 'beamlines' or 'run_configurations' section");
-  throw std::runtime_error("unreachable");
+  throw std::runtime_error(
+      "RunReader::load_from_json: Run configuration missing 'beamlines' or 'run_configurations' section");
 }
 
 }  // namespace
@@ -47,18 +45,23 @@ std::string Run::key() const { return beam_mode + ":" + run_period; }
 std::string Run::label() const { return key(); }
 
 void Run::validate() const {
-  if (beam_mode.empty())
-    log::fatal("Run::validate", "empty beam_mode");
-  if (run_period.empty())
-    log::fatal("Run::validate", "empty run_period");
-  if (samples.empty())
-    log::fatal("Run::validate", "no samples for", beam_mode + "/" + run_period);
+  if (beam_mode.empty()) {
+    throw std::runtime_error("Run::validate: empty beam_mode");
+  }
+  if (run_period.empty()) {
+    throw std::runtime_error("Run::validate: empty run_period");
+  }
+  if (samples.empty()) {
+    throw std::runtime_error("Run::validate: no samples for " + beam_mode +
+                             "/" + run_period);
+  }
 
   std::set<std::string> keys;
   for (auto& s : samples) {
     std::string key = s.at("sample_key").get<std::string>();
-    if (!keys.insert(key).second)
-      log::fatal("Run::validate", "duplicate sample key:", key);
+    if (!keys.insert(key).second) {
+      throw std::runtime_error("Run::validate: duplicate sample key: " + key);
+    }
   }
 }
 
@@ -84,13 +87,15 @@ const std::map<std::string, Run>& RunReader::all() const noexcept {
 
 RunReader::RunReader(const std::string& path) {
   std::ifstream f(path);
-  if (!f.is_open())
-    log::fatal("RunReader::RunReader", "Could not open config file:", path);
+  if (!f.is_open()) {
+    throw std::runtime_error("RunReader::RunReader: Could not open config file: " + path);
+  }
 
   try {
     load_from_json(nlohmann::json::parse(f));
   } catch (const std::exception& e) {
-    log::fatal("RunReader::RunReader", "Parsing error:", e.what());
+    throw std::runtime_error(std::string("RunReader::RunReader: Parsing error: ") +
+                             e.what());
   }
 }
 

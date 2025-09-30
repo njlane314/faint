@@ -2,11 +2,12 @@
 
 #include <cassert>
 #include <filesystem>
+#include <iostream>
+#include <sstream>
 #include <utility>
 
 #include <nlohmann/json.hpp>
 
-#include "faint/Log.h"
 #include "faint/proc/MuonSelector.h"
 
 namespace faint {
@@ -40,9 +41,10 @@ ROOT::RDF::RNode exclude_truth(ROOT::RDF::RNode df,
         }
       }
     }
-    if (!found)
-      log::warn("Sample::exclude_truth", "Exclusion k not found or missing truth:",
-                k);
+    if (!found) {
+      std::clog << "Sample::exclude_truth: Exclusion k not found or missing truth: "
+                << k << '\n';
+    }
   }
   return df;
 }
@@ -96,28 +98,44 @@ Sample::Sample(const nlohmann::json& j, const nlohmann::json& all,
 }
 
 void Sample::validate(const std::string& base_dir) const {
-  if (key_.str().empty())
-    log::fatal("Sample::validate", "empty key_");
-  if (origin_ == SampleOrigin::kUnknown)
-    log::fatal("Sample::validate", "unknown origin for", key_.str());
+  if (key_.str().empty()) {
+    throw std::runtime_error("Sample::validate: empty key_");
+  }
+  if (origin_ == SampleOrigin::kUnknown) {
+    throw std::runtime_error("Sample::validate: unknown origin for " +
+                             key_.str());
+  }
   if ((origin_ == SampleOrigin::kMonteCarlo || origin_ == SampleOrigin::kDirt) &&
-      pot_ <= 0)
-    log::fatal("Sample::validate", "invalid pot_ for MC/Dirt", key_.str());
-  if (origin_ == SampleOrigin::kData && triggers_ <= 0)
-    log::fatal("Sample::validate", "invalid triggers_ for Data", key_.str());
-  if (origin_ != SampleOrigin::kData && path_.empty())
-    log::fatal("Sample::validate", "missing path for", key_.str());
+      pot_ <= 0) {
+    std::ostringstream msg;
+    msg << "Sample::validate: invalid pot_ for MC/Dirt " << key_.str()
+        << " (pot=" << pot_ << ")";
+    throw std::runtime_error(msg.str());
+  }
+  if (origin_ == SampleOrigin::kData && triggers_ <= 0) {
+    std::ostringstream msg;
+    msg << "Sample::validate: invalid triggers_ for Data " << key_.str()
+        << " (triggers=" << triggers_ << ")";
+    throw std::runtime_error(msg.str());
+  }
+  if (origin_ != SampleOrigin::kData && path_.empty()) {
+    throw std::runtime_error("Sample::validate: missing path for " +
+                             key_.str());
+  }
 
   if (!path_.empty()) {
     auto p = std::filesystem::path(base_dir) / path_;
-    if (!std::filesystem::exists(p))
-      log::fatal("Sample::validate", "missing file", p.string());
+    if (!std::filesystem::exists(p)) {
+      throw std::runtime_error("Sample::validate: missing file " + p.string());
+    }
   }
 
   for (auto& [variation, rel_path] : variation_paths_) {
     auto vp = std::filesystem::path(base_dir) / rel_path;
-    if (!std::filesystem::exists(vp))
-      log::fatal("Sample::validate", "missing variation", rel_path);
+    if (!std::filesystem::exists(vp)) {
+      throw std::runtime_error("Sample::validate: missing variation " +
+                               rel_path);
+    }
   }
 }
 
@@ -132,8 +150,7 @@ SampleVariation Sample::parse_variation(const std::string& s) const {
   if (s == "wiremodyz") return SampleVariation::kWireModYZ;
   if (s == "wiremodanglexz") return SampleVariation::kWireModAngleXZ;
   if (s == "wiremodangleyz") return SampleVariation::kWireModAngleYZ;
-  log::fatal("Sample::parse_variation", "invalid detvar_type:", s);
-  return SampleVariation::kUnknown;
+  throw std::runtime_error("Sample::parse_variation: invalid detvar_type: " + s);
 }
 
 ROOT::RDF::RNode Sample::build(const std::string& base_dir,
@@ -188,16 +205,17 @@ void SampleSet::snapshot(const Selection& selection, const std::string& out,
 }
 
 void SampleSet::print_branches() {
-  log::debug("SampleSet::print_branches",
-             "Available branches in loaded samples:");
+#ifndef NDEBUG
+  std::clog << "SampleSet::print_branches: Available branches in loaded samples:\n";
   for (auto& [sample_key, sample_def] : samples_) {
-    log::debug("SampleSet::print_branches", "--- Sample:", sample_key.str(),
-               "---");
+    std::clog << "SampleSet::print_branches: --- Sample: " << sample_key.str()
+              << " ---\n";
     auto branches = sample_def.nominal().GetColumnNames();
     for (const auto& branch : branches) {
-      log::debug("SampleSet::print_branches", "  - ", branch);
+      std::clog << "SampleSet::print_branches:   - " << branch << '\n';
     }
   }
+#endif
 }
 
 void SampleSet::build() {
@@ -245,8 +263,8 @@ void SampleSet::add_run(const Run& rc) {
   processors_.reserve(processors_.size() + rc.samples.size());
   for (auto& s : rc.samples) {
     if (s.contains("active") && !s.at("active").get<bool>()) {
-      log::info("SampleSet::add_run", "Skipping inactive sample: ",
-                s.at("sample_key").get<std::string>());
+      std::clog << "SampleSet::add_run: Skipping inactive sample: "
+                << s.at("sample_key").get<std::string>() << '\n';
       continue;
     }
 

@@ -4,9 +4,7 @@
 #include <TH1D.h>
 
 #include <faint/Dataset.h>
-#include <faint/Log.h>
-#include <faint/Selection.h>
-#include <faint/Types.h>
+#include <faint/Samples.h>
 #include <faint/plot/StackedHistogram.h>
 
 #include <algorithm>

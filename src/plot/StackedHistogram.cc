@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -19,7 +20,6 @@
 #include "TH1.h"
 #include "THStack.h"
 
-#include "faint/Log.h"
 #include "faint/plot/PlotStyle.h"
 
 namespace faint {
@@ -202,7 +202,7 @@ void StackedHistogram::draw(TCanvas& canvas) {
     signal_->histogram->Draw("HIST");
     max_y = std::max(max_y, signal_->histogram->GetMaximum());
   } else {
-    faint::log::warn("StackedHistogram::draw", "No histograms available to draw");
+    std::clog << "StackedHistogram::draw: No histograms available to draw\n";
     canvas.Update();
     return;
   }
@@ -375,7 +375,7 @@ void StackedHistogram::draw_and_save(const std::string& format) {
   } else {
     std::unique_ptr<TImage> image(TImage::Create());
     if (!image) {
-      faint::log::warn("StackedHistogram::draw_and_save", "Failed to create ROOT image object");
+      std::clog << "StackedHistogram::draw_and_save: Failed to create ROOT image object\n";
       return;
     }
     image->FromPad(&canvas);
