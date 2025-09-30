@@ -40,8 +40,9 @@ ROOT::RDF::RNode MuonSelector::build_mask(ROOT::RDF::RNode df) const {
               start_x[i], start_y[i], start_z[i]);
           const bool fid_end = fiducial::is_in_reco_volume(
               end_x[i], end_y[i], end_z[i]);
-          mask[i] = (scores[i] > 0.5f && llr[i] > 0.2f && lengths[i] > 10.0f &&
-                     dists[i] < 4.0f && gens[i] == 2u && fid_start && fid_end);
+          mask[i] = selection::passes_muon_track_selection(
+              scores[i], llr[i], lengths[i], dists[i], gens[i], fid_start,
+              fid_end);
         }
         return mask;
       },
