@@ -144,7 +144,9 @@ ifeq ($(strip $(SRCS)),)
   $(warning No sources found under '$(SRC_DIR)'.)
 endif
 
-ROOT_DICT_HEADERS_REL := faint/EventProcessor.h faint/PreSelection.h faint/MuonSelector.h faint/Selection.h faint/TruthClassifier.h
+ROOT_DICT_HEADERS_REL := faint/proc/EventProcessor.h faint/proc/PreSelection.h \
+                          faint/proc/MuonSelector.h faint/Selection.h \
+                          faint/proc/TruthClassifier.h faint/proc/Weighter.h
 ROOT_DICT_HEADERS := $(addprefix $(INCLUDE_DIR)/,$(ROOT_DICT_HEADERS_REL))
 ROOT_DICT_SRC := $(OBJ_DIR)/$(ROOT_SHARED_LIB_NAME)_dict.cxx
 ROOT_DICT_OBJ := $(OBJ_DIR)/$(ROOT_SHARED_LIB_NAME)_dict.o

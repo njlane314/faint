@@ -1,15 +1,15 @@
 #include "faint/Dataset.h"
-#include "faint/EventProcessor.h"
-#include "faint/MuonSelector.h"
-#include "faint/PreSelection.h"
+#include "faint/proc/EventProcessor.h"
+#include "faint/proc/MuonSelector.h"
+#include "faint/proc/PreSelection.h"
 #include "faint/Run.h"
 #include "faint/Samples.h"
 #include "faint/Selection.h"
 #include "faint/plot/StackedHistogram.h"
-#include "faint/TruthClassifier.h"
+#include "faint/proc/TruthClassifier.h"
 #include "faint/Types.h"
 #include "faint/Variables.h"
-#include "faint/Weighter.h"
+#include "faint/proc/Weighter.h"
 
 #ifdef __CLING__
 #pragma link C++ namespace faint;

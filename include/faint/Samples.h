@@ -13,14 +13,14 @@
 
 #include "nlohmann/json.hpp"
 
-#include "faint/EventProcessor.h"
-#include "faint/PreSelection.h"
+#include "faint/proc/EventProcessor.h"
+#include "faint/proc/PreSelection.h"
 #include "faint/Run.h"
 #include "faint/Selection.h"
-#include "faint/TruthClassifier.h"
+#include "faint/proc/TruthClassifier.h"
 #include "faint/Types.h"
 #include "faint/Variables.h"
-#include "faint/Weighter.h"
+#include "faint/proc/Weighter.h"
 
 namespace faint {
 

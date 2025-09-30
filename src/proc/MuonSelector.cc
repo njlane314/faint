@@ -1,4 +1,4 @@
-#include "faint/MuonSelector.h"
+#include "faint/proc/MuonSelector.h"
 
 #include <cmath>
 #include <initializer_list>

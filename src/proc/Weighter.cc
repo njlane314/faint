@@ -1,4 +1,4 @@
-#include "faint/Weighter.h"
+#include "faint/proc/Weighter.h"
 
 #include <cmath>
 
