@@ -1,6 +1,6 @@
 #include "faint/PreSelection.h"
 
-#include "faint/FiducialVolume.h"
+#include "faint/Selections.h"
 
 #include "ROOT/RVec.hxx"
 
@@ -44,7 +44,7 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
   node = node.Define(
       "in_reco_fiducial",
       [](float x, float y, float z) {
-        return fiducial::is_in_reco_volume(x, y, z);
+        return selection::in_reco_fiducial_volume(x, y, z);
       },
       {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y",
        "reco_neutrino_vertex_sce_z"});
@@ -94,54 +94,61 @@ ROOT::RDF::RNode PreSelection::process(ROOT::RDF::RNode df,
   }
 
   node = node.Define(
-      "pass_pre",
+      selection::column::kPassPre,
       [origin](float pe_beam, float pe_veto, bool swtrig) {
-        const bool dataset_gate =
-            (origin == SampleOrigin::kMonteCarlo ||
-             origin == SampleOrigin::kDirt)
-                ? (pe_beam > 0.f && pe_veto < 20.f)
-                : true;
-        return dataset_gate && swtrig;
+        return selection::passes_pre_selection(origin, pe_beam, pe_veto,
+                                               swtrig);
       },
       {"optical_filter_pe_beam", "optical_filter_pe_veto",
        "software_trigger"});
 
   node = node.Define(
-      "pass_flash",
+      selection::column::kPassFlash,
       [](int nslices, float topo, int n_gen2) {
-        return nslices == 1 && topo > 0.06f && n_gen2 > 1;
+        return selection::passes_flash_selection(nslices, topo, n_gen2);
       },
       {"num_slices", "topological_score", "n_pfps_gen2"});
 
   node = node.Define(
-      "pass_fv",
+      selection::column::kPassFiducial,
       [](float x, float y, float z) {
-        return fiducial::is_in_reco_volume(x, y, z);
+        return selection::in_reco_fiducial_volume(x, y, z);
       },
       {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y",
        "reco_neutrino_vertex_sce_z"});
 
   if (!node.HasColumn("n_muons_tot"))
     node = node.Define("n_muons_tot", []() { return 0UL; });
-  node = node.Define("pass_mu", "n_muons_tot > 0");
+  node = node.Define(
+      selection::column::kPassMuon,
+      [](unsigned long n_muons) {
+        return selection::passes_muon_selection(n_muons);
+      },
+      {"n_muons_tot"});
 
   node = node.Define(
-      "pass_topo",
+      selection::column::kPassTopology,
       [](float contained, float cluster) {
-        return contained >= 0.7f && cluster >= 0.5f;
+        return selection::passes_topology_selection(contained, cluster);
       },
       {"contained_fraction", "slice_cluster_fraction"});
 
   node = node.Define(
-      "pass_final",
+      selection::column::kPassFinal,
       [](bool pre, bool flash, bool fv, bool mu, bool topo) {
-        return pre && flash && fv && mu && topo;
+        return selection::passes_final_selection(pre, flash, fv, mu, topo);
       },
-      {"pass_pre", "pass_flash", "pass_fv", "pass_mu", "pass_topo"});
+      {selection::column::kPassPre, selection::column::kPassFlash,
+       selection::column::kPassFiducial, selection::column::kPassMuon,
+       selection::column::kPassTopology});
 
   node = node.Define(
-      "quality_event",
-      "pass_pre && pass_flash && pass_fv && pass_topo");
+      selection::column::kQualityEvent,
+      [](bool pre, bool flash, bool fv, bool topo) {
+        return selection::is_quality_event(pre, flash, fv, topo);
+      },
+      {selection::column::kPassPre, selection::column::kPassFlash,
+       selection::column::kPassFiducial, selection::column::kPassTopology});
 
   return next_ ? next_->process(node, origin) : node;
 }

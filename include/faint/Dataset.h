@@ -18,18 +18,19 @@
 #include <faint/RunCatalog.h>
 #include <faint/Sample.h>
 #include <faint/SampleSet.h>
+#include <faint/Selections.h>
 
 namespace faint {
 namespace dataset {
 
 namespace sel {
-inline constexpr const char* Pre = "pass_pre";
-inline constexpr const char* Flash = "pass_flash";
-inline constexpr const char* FV = "pass_fv";
-inline constexpr const char* Muon = "pass_mu";
-inline constexpr const char* Topo = "pass_topo";
-inline constexpr const char* Final = "pass_final";
-inline constexpr const char* Quality = "quality_event";
+inline constexpr const char* Pre = selection::column::kPassPre;
+inline constexpr const char* Flash = selection::column::kPassFlash;
+inline constexpr const char* FV = selection::column::kPassFiducial;
+inline constexpr const char* Muon = selection::column::kPassMuon;
+inline constexpr const char* Topo = selection::column::kPassTopology;
+inline constexpr const char* Final = selection::column::kPassFinal;
+inline constexpr const char* Quality = selection::column::kQualityEvent;
 }
 
 namespace col {
