@@ -24,7 +24,7 @@ const nlohmann::json& runs_node(const nlohmann::json& data) {
     return node->at("beamlines");
   }
 
-  log::fatal("RunReader::from_json",
+  log::fatal("RunReader::load_from_json",
              "Run configuration missing 'beamlines' or 'run_configurations' section");
   throw std::runtime_error("unreachable");
 }
@@ -82,30 +82,28 @@ const std::map<std::string, Run>& RunReader::all() const noexcept {
   return configs_;
 }
 
-RunReader RunReader::from_json(const nlohmann::json& data) {
-  RunReader out;
+RunReader::RunReader(const std::string& path) {
+  std::ifstream f(path);
+  if (!f.is_open())
+    log::fatal("RunReader::RunReader", "Could not open config file:", path);
+
+  try {
+    load_from_json(nlohmann::json::parse(f));
+  } catch (const std::exception& e) {
+    log::fatal("RunReader::RunReader", "Parsing error:", e.what());
+  }
+}
+
+void RunReader::load_from_json(const nlohmann::json& data) {
+  configs_.clear();
   const auto& runs = runs_node(data);
   for (auto const& [beam, periods] : runs.items()) {
     for (auto const& [period, details] : periods.items()) {
       Run rc(details, beam, period);
       rc.validate();
-      out.add(std::move(rc));
+      add(std::move(rc));
     }
   }
-  return out;
-}
-
-RunReader RunReader::from_file(const std::string& path) {
-  std::ifstream f(path);
-  if (!f.is_open())
-    log::fatal("RunReader::from_file", "Could not open config file:", path);
-  try {
-    nlohmann::json data = nlohmann::json::parse(f);
-    return from_json(data);
-  } catch (const std::exception& e) {
-    log::fatal("RunReader::from_file", "Parsing error:", e.what());
-  }
-  return {};
 }
 
 }  // namespace faint

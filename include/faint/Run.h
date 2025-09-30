@@ -29,21 +29,18 @@ struct Run {
 
 class RunReader {
 public:
+  RunReader() = default;
+  explicit RunReader(const std::string& path);
+
   void add(Run rc);
 
   const Run& get(const std::string& beam, const std::string& period) const;
 
   const std::map<std::string, Run>& all() const noexcept;
 
-  static RunReader from_json(const nlohmann::json& data);
-
-  static RunReader from_file(const std::string& path);
-
-  static RunReader read(const nlohmann::json& data) { return from_json(data); }
-
-  static RunReader read(const std::string& path) { return from_file(path); }
-
 private:
+  void load_from_json(const nlohmann::json& data);
+
   std::map<std::string, Run> configs_;
 };
 
