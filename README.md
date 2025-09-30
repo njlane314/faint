@@ -49,18 +49,18 @@ After building, the faint libraries must be discoverable by ROOT.  The
 executes any macro you pass to it.  From the repository root run:
 
 ```bash
-./scripts/faint-root.sh -b -q src/example_macro.C
+./scripts/faint-root.sh -b -q macros/example_macro.C
 ```
 
 This command loads the generated libraries, configures ROOT include paths, and
-runs the `example_macro()` entry point defined in `src/example_macro.C`.  Drop
+runs the `example_macro()` entry point defined in `macros/example_macro.C`.  Drop
 `-b -q` to open an interactive ROOT session preloaded with the FAINT API.
 
 Alternatively, you can call the setup macro manually from ROOT by providing the
 absolute library and include directories:
 
 ```bash
-root -l -q -e 'setup_faint("$PWD/build/lib/libfaint.so","$PWD/include")' src/example_macro.C
+root -l -q -e 'setup_faint("$PWD/build/lib/libfaint.so","$PWD/include")' macros/example_macro.C
 ```
 
 Replace the library suffix with `.dylib` on macOS.  Once the environment is
