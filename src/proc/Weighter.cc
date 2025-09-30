@@ -1,4 +1,5 @@
 #include "faint/proc/Weighter.h"
+#include "faint/Samples.h"
 
 #include <cmath>
 #include <iostream>
@@ -17,10 +18,10 @@ Weighter::Weighter(const nlohmann::json& cfg, double total_run_pot,
 }
 
 ROOT::RDF::RNode Weighter::process(ROOT::RDF::RNode df,
-                                   SampleOrigin origin) const {
+                                   sample::Origin origin) const {
   ROOT::RDF::RNode node = df;
 
-  if (origin == SampleOrigin::kMonteCarlo || origin == SampleOrigin::kDirt) {
+  if (origin == sample::Origin::kMonteCarlo || origin == sample::Origin::kDirt) {
     double scale = 1.0;
     if (sample_pot_ > 0.0 && total_run_pot_ > 0.0)
       scale = total_run_pot_ / sample_pot_;
@@ -41,7 +42,7 @@ ROOT::RDF::RNode Weighter::process(ROOT::RDF::RNode df,
         },
         {"base_event_weight", "weightSpline", "weightTune"});
 
-  } else if (origin == SampleOrigin::kExternal) {
+  } else if (origin == sample::Origin::kExternal) {
     double scale = 1.0;
     if (sample_triggers_ > 0 && total_run_triggers_ > 0) {
       scale = static_cast<double>(total_run_triggers_) /

@@ -1,4 +1,5 @@
 #include "faint/proc/TruthClassifier.h"
+#include "faint/Samples.h"
 
 #include "faint/FiducialVolume.h"
 
@@ -10,8 +11,8 @@
 namespace faint {
 
 ROOT::RDF::RNode TruthClassifier::process(ROOT::RDF::RNode df,
-                                          SampleOrigin origin) const {
-  if (origin != SampleOrigin::kMonteCarlo) {
+                                          sample::Origin origin) const {
+  if (origin != sample::Origin::kMonteCarlo) {
     return this->process_non_mc(df, origin);
   }
 
@@ -24,15 +25,15 @@ ROOT::RDF::RNode TruthClassifier::process(ROOT::RDF::RNode df,
 }
 
 ROOT::RDF::RNode TruthClassifier::process_non_mc(ROOT::RDF::RNode df,
-                                                 SampleOrigin origin) const {
+                                                 sample::Origin origin) const {
   auto mode_frame = df.Define("genie_int_mode", []() { return -1; });
 
   auto inclusive_frame = mode_frame.Define("incl_channel", [c = origin]() {
-    if (c == SampleOrigin::kData)
+    if (c == sample::Origin::kData)
       return 0;
-    if (c == SampleOrigin::kExternal)
+    if (c == sample::Origin::kExternal)
       return 1;
-    if (c == SampleOrigin::kDirt)
+    if (c == sample::Origin::kDirt)
       return 2;
     return 99;
   });
@@ -41,11 +42,11 @@ ROOT::RDF::RNode TruthClassifier::process_non_mc(ROOT::RDF::RNode df,
       inclusive_frame.Define("inclusive_strange_channels", "incl_channel");
 
   auto exclusive_frame = inclusive_alias_frame.Define("excl_channel", [c = origin]() {
-    if (c == SampleOrigin::kData)
+    if (c == sample::Origin::kData)
       return 0;
-    if (c == SampleOrigin::kExternal)
+    if (c == sample::Origin::kExternal)
       return 1;
-    if (c == SampleOrigin::kDirt)
+    if (c == sample::Origin::kDirt)
       return 2;
     return 99;
   });
@@ -54,9 +55,9 @@ ROOT::RDF::RNode TruthClassifier::process_non_mc(ROOT::RDF::RNode df,
       exclusive_frame.Define("exclusive_strange_channels", "excl_channel");
 
   auto channel_frame = exclusive_alias_frame.Define("channel_def", [c = origin]() {
-    if (c == SampleOrigin::kData)
+    if (c == sample::Origin::kData)
       return 0;
-    if (c == SampleOrigin::kExternal || c == SampleOrigin::kDirt)
+    if (c == sample::Origin::kExternal || c == sample::Origin::kDirt)
       return 1;
     return 99;
   });

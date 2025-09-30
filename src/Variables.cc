@@ -34,9 +34,9 @@ const std::string& Variables::single_knob_var() {
   return s;
 }
 
-std::vector<std::string> Variables::event_var(SampleOrigin origin) {
+std::vector<std::string> Variables::event_var(sample::Origin origin) {
   auto vars = collect_base_vars();
-  if (origin == SampleOrigin::kMonteCarlo || origin == SampleOrigin::kDirt)
+  if (origin == sample::Origin::kMonteCarlo || origin == sample::Origin::kDirt)
     add_mc_vars(vars);
   return std::vector<std::string>(vars.begin(), vars.end());
 }

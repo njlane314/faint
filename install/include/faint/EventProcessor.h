@@ -5,7 +5,9 @@
 
 #include "ROOT/RDataFrame.hxx"
 
-#include <faint/Types.h>
+namespace faint::sample {
+enum class Origin : unsigned int;
+}
 
 namespace faint {
 
@@ -14,7 +16,7 @@ public:
   virtual ~EventProcessor() = default;
 
   virtual ROOT::RDF::RNode process(ROOT::RDF::RNode df,
-                                   SampleOrigin origin) const = 0;
+                                   sample::Origin origin) const = 0;
 
   void chain_processor(std::unique_ptr<EventProcessor> next);
 

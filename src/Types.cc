@@ -1,38 +1,38 @@
-#include "faint/Types.h"
+#include "faint/Samples.h"
 
 #include <utility>
 
-namespace faint {
+namespace faint::sample {
 
-SampleKey::SampleKey(std::string value) : value_(std::move(value)) {}
+Key::Key(std::string value) : value_(std::move(value)) {}
 
-SampleKey::SampleKey(const char* value) : value_(value ? value : "") {}
+Key::Key(const char* value) : value_(value ? value : "") {}
 
-std::string to_key(SampleVariation var) {
+std::string to_key(Variation var) {
   switch (var) {
-    case SampleVariation::kCV:
+    case Variation::kCV:
       return "CV";
-    case SampleVariation::kLYAttenuation:
+    case Variation::kLYAttenuation:
       return "LYAttenuation";
-    case SampleVariation::kLYDown:
+    case Variation::kLYDown:
       return "LYDown";
-    case SampleVariation::kLYRayleigh:
+    case Variation::kLYRayleigh:
       return "LYRayleigh";
-    case SampleVariation::kRecomb2:
+    case Variation::kRecomb2:
       return "Recomb2";
-    case SampleVariation::kSCE:
+    case Variation::kSCE:
       return "SCE";
-    case SampleVariation::kWireModX:
+    case Variation::kWireModX:
       return "WireModX";
-    case SampleVariation::kWireModYZ:
+    case Variation::kWireModYZ:
       return "WireModYZ";
-    case SampleVariation::kWireModAngleXZ:
+    case Variation::kWireModAngleXZ:
       return "WireModAngleXZ";
-    case SampleVariation::kWireModAngleYZ:
+    case Variation::kWireModAngleYZ:
       return "WireModAngleYZ";
     default:
       return "Unknown";
   }
 }
 
-}  // namespace faint
+}  // namespace faint::sample
