@@ -45,8 +45,6 @@ void stacked_histogram_example() {
     faint::dataset::Options options;
     options.beam = "numi-fhc";
     options.periods = {"run1"};
-    options.ntuple_dir = faint::dataset::ntuple_directory();
-
     auto dataset = faint::dataset::Dataset::open(config_path, options);
 
     faint::plot::StackedHistogram plot("muon_track_length");

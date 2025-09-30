@@ -70,7 +70,7 @@ class SampleSet {
 
   SampleSet(const RunReader& runs, VariableRegistry variables,
             const std::string& beam, std::vector<std::string> periods,
-            const std::string& ntuple_dir, bool blind = true);
+            const std::string& ntuple_dir);
 
   Map& frames() noexcept;
 
@@ -96,8 +96,6 @@ class SampleSet {
 
   std::string beam_;
   std::vector<std::string> periods_;
-  bool blind_;
-
   double total_pot_;
   long total_triggers_;
 
