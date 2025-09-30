@@ -82,10 +82,10 @@ ROOT::RDF::RNode Dataset::df(std::string_view sample_key,
     if (!variations) {
         throw std::runtime_error(std::string("Sample not found: ") + std::string(sample_key));
     }
-    if (v == SampleVariation::kCV) return variations->nominal.dataframe;
+    if (v == SampleVariation::kCV) return variations->nominal.dataframe();
     auto it = variations->variations.find(v);
-    return (it != variations->variations.end()) ? it->second.dataframe
-                                                : variations->nominal.dataframe;
+    return (it != variations->variations.end()) ? it->second.dataframe()
+                                                : variations->nominal.dataframe();
 }
 
 ROOT::RDF::RNode Dataset::final(std::string_view key,
