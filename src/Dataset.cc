@@ -27,17 +27,14 @@ std::string run_config_path() {
     return cwd + "/data/samples.json";
 }
 
-std::string ntuple_directory() {
-    return ntuple_directory(run_config_path());
-}
-
-std::string ntuple_directory(const std::string& run_config_json) {
+Dataset Dataset::open(const std::string& run_config_json, Options opt, Variables vars) {
     const auto& config_path = run_config_json;
     std::ifstream input(config_path);
     if (!input.is_open()) {
         throw std::runtime_error("Could not open run configuration: " + config_path);
     }
 
+    std::string ntuple_dir;
     try {
         auto data = nlohmann::json::parse(input);
         if (data.contains("samples")) {
@@ -48,19 +45,14 @@ std::string ntuple_directory(const std::string& run_config_json) {
             throw std::runtime_error("Run configuration missing 'ntupledir' entry");
         }
 
-        auto dir = data.at("ntupledir").get<std::string>();
-        if (dir.empty()) {
+        ntuple_dir = data.at("ntupledir").get<std::string>();
+        if (ntuple_dir.empty()) {
             throw std::runtime_error("Run configuration has empty 'ntupledir'");
         }
-
-        return dir;
     } catch (const nlohmann::json::exception& e) {
         throw std::runtime_error(std::string{"Failed to parse run configuration: "} + e.what());
     }
-}
 
-Dataset Dataset::open(const std::string& run_config_json, Options opt, Variables vars) {
-    auto ntuple_dir = ntuple_directory(run_config_json);
     return Dataset(RunReader(run_config_json), std::move(ntuple_dir), std::move(opt),
                    std::move(vars));
 }
