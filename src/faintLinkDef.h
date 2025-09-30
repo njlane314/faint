@@ -3,7 +3,6 @@
 #include "faint/MuonSelector.h"
 #include "faint/PreSelection.h"
 #include "faint/Run.h"
-#include "faint/RunReader.h"
 #include "faint/Sample.h"
 #include "faint/SampleSet.h"
 #include "faint/Selection.h"
