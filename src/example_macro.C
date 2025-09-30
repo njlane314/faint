@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "TSystem.h"
+#include "ROOT/RDataFrame.hxx"
 
 #include <faint/Campaign.h>
 
@@ -17,6 +18,8 @@ void example_macro(const char* run_config = nullptr)
   if (config_path.empty()) {
     config_path = faint::campaign::run_config_path();
   }
+
+  ROOT::EnableImplicitMT();
 
   faint::campaign::Options options;
   options.beam = "numi-fhc";
