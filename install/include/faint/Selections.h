@@ -1,22 +1,21 @@
-#ifndef FAINT_SELECTION_H
-#define FAINT_SELECTION_H
+#ifndef FAINT_SELECTIONS_H
+#define FAINT_SELECTIONS_H
 
-#include <string>
+#include <cstddef>
 
 #include <faint/FiducialVolume.h>
 #include <faint/Types.h>
 
-namespace faint {
-namespace selection {
+namespace faint::selection {
 
 namespace column {
-  inline constexpr const char *kPassPre = "pass_pre";
-  inline constexpr const char *kPassFlash = "pass_flash";
-  inline constexpr const char *kPassFiducial = "pass_fv";
-  inline constexpr const char *kPassMuon = "pass_mu";
-  inline constexpr const char *kPassTopology = "pass_topo";
-  inline constexpr const char *kPassFinal = "pass_final";
-  inline constexpr const char *kQualityEvent = "quality_event";
+inline constexpr const char *kPassPre = "pass_pre";
+inline constexpr const char *kPassFlash = "pass_flash";
+inline constexpr const char *kPassFiducial = "pass_fv";
+inline constexpr const char *kPassMuon = "pass_mu";
+inline constexpr const char *kPassTopology = "pass_topo";
+inline constexpr const char *kPassFinal = "pass_final";
+inline constexpr const char *kQualityEvent = "quality_event";
 } // namespace column
 
 struct PreCut {
@@ -95,19 +94,6 @@ inline bool is_quality_event(bool pre, bool flash, bool fiducial, bool topology)
   return pre && flash && fiducial && topology;
 }
 
-class Selection {
- public:
-  Selection();
-  explicit Selection(std::string expression);
+} // namespace faint::selection
 
-  const std::string& str() const noexcept;
-  bool empty() const noexcept;
-
- private:
-  std::string expression_;
-};
-
-}  // namespace selection
-}  // namespace faint
-
-#endif  // FAINT_SELECTION_H
+#endif // FAINT_SELECTIONS_H
