@@ -36,7 +36,8 @@ void example_macro(const char* run_config = nullptr)
 
   for (const auto& key : campaign.sample_keys()) {
     auto final_count = campaign.final(key).Count();
-    std::cout << "Final selection entries for " << key << ": " << final_count.GetValue() << std::endl;
+    auto final_count_value = final_count.GetValue();
+    std::cout << "Final selection entries for " << key << ": " << final_count_value << std::endl;
   }
 
   std::cout << "Total POT: " << campaign.pot() << std::endl;
