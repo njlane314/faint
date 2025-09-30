@@ -31,38 +31,38 @@ class StackedHistogram {
   StackedHistogram(std::string plot_name, std::string output_directory = "plots");
   ~StackedHistogram();
 
-  void setXAxisTitle(std::string title);
-  void setYAxisTitle(std::string title);
-  void setLogY(bool value);
-  void setYAxisRange(double minimum, double maximum);
-  void resetYAxisRange();
+  void set_x_axis_title(std::string title);
+  void set_y_axis_title(std::string title);
+  void set_log_y(bool value);
+  void set_y_axis_range(double minimum, double maximum);
+  void reset_y_axis_range();
 
-  void setLegendPosition(double x1, double y1, double x2, double y2);
-  void setLegendColumns(int columns);
-  void setLegendTextSize(double size);
-  void setLegendHeader(std::optional<std::string> header);
+  void set_legend_position(double x1, double y1, double x2, double y2);
+  void set_legend_columns(int columns);
+  void set_legend_text_size(double size);
+  void set_legend_header(std::optional<std::string> header);
 
-  void setAnnotateYields(bool value);
+  void set_annotate_yields(bool value);
 
-  void addBackground(const TH1& hist, std::string label, Color_t color,
+  void add_background(const TH1& hist, std::string label, Color_t color,
                      Style_t fill_style = 1001);
-  void clearBackgrounds();
+  void clear_backgrounds();
 
-  void setData(const TH1& hist, std::string label = "Data",
+  void set_data(const TH1& hist, std::string label = "Data",
                Color_t color = kBlack, Style_t marker_style = 20);
-  void clearData();
+  void clear_data();
 
-  void setSignal(const TH1& hist, std::string label,
+  void set_signal(const TH1& hist, std::string label,
                  Color_t color = kGreen + 2, Style_t line_style = kDashed,
                  double scale = 1.0, int line_width = 2);
-  void clearSignal();
+  void clear_signal();
 
-  void addCut(double threshold, CutDirection direction,
+  void add_cut(double threshold, CutDirection direction,
               std::string label = std::string(), Color_t color = kRed);
-  void clearCuts();
+  void clear_cuts();
 
   void draw(TCanvas& canvas);
-  void drawAndSave(const std::string& format = "png");
+  void draw_and_save(const std::string& format = "png");
 
  private:
   struct BackgroundComponent {
@@ -88,11 +88,11 @@ class StackedHistogram {
     int line_width{2};
   };
 
-  std::unique_ptr<TH1> cloneHistogram(const TH1& hist,
+  std::unique_ptr<TH1> clone_histogram(const TH1& hist,
                                        const std::string& suffix) const;
-  std::string formatYield(double value, int precision = 1) const;
-  void setGlobalStyle() const;
-  void drawCuts(double max_y, double x_min, double x_max);
+  std::string format_yield(double value, int precision = 1) const;
+  void set_global_style() const;
+  void draw_cuts(double max_y, double x_min, double x_max);
 
   std::string plot_name_;
   std::string output_directory_;
