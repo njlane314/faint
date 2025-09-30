@@ -5,8 +5,9 @@
 #include <utility>
 #include <vector>
 
+#include "TMatrixDSym.h"
+
 class TH1D;
-class TMatrixDSym;
 
 namespace faint {
 namespace plot {
