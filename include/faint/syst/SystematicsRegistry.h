@@ -1,5 +1,5 @@
-#ifndef FAINT_SYSTEMATICS_REGISTRY_H
-#define FAINT_SYSTEMATICS_REGISTRY_H
+#ifndef FAINT_SYST_SYSTEMATICS_REGISTRY_H
+#define FAINT_SYST_SYSTEMATICS_REGISTRY_H
 
 #include <string>
 #include <utility>
@@ -67,4 +67,4 @@ inline std::vector<SystematicDescriptor> systematic_list_from_variables() {
 } // namespace syst
 } // namespace faint
 
-#endif // FAINT_SYSTEMATICS_REGISTRY_H
+#endif // FAINT_SYST_SYSTEMATICS_REGISTRY_H
