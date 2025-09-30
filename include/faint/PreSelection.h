@@ -8,8 +8,6 @@
 
 namespace faint {
 
-// NuMu charged-current event selection + the useful reconstruction gates
-// previously split across Reconstruction and NuMuCCSelectionProcessor.
 class PreSelection : public EventProcessor {
 public:
   ROOT::RDF::RNode process(ROOT::RDF::RNode df,
