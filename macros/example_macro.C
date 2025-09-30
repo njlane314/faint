@@ -34,8 +34,8 @@ void example_macro() {
 
     for (const auto& key : dataset.sample_keys()) {
       auto final_count = dataset.final(key).Count();
-      std::cout << "Final selection entries for " << key << ": " << final_count.GetValue()
-                << std::endl;
+      auto eval_final_count = final_count.GetValue();
+      std::cout << "Final selection entries for " << key << ": " << eval_final_count << std::endl;
     }
 
     std::cout << "Total POT: " << dataset.pot() << std::endl;
