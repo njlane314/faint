@@ -106,12 +106,19 @@ ROOT::RDF::RNode MuonSelector::extract_features(ROOT::RDF::RNode df) const {
                    .Define("muon_track_costheta", filter_costheta,
                            {"track_theta", "muon_mask"});
 
-  if (mu_df.HasColumn("n_muons_tot"))
-    mu_df = mu_df.Redefine("n_muons_tot", "ROOT::VecOps::Sum(muon_mask)");
-  else
-    mu_df = mu_df.Define("n_muons_tot", "ROOT::VecOps::Sum(muon_mask)");
+  auto redefine_or_define = [](ROOT::RDF::RNode node, const char *name,
+                               const char *expr) {
+    return node.HasColumn(name) ? node.Redefine(name, expr)
+                                : node.Define(name, expr);
+  };
 
-  mu_df = mu_df.Define("has_muon", "n_muons_tot > 0");
+  mu_df = redefine_or_define(mu_df, "n_muons_tot",
+                             "ROOT::VecOps::Sum(muon_mask)");
+  mu_df = redefine_or_define(mu_df, "pass_mu", "n_muons_tot > 0");
+  mu_df = redefine_or_define(
+      mu_df, "pass_final",
+      "pass_pre && pass_flash && pass_fv && pass_mu && pass_topo");
+  mu_df = redefine_or_define(mu_df, "has_muon", "n_muons_tot > 0");
   return mu_df;
 }
 
