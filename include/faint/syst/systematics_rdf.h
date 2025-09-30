@@ -11,7 +11,7 @@
 #include "TH2D.h"
 #include "TMatrixD.h"
 
-#include <faint/systematics_registry.h>
+#include <faint/syst/systematics_registry.h>
 
 namespace faint {
 namespace syst {

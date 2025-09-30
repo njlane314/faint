@@ -1,4 +1,4 @@
-#include "faint/ChiSquaredCalculator.h"
+#include "faint/plot/ChiSquaredCalculator.h"
 
 #include <algorithm>
 #include <stdexcept>

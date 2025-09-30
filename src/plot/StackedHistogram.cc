@@ -1,4 +1,4 @@
-#include "faint/StackedHistogram.h"
+#include "faint/plot/StackedHistogram.h"
 
 #include <algorithm>
 #include <cctype>
@@ -20,7 +20,7 @@
 #include "THStack.h"
 
 #include "faint/Log.h"
-#include "faint/PlotStyle.h"
+#include "faint/plot/PlotStyle.h"
 
 namespace faint {
 namespace plot {

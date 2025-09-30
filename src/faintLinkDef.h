@@ -7,7 +7,7 @@
 #include "faint/Sample.h"
 #include "faint/SampleSet.h"
 #include "faint/SelectionQuery.h"
-#include "faint/StackedHistogram.h"
+#include "faint/plot/StackedHistogram.h"
 #include "faint/TruthClassifier.h"
 #include "faint/Types.h"
 #include "faint/Variables.h"
