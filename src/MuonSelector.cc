@@ -1,9 +1,14 @@
 #include "faint/MuonSelector.h"
 
 #include <cmath>
+#include <initializer_list>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "ROOT/RVec.hxx"
 #include "faint/FiducialVolume.h"
+#include "faint/Selections.h"
 
 namespace faint {
 
@@ -103,18 +108,43 @@ ROOT::RDF::RNode MuonSelector::extract_features(ROOT::RDF::RNode df) const {
                            {"track_theta", "muon_mask"});
 
   auto redefine_or_define = [](ROOT::RDF::RNode node, const char *name,
-                               const char *expr) {
-    return node.HasColumn(name) ? node.Redefine(name, expr)
-                                : node.Define(name, expr);
+                               auto &&callable,
+                               std::initializer_list<std::string> cols) {
+    const std::vector<std::string> columns(cols.begin(), cols.end());
+    return node.HasColumn(name) ? node.Redefine(name, std::forward<decltype(callable)>(callable), columns)
+                                : node.Define(name, std::forward<decltype(callable)>(callable), columns);
   };
 
-  mu_df = redefine_or_define(mu_df, "n_muons_tot",
-                             "ROOT::VecOps::Sum(muon_mask)");
-  mu_df = redefine_or_define(mu_df, "pass_mu", "n_muons_tot > 0");
   mu_df = redefine_or_define(
-      mu_df, "pass_final",
-      "pass_pre && pass_flash && pass_fv && pass_mu && pass_topo");
-  mu_df = redefine_or_define(mu_df, "has_muon", "n_muons_tot > 0");
+      mu_df, "n_muons_tot",
+      [](const ROOT::RVec<bool> &mask) {
+        return static_cast<unsigned long>(ROOT::VecOps::Sum(mask));
+      },
+      {"muon_mask"});
+
+  mu_df = redefine_or_define(
+      mu_df, selection::column::kPassMuon,
+      [](unsigned long n_muons) {
+        return selection::passes_muon_selection(n_muons);
+      },
+      {"n_muons_tot"});
+
+  mu_df = redefine_or_define(
+      mu_df, selection::column::kPassFinal,
+      [](bool pre, bool flash, bool fiducial, bool muon, bool topo) {
+        return selection::passes_final_selection(pre, flash, fiducial, muon,
+                                                 topo);
+      },
+      {selection::column::kPassPre, selection::column::kPassFlash,
+       selection::column::kPassFiducial, selection::column::kPassMuon,
+       selection::column::kPassTopology});
+
+  mu_df = redefine_or_define(
+      mu_df, "has_muon",
+      [](unsigned long n_muons) {
+        return selection::passes_muon_selection(n_muons);
+      },
+      {"n_muons_tot"});
   return mu_df;
 }
 
