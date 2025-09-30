@@ -17,8 +17,7 @@
 #include <faint/Types.h>
 #include <faint/Variables.h>
 #include <faint/RunReader.h>
-#include <faint/Sample.h>
-#include <faint/SampleSet.h>
+#include <faint/Samples.h>
 #include <faint/Selections.h>
 
 namespace faint {
