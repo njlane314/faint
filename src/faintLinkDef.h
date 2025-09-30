@@ -6,7 +6,7 @@
 #include "faint/RunReader.h"
 #include "faint/Sample.h"
 #include "faint/SampleSet.h"
-#include "faint/SelectionQuery.h"
+#include "faint/Selection.h"
 #include "faint/plot/StackedHistogram.h"
 #include "faint/TruthClassifier.h"
 #include "faint/Types.h"
@@ -35,7 +35,7 @@
 #pragma link C++ class faint::SampleSet+;
 #pragma link C++ class faint::Run+;
 #pragma link C++ class faint::RunReader+;
-#pragma link C++ class faint::SelectionQuery+;
+#pragma link C++ class faint::Selection+;
 #pragma link C++ class faint::Variables+;
 #pragma link C++ class faint::Weighter+;
 #pragma link C++ class faint::plot::StackedHistogram+;

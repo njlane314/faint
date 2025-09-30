@@ -172,6 +172,7 @@ void setup_faint(const char* abs_lib_path = nullptr, const char* abs_inc_dir = n
   if (!include_dir.empty()) {
     load_header("faint/Types.h");
     load_header("faint/SampleSet.h");
+    load_header("faint/Selection.h");
     load_header("faint/PreSelection.h");
     load_header("faint/TruthClassifier.h");
     load_header("faint/MuonSelector.h");

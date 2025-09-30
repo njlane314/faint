@@ -15,7 +15,7 @@
 #include "faint/Run.h"
 #include "faint/RunReader.h"
 #include "faint/Sample.h"
-#include "faint/SelectionQuery.h"
+#include "faint/Selection.h"
 #include "faint/TruthClassifier.h"
 #include "faint/Variables.h"
 #include "faint/Weighter.h"
@@ -42,7 +42,7 @@ class SampleSet {
 
   void snapshot(const std::string& filter, const std::string& out,
                 const std::vector<std::string>& cols = {}) const;
-  void snapshot(const SelectionQuery& query, const std::string& out,
+  void snapshot(const Selection& selection, const std::string& out,
                 const std::vector<std::string>& cols = {}) const;
 
   void print_branches();
