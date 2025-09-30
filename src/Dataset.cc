@@ -129,8 +129,9 @@ void Dataset::build_dataset_cache() {
     datasets_.clear();
     auto& frames = const_cast<SampleSet&>(set()).frames();
     for (auto& [key, sample] : frames) {
-        Variations variations;
-        variations.nominal = make_entry(sample, SampleVariation::kCV, sample.nominal());
+        Variations variations{
+            make_entry(sample, SampleVariation::kCV, sample.nominal()), {}
+        };
         for (auto const& [variation, node] : sample.variations()) {
             variations.variations.emplace(variation, make_entry(sample, variation, node));
         }
