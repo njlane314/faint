@@ -65,7 +65,10 @@ void example_macro() {
       std::cout << "  Final selection entries: " << eval_final_count << std::endl;
 
       for (const auto& detvar : entry->detvars) {
-        auto detvar_count = detvar.second.node.Count().GetValue();
+        if (!detvar.second.node) {
+          continue;
+        }
+        auto detvar_count = detvar.second.rnode().Count().GetValue();
         std::cout << "  Detector variation '" << detvar.first
                   << "' entries: " << detvar_count << std::endl;
       }
