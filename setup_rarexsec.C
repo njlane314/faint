@@ -11,9 +11,7 @@ const char* const kHeadersToInclude[] = {
     "rarexsec/Processor.hh",
     "rarexsec/Selection.hh",
     "rarexsec/Snapshot.hh",
-    "rarexsec/Volume.hh",
-    "Hub.hh",
-    "Selection.hh"
+    "rarexsec/Volume.hh"
 };
 
 void include_required_headers() {
@@ -23,7 +21,7 @@ void include_required_headers() {
     }
 }
 
-} // namespace
+} 
 
 void setup_rarexsec(const char* libpath, const char* incdir) {
     if (libpath && libpath[0] != '\0') {
