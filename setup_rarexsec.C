@@ -1,4 +1,4 @@
-// scripts/setup_faint.C
+// setup_rarexsec.C
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
