@@ -4,18 +4,19 @@
 #include <fstream>
 #include <stdexcept>
 
-using json = nlohmann::json;
+#include "Processor.hh"
 
-rarexsec::Data rarexsec::Hub::make_frame(const std::string& file,
+rarexsec::Data rarexsec::Hub::sample(const std::string& file,
                                          sample::origin kind) {
-    constexpr const char* kTree = "nuselection/EventSelectionFilter";
-    constexpr const char* kTruthStrange = "is_strange";
+    constexpr const char* tree = "nuselection/EventSelectionFilter";
 
-    auto df_ptr = std::make_shared<ROOT::RDataFrame>(kTree, file);
+    auto df_ptr = std::make_shared<ROOT::RDataFrame>(tree, file);
     ROOT::RDF::RNode node = *df_ptr;
 
-    if (kind == sample::origin::beam) node = node.Filter(std::string(kTruthStrange) + " == 0", "truth_beam");
-    else if (kind == sample::origin::strangeness) node = node.Filter(std::string(kTruthStrange) + " != 0", "truth_strangeness");
+    node = processor().run(node, kind);
+
+    if (kind == sample::origin::beam) node = node.Filter("!is_strange");
+    else if (kind == sample::origin::strangeness) node = node.Filter("is_strange");
 
     return Data{df_ptr, node};
 }
@@ -23,7 +24,7 @@ rarexsec::Data rarexsec::Hub::make_frame(const std::string& file,
 rarexsec::Hub::Hub(const std::string& path) {
     std::ifstream cfg(path);
     if (!cfg) throw std::runtime_error("cannot open " + path);
-    json j; cfg >> j;
+    nlohmann::json j; cfg >> j;
 
     const auto& bl = j.at("beamlines");
     for (auto it_bl = bl.begin(); it_bl != bl.end(); ++it_bl) {
@@ -41,12 +42,9 @@ rarexsec::Hub::Hub(const std::string& path) {
                 rec.period   = period;
                 rec.kind     = sample::origin_from(s.at("kind").get<std::string>());
                 rec.file     = s.at("file").get<std::string>();
-                if (rec.file.empty()) {
-                    throw std::runtime_error("sample entry is missing required file path");
-                }
                 rec.pot      = s.value("pot", 0.0);
 
-                rec.nominal = make_frame(rec.file, rec.kind);
+                rec.nominal = sample(rec.file, rec.kind);
 
                 if (s.contains("detvars")) {
                     const auto& dvs = s.at("detvars");
@@ -55,7 +53,7 @@ rarexsec::Hub::Hub(const std::string& path) {
                         const auto& desc = it_dv.value();
                         const std::string dv_file = desc.at("file").get<std::string>();
                         if (!dv_file.empty()) {
-                            rec.detvars.emplace(tag, make_frame(dv_file, rec.kind));
+                            rec.detvars.emplace(tag, sample(dv_file, rec.kind));
                         }
                     }
                 }
@@ -74,7 +72,7 @@ std::vector<const rarexsec::sample::Entry*> rarexsec::Hub::simulation(const std:
     for (const auto& per : periods) {
         auto it_p = it_bl->second.find(per);
         if (it_p == it_bl->second.end()) continue;
-        for (const auto& rec : it_p->second) if (rec.kind != sample::origin::data) out.push_back(&rec);
+        for (const auto& rec : it_p->second) if (rec.kind != sample::origin::sample) out.push_back(&rec);
     }
     return out;
 }
