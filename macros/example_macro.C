@@ -12,6 +12,10 @@ void example_macro() {
     try {
         ROOT::EnableImplicitMT();
 
+        if (gSystem->Load("librarexsec") < 0) {
+            throw std::runtime_error("Failed to load librexsec");
+        }
+
         const std::string config_path = "data/samples.json";
         const std::string beamline = "numi-fhc";
         const std::vector<std::string> periods = {"run1"};
@@ -27,19 +31,19 @@ void example_macro() {
 
         auto origin_to_string = [](rarexsec::sample::origin kind) {
             switch (kind) {
-                case rarexsec::sample::origin::data:
-                    return "data";
-                case rarexsec::sample::origin::beam:
-                    return "beam";
-                case rarexsec::sample::origin::strangeness:
-                    return "strangeness";
-                case rarexsec::sample::origin::ext:
-                    return "ext";
-                case rarexsec::sample::origin::dirt:
-                    return "dirt";
-                case rarexsec::sample::origin::unknown:
-                default:
-                    return "unknown";
+            case rarexsec::sample::origin::data:
+                return "data";
+            case rarexsec::sample::origin::beam:
+                return "beam";
+            case rarexsec::sample::origin::strangeness:
+                return "strangeness";
+            case rarexsec::sample::origin::ext:
+                return "ext";
+            case rarexsec::sample::origin::dirt:
+                return "dirt";
+            case rarexsec::sample::origin::unknown:
+            default:
+                return "unknown";
             }
         };
 
