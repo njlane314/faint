@@ -220,7 +220,11 @@ def classify_kind(entry: dict) -> str:
     st = (entry.get("sample_type") or "").lower()
     key = (entry.get("sample_key") or "").lower()
     truth = (entry.get("truth_filter") or "").lower()
-    if st in {"ext", "data"}:
+    if st == "ext":
+        return "ext"
+    if st == "dirt":
+        return "dirt"
+    if st == "data":
         return "data"
     if "strange" in key or "strange" in truth or "mc_n_strange" in truth:
         return "strangeness"
