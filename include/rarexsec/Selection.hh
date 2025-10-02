@@ -11,7 +11,6 @@
 namespace rarexsec {
 namespace selection {
 
-namespace cuts {
 inline constexpr float min_beam_pe = 0.f;
 inline constexpr float max_veto_pe = 20.f;
 inline constexpr int required_slices = 1;
@@ -24,7 +23,6 @@ inline constexpr float min_llr = 0.2f;
 inline constexpr float min_length = 10.0f;
 inline constexpr float max_distance = 4.0f;
 inline constexpr unsigned required_generation = 2u;
-}
 
 enum class Preset {
     All,
@@ -57,23 +55,23 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                                         k == sample::origin::strangeness ||
                                         k == sample::origin::dirt);
                                    const bool dataset_gate = requires_dataset_gate
-                                                                ? (pe_beam > cuts::min_beam_pe &&
-                                                                   pe_veto < cuts::max_veto_pe)
+                                                                ? (pe_beam > min_beam_pe &&
+                                                                   pe_veto < max_veto_pe)
                                                                 : true;
                                    return dataset_gate && sw;
                                },
                                {"pe_beam", "pe_veto", "software_trigger"});
         case Preset::FlashOnly:
             return node.Filter([](int ns, float topo, int n2g){
-                                   return ns == cuts::required_slices &&
-                                          topo > cuts::min_topological_score &&
-                                          n2g >= cuts::min_generation2_pfps;
+                                   return ns == required_slices &&
+                                          topo > min_topological_score &&
+                                          n2g >= min_generation2_pfps;
                                },
                                {"num_slices", "topological_score", "generation2_pfps"});
         case Preset::TopologyOnly:
             return node.Filter([](float cf, float cl){
-                                   return cf >= cuts::min_contained_fraction &&
-                                          cl >= cuts::min_cluster_fraction;
+                                   return cf >= min_contained_fraction &&
+                                          cl >= min_cluster_fraction;
                                },
                                {"contained_fraction", "cluster_fraction"});
         case Preset::Final:
@@ -87,15 +85,15 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                                         k == sample::origin::strangeness ||
                                         k == sample::origin::dirt);
                                    const bool dataset_gate = requires_dataset_gate
-                                                                ? (pe_beam > cuts::min_beam_pe &&
-                                                                   pe_veto < cuts::max_veto_pe)
+                                                                ? (pe_beam > min_beam_pe &&
+                                                                   pe_veto < max_veto_pe)
                                                                 : true;
                                    const bool pre_ok = dataset_gate && sw;
-                                   const bool flash_ok = (ns == cuts::required_slices &&
-                                                          topo > cuts::min_topological_score &&
-                                                          n2g >= cuts::min_generation2_pfps);
-                                   const bool topo_ok = (cf >= cuts::min_contained_fraction &&
-                                                         cl >= cuts::min_cluster_fraction);
+                                   const bool flash_ok = (ns == required_slices &&
+                                                          topo > min_topological_score &&
+                                                          n2g >= min_generation2_pfps);
+                                   const bool topo_ok = (cf >= min_contained_fraction &&
+                                                         cl >= min_cluster_fraction);
                                    return pre_ok && flash_ok && fv && mu && topo_ok;
                                },
                                {"pe_beam", "pe_veto", "software_trigger",
