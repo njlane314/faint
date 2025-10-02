@@ -47,10 +47,10 @@ void example_macro() {
             }
         };
 
-        double total_pot = 0.0;
-        double total_pot_eff = 0.0;
-        double total_triggers = 0.0;
-        double total_triggers_eff = 0.0;
+        double total_pot_nom = 0.0;
+        double total_pot_eqv = 0.0;
+        double total_trig_nom = 0.0;
+        double total_trig_eqv = 0.0;
 
         for (const auto* entry : samples) {
             if (!entry) {
@@ -73,16 +73,16 @@ void example_macro() {
                           << "' entries: " << detvar_count << std::endl;
             }
 
-            total_pot += entry->pot;
-            total_pot_eff += (entry->pot_eff > 0.0) ? entry->pot_eff : entry->pot;
-            total_triggers += entry->trig;
-            total_triggers_eff += (entry->trig_eff > 0.0) ? entry->trig_eff : entry->trig;
+            total_pot_nom += entry->pot_nom;
+            total_pot_eqv += (entry->pot_eqv > 0.0) ? entry->pot_eqv : entry->pot_nom;
+            total_trig_nom += entry->trig_nom;
+            total_trig_eqv += (entry->trig_eqv > 0.0) ? entry->trig_eqv : entry->trig_nom;
         }
 
-        std::cout << "Total POT (nominal): " << total_pot << std::endl;
-        std::cout << "Total POT (effective): " << total_pot_eff << std::endl;
-        std::cout << "Total triggers (nominal): " << total_triggers << std::endl;
-        std::cout << "Total triggers (effective): " << total_triggers_eff << std::endl;
+        std::cout << "Total POT (nominal): " << total_pot_nom << std::endl;
+        std::cout << "Total POT (equivalent): " << total_pot_eqv << std::endl;
+        std::cout << "Total triggers (nominal): " << total_trig_nom << std::endl;
+        std::cout << "Total triggers (equivalent): " << total_trig_eqv << std::endl;
     } catch (const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
