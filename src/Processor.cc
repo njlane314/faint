@@ -133,7 +133,15 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
         },
         {"track_shower_scores", "trk_llr_pid_v", "track_length", "track_distance_to_vertex", "pfp_generations"});
 
-    // define a has_muon definition  
+    node = node.Define(
+        "has_muon",
+        [](const ROOT::RVec<bool>& mask) {
+            for (bool is_muon : mask) {
+                if (is_muon) return true;
+            }
+            return false;
+        },
+        {"muon_mask"});
 
     return node;
 }
