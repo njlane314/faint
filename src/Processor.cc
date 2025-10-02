@@ -14,29 +14,29 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
     //node = node.Define("is_mc",           [is_mc]{ return is_mc; });
     //node = node.Define("is_ext",          [is_ext]{ return is_ext; }); 
 
-    double scale_mc  = 1.0;
+    float scale_mc  = 1.0f;
     if (is_mc && rec.pot_nom > 0.0 && rec.pot_eqv > 0.0)
-        scale_mc = rec.pot_eqv / rec.pot_nom;
+        scale_mc = static_cast<float>(rec.pot_eqv / rec.pot_nom);
 
-    double scale_ext = 1.0;
+    float scale_ext = 1.0f;
     if (is_ext && rec.trig_nom > 0.0 && rec.trig_eqv > 0.0)
-        scale_ext = rec.trig_eqv / rec.trig_nom;
+        scale_ext = static_cast<float>(rec.trig_eqv / rec.trig_nom);
 
     node = node.Define("w_base", [is_mc, is_ext, scale_mc, scale_ext] {
-        return is_mc ? scale_mc : (is_ext ? scale_ext : 1.0); 
+        return is_mc ? scale_mc : (is_ext ? scale_ext : 1.0f);
     });
 
     if (is_mc) {
         node = node.Define(
             "w_nominal",
-            [](double w, double w_spline, double w_tune) {
-                double out = w * w_spline * w_tune;
-                if (!std::isfinite(out) || out < 0.0) return 1.0;
+            [](float w, float w_spline, float w_tune) {
+                float out = w * w_spline * w_tune;
+                if (!std::isfinite(out) || out < 0.0f) return 1.0f;
                 return out;
             },
             {"w_base", "weightSpline", "weightTune"});
     } else {
-        node = node.Define("w_nominal", [](double w) { return w; }, {"w_base"});
+        node = node.Define("w_nominal", [](float w) { return w; }, {"w_base"});
     }
 
     if (is_mc) {
