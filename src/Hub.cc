@@ -43,10 +43,13 @@ rarexsec::Hub::Hub(const std::string& path) {
                 rec.kind     = sample::origin_from(s.at("kind").get<std::string>());
                 rec.file     = s.at("file").get<std::string>();
                 
-                rec.pot_nom  = s.value("pot", 0.0);
-                rec.pot_eqv  = s.value("pot_eff", 0.0);
-                rec.trig_nom = s.value("trig", 0.0);
-                rec.trig_eqv = s.value("trig_eff", 0.0);
+                if (rec.kind == sample::origin::ext) {
+                    rec.trig_nom = s.value("trig", 0.0);
+                    rec.trig_eqv = s.value("trig_eff", 0.0);
+                } else {
+                    rec.pot_nom = s.value("pot", 0.0);
+                    rec.pot_eqv = s.value("pot_eff", 0.0);
+                }
 
                 rec.nominal = sample(rec);
 

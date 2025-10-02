@@ -47,7 +47,7 @@
         "ext_triggers": 40062895,
         "samples": [
           {
-            "kind": "data",
+            "kind": "ext",
             "file": "/exp/uboone/data/users/nlane/ntuples/numi_ext_run1.root",
             "pot": 0.0,
             "pot_eff": 0.0,
