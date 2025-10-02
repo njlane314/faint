@@ -1,8 +1,10 @@
 // setup_rarexsec.C
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "TError.h"
 #include "TInterpreter.h"
@@ -97,6 +99,17 @@ std::string join_path(const std::string& base, const std::string& leaf) {
   return base + "/" + leaf;
 }
 
+bool header_exists(const std::string& include_dir,
+                   const std::string& relative_header) {
+  if (include_dir.empty()) {
+    return false;
+  }
+
+  const std::string absolute = join_path(include_dir, relative_header);
+  std::ifstream stream(absolute);
+  return stream.good();
+}
+
 } // namespace
 void load_header(const std::string& h) {
   TInterpreter::EErrorCode ec;
@@ -170,12 +183,19 @@ void setup_rarexsec(const char* abs_lib_path = nullptr, const char* abs_inc_dir 
 
   // Pull in commonly used headers so macros can use the API immediately
   if (!include_dir.empty()) {
-    load_header("rarexsec/Types.h");
-    load_header("rarexsec/Samples.h");
-    load_header("rarexsec/Selection.h");
-    load_header("rarexsec/proc/PreSelection.h");
-    load_header("rarexsec/proc/TruthClassifier.h");
-    load_header("rarexsec/proc/MuonSelector.h");
-    load_header("rarexsec/proc/Weighter.h");
+    const std::vector<std::string> headers = {
+        "rarexsec/Hub.hh",
+        "rarexsec/Processor.hh",
+    };
+
+    for (const auto& header : headers) {
+      if (header_exists(include_dir, header)) {
+        load_header(header);
+      } else {
+        std::cout << "Note: rarexsec header '" << header
+                  << "' not found in '" << include_dir
+                  << "'; skipping.\n";
+      }
+    }
   }
 }
