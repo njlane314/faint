@@ -95,8 +95,12 @@ $(AR) rcs $@ $^
 @echo Built $@
 
 $(CONFIG_OUT): $(CONFIG_IN) | $(BIN)
-sed -e 's|@@VERSION@@|$(VERSION)|g' -e 's|@@GIT_REVISION@@|$(GIT_REV)|g' -e 's|@@CXX_STD@@|$(CXXSTD)|g' -e 's|@@USE_ROOT@@|yes|g' $< > $@
-chmod +x $@
+	sed -e 's|@@VERSION@@|$(VERSION)|g' \
+	    -e 's|@@GIT_REVISION@@|$(GIT_REV)|g' \
+	    -e 's|@@CXX_STD@@|$(CXXSTD)|g' \
+	    -e 's|@@USE_ROOT@@|yes|g' \
+	    $< > $@
+	chmod +x $@
 
 PREFIX?=$(TOP)/install
 INSTALL_LIB:=$(PREFIX)/lib
