@@ -19,7 +19,7 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
             [](double w, float w_spline, float w_tune) {
                 double out = w;
                 out *= w_spline * w_tune;
-                
+
                 if (!std::isfinite(out) || out < 0)
                     return 1.0;
                 return out;
@@ -28,22 +28,9 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
     } else if (is_ext)
         double scale = 1.0;
         if (rec.trigs > 0 && rec.trigs_eff > 0) 
-            scale = static_cast<double>(rec.trigs_eff) / static_cast<double>(sample_triggers_);
+            scale = static_cast<double>(rec.trigs_eff) / static_cast<double>(rec.trigs);
         node = node.Define("w_nominal", [scale]() { return scale; });
     }
-
-
-    // -------------------------
-    // YOUR ANALYSIS LOGIC HERE
-    // e.g.,
-    // if (!is_data) {
-    //   node = node.Define("w_genie", "genie_w");      // if such a column exists
-    //   node = node.Define("w", "w_nominal * w_genie");
-    // } else {
-    //   node = node.Define("w", "w_nominal");
-    // }
-    // node = node.Filter("n_tracks > 0", ">=1 reco track");
-    // -------------------------
 
     return node;
 }
