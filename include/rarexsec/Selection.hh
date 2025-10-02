@@ -39,7 +39,7 @@ enum class Preset {
     Fiducial,
     Topology,
     Muon,
-    InclsuiveMuCC
+    InclusiveMuCC
 };
 
 inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::Entry& rec) {
@@ -60,9 +60,9 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                                },
                                {"pe_beam", "pe_veto", "software_trigger"});
         case Preset::Slice:
-            return node.Filter([](int ns, float topo, int n2g){
-                                   return ns == slice_required_count &&
-                                          topo > slice_min_topology_score;
+            return node.Filter([](int ns, float topo){
+                                   return ns == required_slices &&
+                                          topo > min_topological_score;
                                },
                                {"num_slices", "topological_score"});
         case Preset::Fiducial:
