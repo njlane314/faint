@@ -1,7 +1,7 @@
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
 #include <TSystem.h>
-#include <faint/Dataset.h>
+#include <rarexsec/Dataset.h>
 
 #include <iostream>
 #include <stdexcept>
@@ -12,16 +12,16 @@ void example_macro() {
   try {
     ROOT::EnableImplicitMT();
 
-    if (gSystem->Load("libfaint_root")) {
-      throw std::runtime_error("Failed to load libfaint_root library");
+    if (gSystem->Load("librarexsec_root")) {
+      throw std::runtime_error("Failed to load librarexsec_root library");
     }
 
     const std::string config_path = "data/samples.json";
 
-    faint::dataset::Options options;
+    rarexsec::dataset::Options options;
     options.beam = "numi-fhc";
     options.periods = {"run1"};
-    auto dataset = faint::dataset::Dataset::open(config_path, options);
+    auto dataset = rarexsec::dataset::Dataset::open(config_path, options);
 
     std::cout << "Loaded beam " << dataset.beam() << " for";
     for (const auto& period : dataset.periods()) {

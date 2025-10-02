@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set -e
 
-# Determine topdir from FAINT or script path
-if [ -z "$FAINT" ]; then
+# Determine topdir from RAREXSEC or script path
+if [ -z "$RAREXSEC" ]; then
   TOPDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
 else
-  TOPDIR="$FAINT"
+  TOPDIR="$RAREXSEC"
 fi
 
 LIBDIR="${TOPDIR}/build/lib"
 INCDIR="${TOPDIR}/include"
-MACRO="${TOPDIR}/scripts/setup_faint.C"
+MACRO="${TOPDIR}/setup_rarexsec.C"
 
 # Allow users to provide an external nlohmann/json install via common
 # environment variables.  ROOT needs the headers to be discoverable at
@@ -37,4 +37,4 @@ else
 fi
 
 # Start ROOT, ensure the helper macro is loaded, then forward any user macro call
-root -l -q -e "gROOT->LoadMacro(\"${MACRO}\"); setup_faint(\"${LIBDIR}/libfaint.${LIBEXT}\",\"${INCDIR}\");" "$@"
+root -l -q -e "gROOT->LoadMacro(\"${MACRO}\"); setup_rarexsec(\"${LIBDIR}/librarexsec.${LIBEXT}\",\"${INCDIR}\");" "$@"
