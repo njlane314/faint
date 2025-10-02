@@ -26,7 +26,7 @@ struct Data {
     std::shared_ptr<ROOT::RDataFrame> df;
     std::optional<ROOT::RDF::RNode> node;
 
-    const ROOT::RDF::RNode& rnode() const { return node.value(); }
+    ROOT::RDF::RNode rnode() const { return ROOT::RDF::RNode{node.value()}; }
 };
 
 struct Entry {
@@ -40,7 +40,7 @@ struct Entry {
     double trig_eqv = 0.0;
     Data nominal;
     std::unordered_map<std::string, Data> detvars;
-    const ROOT::RDF::RNode& rnode() const { return nominal.rnode(); }
+    ROOT::RDF::RNode rnode() const { return nominal.rnode(); }
     const Data* detvar(const std::string& tag) const {
         auto it = detvars.find(tag);
         return it == detvars.end() ? nullptr : &it->second;
