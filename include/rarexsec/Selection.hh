@@ -13,17 +13,24 @@
 namespace rarexsec {
 namespace selection {
 
-inline constexpr float min_beam_pe = 0.f;
-inline constexpr float max_veto_pe = 20.f;
-inline constexpr int required_slices = 1;
-inline constexpr float min_topological_score = 0.06f;
-inline constexpr float min_contained_fraction = 0.7f;
-inline constexpr float min_cluster_fraction = 0.5f;
-inline constexpr float min_score = 0.5f;
-inline constexpr float min_llr = 0.2f;
-inline constexpr float min_length = 10.0f;
-inline constexpr float max_distance = 4.0f;
-inline constexpr unsigned required_generation = 2u;
+// Trigger stage thresholds
+inline constexpr float trigger_min_beam_pe = 0.f;
+inline constexpr float trigger_max_veto_pe = 20.f;
+
+// Slice stage thresholds
+inline constexpr int slice_required_count = 1;
+inline constexpr float slice_min_topology_score = 0.06f;
+
+// Topology stage thresholds
+inline constexpr float topology_min_contained_fraction = 0.7f;
+inline constexpr float topology_min_cluster_fraction = 0.5f;
+
+// Muon identification thresholds
+inline constexpr float muon_min_track_score = 0.5f;
+inline constexpr float muon_min_llr = 0.2f;
+inline constexpr float muon_min_track_length = 10.0f;
+inline constexpr float muon_max_track_distance = 4.0f;
+inline constexpr unsigned muon_required_generation = 2u;
 
 enum class Preset {
     Empty,
@@ -46,8 +53,8 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                                         k == sample::origin::strangeness ||
                                         k == sample::origin::dirt);
                                    const bool dataset_gate = requires_dataset_gate
-                                                                ? (pe_beam > min_beam_pe &&
-                                                                   pe_veto < max_veto_pe)
+                                                                ? (pe_beam > trigger_min_beam_pe &&
+                                                                   pe_veto < trigger_max_veto_pe)
                                                                 : true;
                                    return dataset_gate && sw;
                                },
@@ -63,8 +70,8 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                                {"in_reco_fiducial"});
         case Preset::Topology:
             return node.Filter([](float cf, float cl){
-                                   return cf >= min_contained_fraction &&
-                                          cl >= min_cluster_fraction;
+                                   return cf >= topology_min_contained_fraction &&
+                                          cl >= topology_min_cluster_fraction;
                                },
                                {"contained_fraction", "cluster_fraction"});
         case Preset::Muon:
@@ -76,11 +83,11 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                    const ROOT::RVec<unsigned>& generations) {
                     const auto n = scores.size();
                     for (std::size_t i = 0; i < n; ++i) {
-                        const bool passes = scores[i] > min_score &&
-                                            llrs[i] > min_llr &&
-                                            lengths[i] > min_length &&
-                                            distances[i] < max_distance &&
-                                            generations[i] == required_generation;
+                        const bool passes = scores[i] > muon_min_track_score &&
+                                            llrs[i] > muon_min_llr &&
+                                            lengths[i] > muon_min_track_length &&
+                                            distances[i] < muon_max_track_distance &&
+                                            generations[i] == muon_required_generation;
                         if (passes) {
                             return true;
                         }
