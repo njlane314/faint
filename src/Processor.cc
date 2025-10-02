@@ -29,8 +29,8 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
     if (is_mc) {
         node = node.Define(
             "w_nominal",
-            [](double w, double w_spline, double w_tune) {
-                double out = w * w_spline * w_tune;
+            [](double w, const auto& w_spline, const auto& w_tune) {
+                double out = w * static_cast<double>(w_spline) * static_cast<double>(w_tune);
                 if (!std::isfinite(out) || out < 0.0) return 1.0;
                 return out;
             },
