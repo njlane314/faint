@@ -2,14 +2,55 @@
 set -e
 
 if [ -z "$RAREXSEC" ]; then
-  TOPDIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd .. && pwd )"
+  SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+  if [ -f "${SCRIPT_DIR}/setup_rarexsec.C" ] || [ -d "${SCRIPT_DIR}/build" ]; then
+    TOPDIR="${SCRIPT_DIR}"
+  else
+    TOPDIR="$( cd "${SCRIPT_DIR}/.." && pwd )"
+  fi
 else
   TOPDIR="$RAREXSEC"
 fi
 
-LIBDIR="${TOPDIR}/build/lib"
-INCDIR="${TOPDIR}/include"
-MACRO="${TOPDIR}/setup_rarexsec.C"
+lib_candidates=(
+  "${TOPDIR}/build/lib"
+  "${TOPDIR}/lib"
+)
+for candidate in "${lib_candidates[@]}"; do
+  if [ -d "${candidate}" ]; then
+    LIBDIR="${candidate}"
+    break
+  fi
+done
+: "${LIBDIR:=${TOPDIR}/build/lib}"
+
+inc_candidates=(
+  "${TOPDIR}/include"
+  "${TOPDIR}/include/rarexsec"
+)
+for candidate in "${inc_candidates[@]}"; do
+  if [ -d "${candidate}" ]; then
+    INCDIR="${candidate}"
+    break
+  fi
+done
+: "${INCDIR:=${TOPDIR}/include}"
+
+macro_candidates=(
+  "${TOPDIR}/setup_rarexsec.C"
+  "${TOPDIR}/scripts/setup_rarexsec.C"
+)
+for candidate in "${macro_candidates[@]}"; do
+  if [ -f "${candidate}" ]; then
+    MACRO="${candidate}"
+    break
+  fi
+done
+
+if [ -z "${MACRO:-}" ]; then
+  echo "rarexsec-root: could not locate setup_rarexsec.C" >&2
+  exit 1
+fi
 
 JSON_INC_PATH="${JSON_INC:-${NLOHMANN_JSON_INC:-}}"
 if [ -n "${JSON_INC_PATH}" ]; then
