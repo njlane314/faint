@@ -77,31 +77,12 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                                },
                                {"contained_fraction", "cluster_fraction"});
         case Preset::Final:
-        default:
-            return node.Filter([k = rec.kind](float pe_beam, float pe_veto, bool sw,
-                                              int ns, float topo, int n2g,
-                                              bool fv, bool mu,
-                                              float cf, float cl){
-                                   const bool requires_dataset_gate =
-                                       (k == sample::origin::beam ||
-                                        k == sample::origin::strangeness ||
-                                        k == sample::origin::dirt);
-                                   const bool dataset_gate = requires_dataset_gate
-                                                                ? (pe_beam > cuts::min_beam_pe &&
-                                                                   pe_veto < cuts::max_veto_pe)
-                                                                : true;
-                                   const bool pre_ok = dataset_gate && sw;
-                                   const bool flash_ok = (ns == cuts::required_slices &&
-                                                          topo > cuts::min_topological_score &&
-                                                          n2g >= cuts::min_generation2_pfps);
-                                   const bool topo_ok = (cf >= cuts::min_contained_fraction &&
-                                                         cl >= cuts::min_cluster_fraction);
-                                   return pre_ok && flash_ok && fv && mu && topo_ok;
-                               },
-                               {"pe_beam", "pe_veto", "software_trigger",
-                                "num_slices", "topological_score", "generation2_pfps",
-                                "in_reco_fiducial", "has_muon",
-                                "contained_fraction", "cluster_fraction"});
+        default: {
+            auto filtered = apply(node, Preset::PreOnly, rec);
+            filtered = apply(filtered, Preset::FlashOnly, rec);
+            filtered = apply(filtered, Preset::TopologyOnly, rec);
+            return apply(filtered, Preset::Baseline, rec);
+        }
     }
 }
 
