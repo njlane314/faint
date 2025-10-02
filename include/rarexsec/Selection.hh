@@ -77,13 +77,8 @@ inline bool passes_topology_selection(float contained_fraction,
            cluster_fraction >= topology::min_cluster_fraction;
 }
 
-inline bool passes_muon_track_selection(float score, float llr, float length,
-                                        float distance, unsigned generation) {
-    return score > muon_track::min_score &&
-           llr > muon_track::min_llr &&
-           length > muon_track::min_length &&
-           distance < muon_track::max_distance &&
-           generation == muon_track::required_generation;
+inline bool passes_muon_track_selection(float s, float llr, float l, float d, unsigned g) {
+    return s > muon_track::min_score && llr > muon_track::min_llr && l > muon_track::min_length && d < muon_track::max_distance && g == muon_track::required_generation;
 }
 
 inline bool passes_final_selection(bool pre, bool flash, bool fiducial,

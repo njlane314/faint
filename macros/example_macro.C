@@ -12,11 +12,6 @@ void example_macro() {
     try {
         ROOT::EnableImplicitMT();
 
-        const int load_status = gSystem->Load("librarexsec");
-        if (load_status < 0) {
-            throw std::runtime_error("Failed to load librarexsec library");
-        }
-
         const std::string config_path = "data/samples.json";
         const std::string beamline = "numi-fhc";
         const std::vector<std::string> periods = {"run1"};
