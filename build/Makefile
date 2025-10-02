@@ -81,18 +81,18 @@ $(OBJ) $(LIB) $(BIN):
 $(OBJ)/%.o: $(SRC)/%.cc | $(OBJ)
 	@mkdir -p $(dir $@)
 	
-$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.cpp | $(OBJ)
 	@mkdir -p $(dir $@)
-$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(SHARED): $(OBJS) | $(LIB)
-$(CXX) $(SHAREDFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+	$(CXX) $(SHAREDFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 	@echo Built $@
 
 $(STATIC): $(OBJS) | $(LIB)
-$(AR) rcs $@ $^
+	$(AR) rcs $@ $^
 	@echo Built $@
 
 $(CONFIG_OUT): $(CONFIG_IN) | $(BIN)
