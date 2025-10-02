@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-void example_macro_preset() {
+void apply_inclusive_mucc_preset() {
     try {
         ROOT::EnableImplicitMT();
         if (gSystem->Load("librarexsec") < 0) {
