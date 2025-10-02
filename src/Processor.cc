@@ -2,7 +2,7 @@
 #include "rarexsec/Hub.hh"
 #include <cmath>
 
-ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec::Entry rec) const {
+ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec::Entry& rec) const {
     const bool is_data = (rec.kind == rarexsec::sample::origin::data);
     const bool is_ext = (rec.kind == rarexsec::sample::origin::ext);
     const bool is_mc = !is_data && !is_ext;
@@ -38,9 +38,7 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
     return node;
 }
 
-const Processor& processor() {
+const rarexsec::Processor& rarexsec::processor() {
     static const Processor ep{};
     return ep;
 }
-
-} 

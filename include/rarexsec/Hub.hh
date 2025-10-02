@@ -11,7 +11,7 @@ namespace rarexsec {
 namespace sample {
 enum class origin { data, beam, strangeness, ext, dirt, unknown };
 
-origin origin_from(const std::string& s) {
+inline origin origin_from(const std::string& s) {
     if (s == "data")       return origin::data;
     if (s == "ext")          return origin::ext;
     if (s == "dirt")         return origin::dirt;
@@ -48,16 +48,17 @@ class Hub {
 public:
     explicit Hub(const std::string& path);
 
-    std::vector<const sample::Entry*> simulation(const std::string& beamline,
-                                                 const std::vector<std::string>& periods) const;
+    std::vector<const Entry*> simulation(const std::string& beamline,
+                                         const std::vector<std::string>& periods) const;
 
 
 private:
-    using period_map   = std::unordered_map<std::string, std::vector<sample::Entry>>;
+    using period_map   = std::unordered_map<std::string, std::vector<Entry>>;
     using beamline_map = std::unordered_map<std::string, period_map>;
     beamline_map db_;
 
+    static Data sample(const Entry& rec);
     static Data sample(const std::string& file, sample::origin kind);
 };
 
-} 
+}
