@@ -36,8 +36,33 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
         node = node.Define("w_nominal", [](double w) { return w; }, {"w_base"});
     }
 
+    if (is_mc) {
+        node = node.Define(
+            "in_fiducial",
+            [](float x, float y, float z) {
+                return rarexsec::fiducial::is_in_truth_volume(x, y, z);
+            },
+            {"neutrino_vertex_x", "neutrino_vertex_y", "neutrino_vertex_z"});
 
-    // add truth definitions here
+        node = node.Define(
+            "mc_n_strange",
+            [](int kplus, int kminus, int kzero, int lambda0, int sigplus, int sigzero, int sigminus) {
+                return kplus + kminus + kzero + lambda0 + sigplus + sigzero + sigminus;
+            },
+            {"count_kaon_plus", "count_kaon_minus", "count_kaon_zero",
+            "count_lambda", "count_sigma_plus", "count_sigma_zero", "count_sigma_minus"});
+
+        node = node.Define(
+            "mc_n_pion",
+            [](int pip, int pim) { return pip + pim; },
+            {"count_pi_plus", "count_pi_minus"});
+
+        node = node.Define(
+            "mc_n_proton",
+            [](int n) { return n; },
+            {"count_proton"});
+
+    } 
 
     return node;
 }
