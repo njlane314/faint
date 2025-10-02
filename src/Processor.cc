@@ -10,9 +10,9 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
     const bool is_ext = (rec.kind == rarexsec::sample::origin::ext);
     const bool is_mc = !is_data && !is_ext;
 
-    node = node.Define("is_data",         [is_data]{ return is_data; });
-    node = node.Define("is_mc",           [is_mc]{ return is_mc; });
-    node = node.Define("is_ext",          [is_ext]{ return is_ext; }); 
+    //node = node.Define("is_data",         [is_data]{ return is_data; });
+    //node = node.Define("is_mc",           [is_mc]{ return is_mc; });
+    //node = node.Define("is_ext",          [is_ext]{ return is_ext; }); 
 
     double scale_mc  = 1.0;
     if (is_mc && rec.pot_nom > 0.0 && rec.pot_eqv > 0.0)
@@ -48,11 +48,18 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
             {"neutrino_vertex_x", "neutrino_vertex_y", "neutrino_vertex_z"});
 
         node = node.Define(
-            "is_strange",
+            "count_strange",
             [](int kplus, int kminus, int kzero, int lambda0, int sigplus, int sigzero, int sigminus) {
-                return (kplus + kminus + kzero + lambda0 + sigplus + sigzero + sigminus) > 0;
+                return kplus + kminus + kzero + lambda0 + sigplus + sigzero + sigminus;
             },
             {"count_kaon_plus", "count_kaon_minus", "count_kaon_zero", "count_lambda", "count_sigma_plus", "count_sigma_zero", "count_sigma_minus"});
+
+        node = node.Define(
+            "is_strange",
+            [](int strange) {
+                return strange > 0;
+            },
+            {"count_strange"});
             
         node = node.Define(
             "scattering_mode",
@@ -70,7 +77,8 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
 
         node = node.Define(
             "analysis_channels",
-            [](bool fv, int nu, int ccnc, int s, int npi, int np, int npi0, int ngamma) {
+            [](bool fv, int nu, int ccnc, int s, int np, int npim, int npip, int npi0, int ngamma) {
+                int npi = npim + npip;
                 if (!fv) {
                     if (nu == 0) return 1;   // out-fv
                     return 2;                // ext
@@ -90,7 +98,7 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
                 }
                 return 99; // other
             },
-            {"in_fiducial", "neutrino_pdg", "interaction_ccnc", "mc_n_strange", "mc_n_pion", "mc_n_proton", "count_pi_zero", "count_gamma"});
+            {"in_fiducial", "neutrino_pdg", "interaction_ccnc", "count_strange", "count_proton", "count_pi_minus", "count_pi_plus", "count_pi_zero", "count_gamma"});
 
         node = node.Define(
             "is_signal",

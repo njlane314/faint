@@ -16,12 +16,10 @@ import uproot
 from typing import Set, Tuple, List, Dict
 
 DEFAULT_RUN_DB = "/exp/uboone/data/uboonebeam/beamdb/run.db"
-
 HADD_TMPDIR = Path("/pnfs/uboone/scratch/users/nlane/tmp/")
 MIN_FREE_GB = 5.0
 DEFAULT_JOBS = min(8, os.cpu_count() or 1)
 CATALOGUE_SUBDIR = Path("data") / "catalogues"
-
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
 
 def norm_run(run: str) -> str:
@@ -146,10 +144,8 @@ def _extract_pairs_from_file(f: Path) -> Set[Tuple[int, int]]:
                 "subrun", "subruns",
                 "nuselection/Events", "Events",
             ]
-
             def read_pairs(t) -> Set[Tuple[int, int]]:
                 try:
-                    # case-insensitive branch lookup
                     bmap = {k.lower(): k for k in t.keys()}
                     if "run" in bmap and "subrun" in bmap:
                         run = t[bmap["run"]].array(library="np")
@@ -158,18 +154,14 @@ def _extract_pairs_from_file(f: Path) -> Set[Tuple[int, int]]:
                 except Exception:
                     pass
                 return set()
-
-            # Try explicit common paths first
             for name in candidates:
                 try:
-                    t = rf[name]  # works for nested paths like "nuselection/SubRun"
+                    t = rf[name]
                 except Exception:
                     continue
                 got = read_pairs(t)
                 if got:
                     return got
-
-            # Fallback: scan every TTree recursively
             try:
                 for path, cls in (rf.classnames(recursive=True) or {}).items():
                     if cls == "TTree":
@@ -224,6 +216,16 @@ def _sum_ext_triggers_from_pairs(run_db: str, pairs: Set[Tuple[int, int]]) -> tu
     conn.close()
     return int(total), missing_pairs, by_run
 
+def classify_kind(entry: dict) -> str:
+    st = (entry.get("sample_type") or "").lower()
+    key = (entry.get("sample_key") or "").lower()
+    truth = (entry.get("truth_filter") or "").lower()
+    if st in {"ext", "data"}:
+        return "data"
+    if "strange" in key or "strange" in truth or "mc_n_strange" in truth:
+        return "strangeness"
+    return "beam"
+
 def process_sample_entry(
     entry: dict,
     processed_analysis_path: Path,
@@ -238,14 +240,11 @@ def process_sample_entry(
         sample_key = entry.get("sample_key", "UNKNOWN")
         print(f"  Skipping {'detector variation' if is_detvar else 'sample'}: {sample_key} (marked as inactive)")
         return False
-
     stage_name = entry.get("stage_name")
     sample_key = entry.get("sample_key")
-    sample_type = entry.get("sample_type", "mc")
-
+    sample_type = (entry.get("sample_type", "mc") or "mc").lower()
     print(f"  Processing {'detector variation' if is_detvar else 'sample'}: {sample_key} (from stage: {stage_name})")
     print(f"    HADD execution for this {'sample' if not is_detvar else 'detector variation'}: Enabled")
-
     input_dir = resolve_input_dir(stage_name, stage_outdirs)
     if not input_dir:
         print(
@@ -253,19 +252,15 @@ def process_sample_entry(
             file=sys.stderr,
         )
         return False
-
     output_file = processed_analysis_path / f"{sample_key}.root"
     output_dir = output_file.parent
     output_dir.mkdir(parents=True, exist_ok=True)
-
     if not os.access(output_dir, os.W_OK):
         print(
-            f"    Error: Output directory '{output_dir}' is not writable. "
-            "Ensure it exists and you have write permission.",
+            f"    Error: Output directory '{output_dir}' is not writable. Ensure it exists and you have write permission.",
             file=sys.stderr,
         )
         return False
-
     if output_file.exists():
         try:
             output_file.unlink()
@@ -275,10 +270,9 @@ def process_sample_entry(
                 file=sys.stderr,
             )
             return False
-
     entry["relative_path"] = output_file.name
+    entry["file"] = str(output_file)
     root_files = list(list_root_files(input_dir))
-
     if not root_files:
         print(
             f"    Warning: No ROOT files found in {input_dir}. HADD will be skipped.",
@@ -289,10 +283,8 @@ def process_sample_entry(
         )
         source_files = []
     else:
-        # Decide parallel vs single-process based on available space in fixed temp dir
         use_parallel = jobs > 1
         chosen_tmp = HADD_TMPDIR
-
         if use_parallel:
             try:
                 chosen_tmp.mkdir(parents=True, exist_ok=True)
@@ -300,50 +292,62 @@ def process_sample_entry(
             except Exception as e:
                 print(f"    Warning: Could not evaluate free space in '{chosen_tmp}': {e}. Falling back to single-process hadd.")
                 free_gb = 0.0
-
             if free_gb < MIN_FREE_GB:
                 print(f"    Note: Only {free_gb:.1f} GB free in '{chosen_tmp}'. Falling back to single-process hadd to avoid temp fills.")
                 use_parallel = False
-
         cmd = ["hadd", "-f"]
         if use_parallel:
             cmd += ["-j", str(jobs), "-d", str(chosen_tmp)]
         cmd += [str(output_file), *root_files]
-
         if not run_command(cmd, True):
             print(
                 f"    Error: HADD failed for {sample_key}. Skipping further processing for this entry.",
                 file=sys.stderr,
             )
             return False
-
         source_files = [str(output_file)]
-
-    # Book-keeping for POT/EXT triggers
-    if sample_type == "mc" or is_detvar:
-        if source_files:
-            pot = get_total_pot_from_files_parallel(source_files, jobs)
-        else:
-            pot = pot_sum_via_iterate(input_dir)
-        entry["pot"] = pot if pot != 0.0 else run_pot
-    elif sample_type == "ext":
-        entry["pot"] = 0.0
+    pot_eff = 0.0
+    try:
+        if sample_type in {"mc"} or is_detvar or sample_type == "data":
+            if source_files:
+                pot_eff = get_total_pot_from_files_parallel(source_files, jobs)
+            else:
+                pot_eff = pot_sum_via_iterate(input_dir)
+    except Exception as e:
+        print(f"    Warning: POT evaluation failed for {sample_key}: {e}", file=sys.stderr)
+        pot_eff = 0.0
+    trig_eff = 0
+    if sample_type == "ext":
         files_for_pairs = source_files if source_files else list(list_root_files(input_dir))
         pairs = _collect_pairs_from_files(list(files_for_pairs))
         total_ext, missing_pairs, by_run = _sum_ext_triggers_from_pairs(run_db, pairs)
-        entry["triggers"] = int(total_ext)
-        print(f"    EXT triggers (from DB): {total_ext}")
+        trig_eff = int(total_ext)
+        print(f"    EXT triggers (effective, from DB): {trig_eff}")
         if not pairs:
-            print(
-                "    Note: No (run, subrun) pairs found in EXT files; check tree names/paths.",
-                file=sys.stderr,
-            )
+            print("    Note: No (run, subrun) pairs found in EXT files; check tree names/paths.", file=sys.stderr)
         if missing_pairs:
             print(f"    Note: {len(missing_pairs)} (run,subrun) pairs seen in files not found in DB (showing up to 5): {missing_pairs[:5]}")
+    if sample_type == "mc" or is_detvar:
+        entry["pot"] = float(run_pot)
+        entry["pot_eff"] = float(pot_eff)
+        entry["trig"] = 0
+        entry["trig_eff"] = 0
+    elif sample_type == "ext":
+        entry["pot"] = 0.0
+        entry["pot_eff"] = 0.0
+        entry["trig"] = int(ext_triggers)
+        entry["trig_eff"] = int(trig_eff)
     elif sample_type == "data":
-        entry["pot"] = run_pot
-        entry["triggers"] = ext_triggers
-
+        entry["pot"] = float(run_pot)
+        entry["pot_eff"] = float(pot_eff or 0.0)
+        entry["trig"] = 0
+        entry["trig_eff"] = 0
+    else:
+        entry["pot"] = float(run_pot)
+        entry["pot_eff"] = float(pot_eff)
+        entry["trig"] = 0
+        entry["trig_eff"] = 0
+    entry.pop("triggers", None)
     entry.pop("stage_name", None)
     return True
 
@@ -373,15 +377,12 @@ def default_xmls() -> list[Path]:
 
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    ap = argparse.ArgumentParser(description="Aggregate ROOT samples from a recipe into a catalogue.")
+    ap = argparse.ArgumentParser(description="Aggregate ROOT samples from a recipe into a Hub-ready catalogue.")
     ap.add_argument("--recipe", type=Path, required=True, help="Path to recipe JSON (instance).")
     args = ap.parse_args()
-
-    # Fixed defaults (no CLI flags)
     jobs = DEFAULT_JOBS
     run_db = DEFAULT_RUN_DB
     outdir = repo_root / CATALOGUE_SUBDIR
-
     recipe_path = args.recipe
     with open(recipe_path) as f:
         cfg = json.load(f)
@@ -389,66 +390,56 @@ def main() -> None:
         sys.exit(f"Expected role='recipe', found '{cfg.get('role')}'.")
     if cfg.get("recipe_kind", "instance") == "template":
         sys.exit("Refusing to run on a template. Copy it and set recipe_kind='instance'.")
-
     xml_paths = default_xmls()
     _entities, stage_outdirs = load_xml_context(xml_paths)
-
     ntuple_dir = Path(cfg["ntuple_base_directory"])
     ntuple_dir.mkdir(parents=True, exist_ok=True)
-
     beams_in: dict = cfg.get("beamlines", cfg.get("run_configurations", {}))
     beamlines_out: dict = {}
-
     for beam_key, run_block in beams_in.items():
         beam_active = bool(run_block.get("active", True))
         if not beam_active:
             logging.info("Skipping beam '%s' (active=false).", beam_key)
             continue
-
         beamline, mode = split_beam_key(beam_key)
         mode = mode.lower()
-
-        for run, run_details in run_block.items():
-            if run == "active":
+        for period, run_details in run_block.items():
+            if period == "active":
                 continue
-
-            logging.info("Processing %s:%s", beam_key, run)
+            logging.info("Processing %s:%s", beam_key, period)
             is_ext = (mode == "ext")
-            pot = float(run_details.get("pot", 0.0)) if not is_ext else 0.0
+            run_pot = float(run_details.get("nominal_pot", run_details.get("pot", 0.0))) if not is_ext else 0.0
             ext_trig = int(run_details.get("ext_triggers", 0)) if is_ext else 0
-            if not is_ext and pot == 0.0:
-                logging.warning("No POT provided for %s:%s (on-beam).", beam_key, run)
-
+            if not is_ext and run_pot == 0.0:
+                logging.warning("No nominal POT provided for %s:%s (on-beam).", beam_key, period)
             samples_in = run_details.get("samples", []) or []
             if not samples_in:
-                logging.info("Skipping %s:%s (no samples).", beam_key, run)
+                logging.info("Skipping %s:%s (no samples).", beam_key, period)
                 continue
-
-            samples_out = []
-
+            samples_out: list[dict] = []
             for sample in samples_in:
                 s = dict(sample)
-
                 ok = process_sample_entry(
                     s,
                     ntuple_dir,
                     stage_outdirs,
-                    pot,
+                    run_pot,
                     ext_trig,
                     run_db,
                     jobs,
                     is_detvar=False,
                 )
-
                 if ok and "detector_variations" in s:
                     new_vars = []
                     for dv in s["detector_variations"]:
                         dv2 = dict(dv)
+                        if "sample_type" not in dv2:
+                            dv2["sample_type"] = "mc"
                         process_sample_entry(
                             dv2,
                             ntuple_dir,
                             stage_outdirs,
-                            pot,
+                            run_pot,
                             ext_trig,
                             run_db,
                             jobs,
@@ -456,28 +447,51 @@ def main() -> None:
                         )
                         new_vars.append(dv2)
                     s["detector_variations"] = new_vars
-
                 samples_out.append(s)
-
+            for s in samples_out:
+                if "file" not in s:
+                    rp = s.get("relative_path")
+                    if rp:
+                        s["file"] = str(ntuple_dir / rp)
+                s["kind"] = classify_kind(s)
+                dv_list = s.pop("detector_variations", []) or []
+                detvars = {}
+                for dv in dv_list:
+                    dv_file = dv.get("file")
+                    if not dv_file:
+                        rp = dv.get("relative_path")
+                        if rp:
+                            dv_file = str(ntuple_dir / rp)
+                    tag = str(dv.get("variation_type") or dv.get("name") or dv.get("sample_key") or f"dv{len(detvars)+1}")
+                    dv_desc = {"file": dv_file}
+                    if "pot" in dv:
+                        dv_desc["pot"] = dv["pot"]
+                    if "pot_eff" in dv:
+                        dv_desc["pot_eff"] = dv["pot_eff"]
+                    if "trig" in dv:
+                        dv_desc["trig"] = dv["trig"]
+                    if "trig_eff" in dv:
+                        dv_desc["trig_eff"] = dv["trig_eff"]
+                    detvars[tag] = dv_desc
+                if detvars:
+                    s["detvars"] = detvars
+                for k in (
+                    "sample_key", "sample_type", "truth_filter", "exclusion_truth_filters",
+                    "relative_path", "variation_type", "stage_name"
+                ):
+                    s.pop(k, None)
             run_copy = dict(run_details)
             run_copy["samples"] = samples_out
-            beamlines_out.setdefault(beam_key, {})[run] = run_copy
-
+            beamlines_out.setdefault(beam_key, {})[period] = run_copy
     outdir.mkdir(parents=True, exist_ok=True)
     out_path = outdir / "samples.json"
-
     catalogue = {
-        "samples": {
-            "ntupledir": cfg["ntuple_base_directory"],
-            "beamlines": beamlines_out,
-        },
+        "ntupledir": str(ntuple_dir),
+        "beamlines": beamlines_out,
     }
-
     with open(out_path, "w") as f:
         json.dump(catalogue, f, indent=4)
-
     logging.info("Wrote catalogue: %s", out_path)
 
 if __name__ == "__main__":
     main()
-
