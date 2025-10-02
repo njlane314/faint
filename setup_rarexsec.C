@@ -2,6 +2,29 @@
 #include "TSystem.h"
 #include "TError.h"
 
+#include <string>
+
+namespace {
+
+const char* const kHeadersToInclude[] = {
+    "rarexsec/Hub.hh",
+    "rarexsec/Processor.hh",
+    "rarexsec/Selection.hh",
+    "rarexsec/Snapshot.hh",
+    "rarexsec/Volume.hh",
+    "Hub.hh",
+    "Selection.hh"
+};
+
+void include_required_headers() {
+    for (const auto* header : kHeadersToInclude) {
+        const std::string directive = std::string("#include \"") + header + "\"";
+        gInterpreter->ProcessLine(directive.c_str());
+    }
+}
+
+} // namespace
+
 void setup_rarexsec(const char* libpath, const char* incdir) {
     if (libpath && libpath[0] != '\0') {
         const Int_t loadStatus = gSystem->Load(libpath);
@@ -13,4 +36,6 @@ void setup_rarexsec(const char* libpath, const char* incdir) {
     if (incdir && incdir[0] != '\0') {
         gInterpreter->AddIncludePath(incdir);
     }
+
+    include_required_headers();
 }
