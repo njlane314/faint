@@ -12,8 +12,9 @@ void example_macro() {
     try {
         ROOT::EnableImplicitMT();
 
-        if (gSystem->Load("librarexsec_root")) {
-            throw std::runtime_error("Failed to load librarexsec_root library");
+        const int load_status = gSystem->Load("librarexsec");
+        if (load_status < 0) {
+            throw std::runtime_error("Failed to load librarexsec library");
         }
 
         const std::string config_path = "data/samples.json";
