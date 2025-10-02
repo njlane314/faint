@@ -1,6 +1,7 @@
 #include "rarexsec/Processor.hh"
 #include "rarexsec/Hub.hh"
 #include "rarexsec/FiducialVolume.hh"
+#include <ROOT/RVec.hxx>
 #include <cmath>
 
 ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec::Entry& rec) const {
@@ -101,6 +102,7 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
                 return is_sig && purity > 0.5f && completeness > 0.1f;
             },
             {"is_signal", "neutrino_purity_from_pfp", "neutrino_completeness_from_pfp"});
+
     } else {
         const int nonmc_channel = is_data ? 0 : (is_ext ? 1 : 99);
         node = node.Define("in_fiducial", [] { return false; });
@@ -109,6 +111,47 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
         node = node.Define("analysis_channels", [nonmc_channel] { return nonmc_channel; });
         node = node.Define("is_signal", [] { return false; });
         node = node.Define("recognised_signal", [] { return false; });
+    }
+
+    node = node.Define(
+        "in_reco_fiducial",
+        [](float x, float y, float z) {
+            return rarexsec::fiducial::is_in_reco_volume(x, y, z);
+        },
+        {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y", "reco_neutrino_vertex_sce_z"});
+
+    if (!node.HasColumn("n_pfps_gen2")) {
+        node = node.Define(
+            "n_pfps_gen2",
+            [](const ROOT::RVec<unsigned>& gens) {
+                return ROOT::VecOps::Sum(gens == 2u);
+            },
+            {"pfp_generations"});
+    }
+
+    if (!node.HasColumn("n_pfps_gen3")) {
+        node = node.Define(
+            "n_pfps_gen3",
+            [](const ROOT::RVec<unsigned>& gens) {
+                return ROOT::VecOps::Sum(gens == 3u);
+            },
+            {"pfp_generations"});
+    }
+
+    if (node.HasColumn("software_trigger_pre_ext")) {
+        node = node.Define(
+            "software_trigger",
+            [](unsigned run, int pre, int post) {
+                return run < 16880 ? pre > 0 : post > 0;
+            },
+            {"run", "software_trigger_pre_ext", "software_trigger_post_ext"});
+    } else if (node.HasColumn("software_trigger_pre")) {
+        node = node.Define(
+            "software_trigger",
+            [](unsigned run, int pre, int post) {
+                return run < 16880 ? pre > 0 : post > 0;
+            },
+            {"run", "software_trigger_pre", "software_trigger_post"});
     }
 
     return node;
