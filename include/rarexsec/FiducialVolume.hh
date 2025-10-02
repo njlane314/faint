@@ -27,7 +27,7 @@ inline bool is_in_active_volume(const X& x, const Y& y, const Z& z) {
            is_within(z, min_z, max_z);
 }
 
-} // namespace detail
+} 
 
 template <typename X, typename Y, typename Z>
 inline bool is_in_truth_volume(const X& x, const Y& y, const Z& z) {
@@ -36,9 +36,8 @@ inline bool is_in_truth_volume(const X& x, const Y& y, const Z& z) {
 
 template <typename X, typename Y, typename Z>
 inline bool is_in_reco_volume(const X& x, const Y& y, const Z& z) {
-    return detail::is_in_active_volume(x, y, z) &&
-           (z < reco_gap_min_z || z > reco_gap_max_z);
+    return detail::is_in_active_volume(x, y, z) && (z < reco_gap_min_z || z > reco_gap_max_z);
 }
 
-} // namespace fiducial
-} // namespace rarexsec
+} 
+} 
