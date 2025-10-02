@@ -1,0 +1,7 @@
+# Ignore build artifacts and intermediate files
+build/
+*.o
+*.so
+*.dylib
+*.a
+*.out
