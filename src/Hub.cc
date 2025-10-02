@@ -1,12 +1,12 @@
-#include "Hub.hh"
+#include "rarexsec/Hub.hh"
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <fstream>
 #include <stdexcept>
 
-#include "Processor.hh"
+#include "rarexsec/Processor.hh"
 
-rarexsec::Data rarexsec::Hub::sample(const sample::Entry& rec) {
+rarexsec::Data rarexsec::Hub::sample(const Entry& rec) {
     constexpr const char* tree = "nuselection/EventSelectionFilter";
 
     auto df_ptr = std::make_shared<ROOT::RDataFrame>(tree, rec.file);
@@ -36,7 +36,7 @@ rarexsec::Hub::Hub(const std::string& path) {
             auto& bucket = db_[beamline][period];
 
             for (const auto& s : arr) {
-                sample::Entry rec;
+                Entry rec;
                 rec.beamline = beamline;
                 rec.period   = period;
                 rec.kind     = sample::origin_from(s.at("kind").get<std::string>());
@@ -67,15 +67,24 @@ rarexsec::Hub::Hub(const std::string& path) {
     }
 }
 
-std::vector<const rarexsec::sample::Entry*> rarexsec::Hub::simulation(const std::string& beamline,
-                                                                      const std::vector<std::string>& periods) const {
-    std::vector<const sample::Entry*> out;
+rarexsec::Data rarexsec::Hub::sample(const std::string& file, sample::origin kind) {
+    Entry rec;
+    rec.file = file;
+    rec.kind = kind;
+    return sample(rec);
+}
+
+std::vector<const rarexsec::Entry*> rarexsec::Hub::simulation(const std::string& beamline,
+                                                              const std::vector<std::string>& periods) const {
+    std::vector<const Entry*> out;
     auto it_bl = db_.find(beamline);
     if (it_bl == db_.end()) return out;
     for (const auto& per : periods) {
         auto it_p = it_bl->second.find(per);
         if (it_p == it_bl->second.end()) continue;
-        for (const auto& rec : it_p->second) if (rec.kind != sample::origin::sample) out.push_back(&rec);
+        for (const auto& rec : it_p->second) {
+            if (rec.kind != sample::origin::data) out.push_back(&rec);
+        }
     }
     return out;
 }
