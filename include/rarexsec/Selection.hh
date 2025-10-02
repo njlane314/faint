@@ -11,7 +11,6 @@
 namespace rarexsec {
 namespace selection {
 
-namespace cuts {
 inline constexpr float min_beam_pe = 0.f;
 inline constexpr float max_veto_pe = 20.f;
 inline constexpr int required_slices = 1;
@@ -24,7 +23,6 @@ inline constexpr float min_llr = 0.2f;
 inline constexpr float min_length = 10.0f;
 inline constexpr float max_distance = 4.0f;
 inline constexpr unsigned required_generation = 2u;
-}
 
 inline bool passes_pre_selection(sample::origin origin, float pe_beam,
                                  float pe_veto, bool software_trigger) {
@@ -32,17 +30,17 @@ inline bool passes_pre_selection(sample::origin origin, float pe_beam,
         (origin == sample::origin::beam || origin == sample::origin::strangeness ||
          origin == sample::origin::dirt);
     const bool dataset_gate = requires_dataset_gate
-                                  ? (pe_beam > cuts::min_beam_pe &&
-                                     pe_veto < cuts::max_veto_pe)
+                                  ? (pe_beam > min_beam_pe &&
+                                     pe_veto < max_veto_pe)
                                   : true;
     return dataset_gate && software_trigger;
 }
 
 inline bool passes_flash_selection(int num_slices, float topological_score,
                                    int generation2_pfps) {
-    return num_slices == cuts::required_slices &&
-           topological_score > cuts::min_topological_score &&
-           generation2_pfps >= cuts::min_generation2_pfps;
+    return num_slices == required_slices &&
+           topological_score > min_topological_score &&
+           generation2_pfps >= min_generation2_pfps;
 }
 
 inline bool in_reco_fiducial_volume(float x, float y, float z) {
@@ -55,14 +53,14 @@ inline bool passes_muon_selection(std::size_t n_muons) {
 
 inline bool passes_topology_selection(float contained_fraction,
                                       float cluster_fraction) {
-    return contained_fraction >= cuts::min_contained_fraction &&
-           cluster_fraction >= cuts::min_cluster_fraction;
+    return contained_fraction >= min_contained_fraction &&
+           cluster_fraction >= min_cluster_fraction;
 }
 
 inline bool passes_muon_track_selection(float s, float llr, float l, float d,
                                         unsigned g) {
-    return s > cuts::min_score && llr > cuts::min_llr && l > cuts::min_length &&
-           d < cuts::max_distance && g == cuts::required_generation;
+    return s > min_score && llr > min_llr && l > min_length &&
+           d < max_distance && g == required_generation;
 }
 
 inline bool passes_final_selection(bool pre_ok, bool flash_ok, bool fiducial_ok,
