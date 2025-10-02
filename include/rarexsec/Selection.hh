@@ -13,19 +13,15 @@
 namespace rarexsec {
 namespace selection {
 
-// Trigger stage thresholds
 inline constexpr float trigger_min_beam_pe = 0.f;
 inline constexpr float trigger_max_veto_pe = 20.f;
 
-// Slice stage thresholds
 inline constexpr int slice_required_count = 1;
 inline constexpr float slice_min_topology_score = 0.06f;
 
-// Topology stage thresholds
 inline constexpr float topology_min_contained_fraction = 0.7f;
 inline constexpr float topology_min_cluster_fraction = 0.5f;
 
-// Muon identification thresholds
 inline constexpr float muon_min_track_score = 0.5f;
 inline constexpr float muon_min_llr = 0.2f;
 inline constexpr float muon_min_track_length = 10.0f;
