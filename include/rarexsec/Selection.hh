@@ -26,12 +26,6 @@ inline constexpr float min_length = 10.0f;
 inline constexpr float max_distance = 4.0f;
 inline constexpr unsigned required_generation = 2u;
 
-bool passes_muon_track_selection(float score,
-                                 float llr,
-                                 float length,
-                                 float distance,
-                                 unsigned generation);
-
 enum class Preset {
     All,
     FiducialOnly,
@@ -59,11 +53,12 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                    const ROOT::RVec<unsigned>& generations) {
                     const auto n = scores.size();
                     for (std::size_t i = 0; i < n; ++i) {
-                        if (passes_muon_track_selection(scores[i],
-                                                         llrs[i],
-                                                         lengths[i],
-                                                         distances[i],
-                                                         generations[i])) {
+                        const bool passes = scores[i] > min_score &&
+                                            llrs[i] > min_llr &&
+                                            lengths[i] > min_length &&
+                                            distances[i] < max_distance &&
+                                            generations[i] == required_generation;
+                        if (passes) {
                             return true;
                         }
                     }
