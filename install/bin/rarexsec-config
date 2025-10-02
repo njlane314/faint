@@ -48,10 +48,10 @@ while [[ $# -gt 0 ]]; do
       echo "-L$libdir -lrarexsec"
       ;;
     --version)
-      echo "2cab4d9-dirty"
+      echo "4f7fcf5-dirty"
       ;;
     --git-revision)
-      echo "2cab4d9"
+      echo "4f7fcf5"
       ;;
     --cxx-std)
       echo "c++17"
