@@ -45,23 +45,11 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
             {"neutrino_vertex_x", "neutrino_vertex_y", "neutrino_vertex_z"});
 
         node = node.Define(
-            "mc_n_strange",
+            "is_strange",
             [](int kplus, int kminus, int kzero, int lambda0, int sigplus, int sigzero, int sigminus) {
-                return kplus + kminus + kzero + lambda0 + sigplus + sigzero + sigminus;
+                return (kplus + kminus + kzero + lambda0 + sigplus + sigzero + sigminus) > 0;
             },
-            {"count_kaon_plus", "count_kaon_minus", "count_kaon_zero",
-            "count_lambda", "count_sigma_plus", "count_sigma_zero", "count_sigma_minus"});
-
-        node = node.Define(
-            "mc_n_pion",
-            [](int pip, int pim) { return pip + pim; },
-            {"count_pi_plus", "count_pi_minus"});
-
-        node = node.Define(
-            "mc_n_proton",
-            [](int n) { return n; },
-            {"count_proton"});
-
+            {"count_kaon_plus", "count_kaon_minus", "count_kaon_zero", "count_lambda", "count_sigma_plus", "count_sigma_zero", "count_sigma_minus"});
     } 
 
     return node;
