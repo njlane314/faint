@@ -129,28 +129,6 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
         },
         {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y", "reco_neutrino_vertex_sce_z"});
 
-    node = node.Define(
-        "muon_mask",
-        [](const ROOT::RVec<float>& s, const ROOT::RVec<float>& llr, const ROOT::RVec<float>& l, const ROOT::RVec<float>& d, const ROOT::RVec<unsigned>& g) {
-            ROOT::RVec<bool> mask(s.size());
-            for (std::size_t i = 0; i < s.size(); ++i) {
-                mask[i] = rarexsec::selection::passes_muon_track_selection(
-                    s[i], llr[i], l[i], d[i], g[i]);
-            }
-            return mask;
-        },
-        {"track_shower_scores", "trk_llr_pid_v", "track_length", "track_distance_to_vertex", "pfp_generations"});
-
-    node = node.Define(
-        "has_muon",
-        [](const ROOT::RVec<bool>& mask) {
-            for (bool is_muon : mask) {
-                if (is_muon) return true;
-            }
-            return false;
-        },
-        {"muon_mask"});
-
     return node;
 }
 

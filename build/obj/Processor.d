@@ -239,8 +239,8 @@
  /cvmfs/larsoft.opensciencegrid.org/products/root/v6_28_12/Linux64bit+3.10-2.17-e20-p3915-prof/include/TH2.h \
  /cvmfs/larsoft.opensciencegrid.org/products/root/v6_28_12/Linux64bit+3.10-2.17-e20-p3915-prof/include/TProfile.h \
  /exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/Hub.hh \
- /exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/FiducialVolume.hh \
- /exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/Selection.h
+ /exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/Volume.hh \
+ /exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/Selection.hh
 
 /exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/Processor.hh:
 
@@ -720,6 +720,6 @@
 
 /exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/Hub.hh:
 
-/exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/FiducialVolume.hh:
+/exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/Volume.hh:
 
-/exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/Selection.h:
+/exp/uboone/app/users/nlane/analysis/faint/include/rarexsec/Selection.hh:
