@@ -30,21 +30,20 @@ bool rarexsec::Hub::is_simulation(sample::origin k) {
     return k != sample::origin::data;
 }
 
-rarexsec::Frame rarexsec::Hub::make_frame(const std::vector<std::string>& files,
+rarexsec::Data rarexsec::Hub::make_frame(const std::string file,
                                           sample::origin kind) {
     constexpr const char* kTree = "nuselection/EventSelectionFilter";
     constexpr const char* kTruthStrange = "is_strange";
 
-    auto chain = std::make_shared<TChain>(kTree);
-    for (const auto& f : files) chain->Add(f.c_str());
+    // define the root dataframe here from a single file
 
-    auto df_ptr = std::make_shared<ROOT::RDataFrame>(*chain);
+    auto df_ptr = std::make_shared<ROOT::RDataFrame>(*file);
     ROOT::RDF::RNode node = *df_ptr;
 
     if (kind == sample::origin::beam) node = node.Filter(std::string(kTruthStrange) + " == 0", "truth_beam");
     else if (kind == sample::origin::strangeness) node = node.Filter(std::string(kTruthStrange) + " != 0", "truth_strangeness");
 
-    return Frame{chain, df_ptr, node};
+    return Data{df_ptr, node};
 }
 
 rarexsec::Hub::Hub(const std::string& path) {
@@ -67,19 +66,19 @@ rarexsec::Hub::Hub(const std::string& path) {
                 rec.beamline = beamline;
                 rec.period   = period;
                 rec.kind     = origin_from(s.at("kind").get<std::string>());
-                rec.files    = s.at("files").get<std::vector<std::string>>();
+                rec.file     = s.at("file").get<std::string>();
                 rec.pot      = s.value("pot", 0.0);
 
-                rec.nominal = make_frame(rec.files, rec.kind);
+                rec.nominal = make_frame(rec.file, rec.kind);
 
                 if (s.contains("detvars")) {
                     const auto& dvs = s.at("detvars");
                     for (auto it_dv = dvs.begin(); it_dv != dvs.end(); ++it_dv) {
                         const std::string tag = it_dv.key();
                         const auto& desc = it_dv.value();
-                        std::vector<std::string> dv_files = fetch_list(desc, "files");
-                        if (!dv_files.empty()) {
-                        rec.detvars.emplace(tag, make_frame(dv_files, rec.kind));
+                        std::string dv_file = fetch_list(desc, "file");
+                        if (!dv_file.empty()) {
+                            rec.detvars.emplace(tag, make_frame(dv_file, rec.kind));
                         }
                     }
                 }

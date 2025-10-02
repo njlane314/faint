@@ -12,8 +12,7 @@ namespace sample {
 enum class origin { data, beam, strangeness, ext, dirt, unknown };
 }
 
-struct Frame {
-    std::shared_ptr<TChain> chain;
+struct Data {
     std::shared_ptr<ROOT::RDataFrame> df;
     ROOT::RDF::RNode node;
 };
@@ -22,12 +21,13 @@ struct Entry {
     std::string beamline;
     std::string period;
     sample::origin kind = sample::origin::unknown;
+    std::string file;
     double pot = 0.0;
-    std::vector<std::string> files;
-    Frame nominal;
-    std::unordered_map<std::string, Frame> detvars;
+    double trig = 0.0;
+    Data nominal;
+    std::unordered_map<std::string, Data> detvars;
     const ROOT::RDF::RNode& rnode() const { return nominal.node; }
-    const Frame* detvar(const std::string& tag) const {
+    const Data* detvar(const std::string& tag) const {
         auto it = detvars.find(tag);
         return it == detvars.end() ? nullptr : &it->second;
     }
@@ -54,7 +54,7 @@ private:
     static sample::origin origin_from(const std::string& s);
     static bool is_simulation(sample::origin k);
 
-    static Frame make_frame(const std::vector<std::string>& files,
+    static Data make_frame(const std::vector<std::string>& files,
                             sample::origin kind);
 };
 
