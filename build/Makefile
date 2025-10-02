@@ -68,7 +68,7 @@ CONFIG_IN:=$(TOP)/rarexsec-config.in
 CONFIG_OUT:=$(BIN)/rarexsec-config
 
 .DEFAULT_GOAL:=all
-.PHONY:all debug clean distclean install print run
+.PHONY:all debug clean distclean install print
 
 all: $(SHARED) $(STATIC) $(CONFIG_OUT)
 
@@ -117,10 +117,6 @@ install: all
 	@[ -f $(TOP)/rarexsec-root.sh ] && cp -a $(TOP)/rarexsec-root.sh $(INSTALL_BIN)/rarexsec-root || true
 	@[ -f $(TOP)/setup_rarexsec.C ] && cp -a $(TOP)/setup_rarexsec.C $(INSTALL_SCRIPTS)/ || true
 	@echo Installed to $(PREFIX)
-
-run: $(SHARED)
-	@command -v root >/dev/null 2>&1 || (echo ROOT executable not found && exit 1)
-	@$(TOP)/rarexsec-root.sh $(TOP)/macros/example_macro.C
 
 print:
 	@echo CXX=$(CXX)
