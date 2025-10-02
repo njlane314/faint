@@ -76,7 +76,7 @@ debug: OPT:=-O0 -g
 debug: all
 
 $(OBJ) $(LIB) $(BIN):
-@mkdir -p $@
+	@mkdir -p $@
 
 $(OBJ)/%.o: $(SRC)/%.cc | $(OBJ)
 @mkdir -p $(dir $@)
