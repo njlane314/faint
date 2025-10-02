@@ -24,10 +24,10 @@
 After building, the rarexsec libraries must be discoverable by ROOT.  The `rarexsec-root.sh` wrapper sets up the include and library paths and executes any macro you pass to it.  From the repository root run:
 
 ```bash
-./rarexsec-root.sh -b -q macros/example_macro.C
+./rarexsec-root.sh -b -q macros/inspect_simulation_samples.C
 ```
 
-This command loads the generated libraries, configures ROOT include paths, and runs the `example_macro()` entry point defined in `macros/example_macro.C`.
+This command loads the generated libraries, configures ROOT include paths, and runs the `inspect_simulation_samples()` entry point defined in `macros/inspect_simulation_samples.C`.
 
 Alternatively, you can call the setup macro manually from ROOT by providing the absolute library and include directories:
 
@@ -35,7 +35,7 @@ Alternatively, you can call the setup macro manually from ROOT by providing the 
 root -l -q -e 'setup_rarexsec("$PWD/build/lib/librarexsec.so","$PWD/include")' macros/example_macro.C
 ```
 
-### Defining multiple entry points in one macro file
+### Macro multiple entry points
 
 Define the functions together and call the one you need in a single command:
 
@@ -46,4 +46,3 @@ void scan_systematics() { /* ... */ }
 
 ./rarexsec-root.sh -b -q 'macros/analysis_tools.C(\"scan_systematics()\")'
 ```
-

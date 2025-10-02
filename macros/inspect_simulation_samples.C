@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-void example_macro() {
+void inspect_simulation_samples() {
     try {
         ROOT::EnableImplicitMT();
 

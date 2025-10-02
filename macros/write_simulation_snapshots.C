@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-void snapshot_macro() {
+void write_simulation_snapshots() {
     try {
         ROOT::EnableImplicitMT();
 

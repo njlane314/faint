@@ -22,8 +22,6 @@ struct Options {
     std::vector<std::string> columns;
 };
 
-namespace detail {
-
 inline std::string origin_to_string(sample::origin k) {
     switch (k) {
         case sample::origin::data:
@@ -90,8 +88,6 @@ inline std::string make_out_path(const Options& opt,
     return (std::filesystem::path(opt.outdir) / name).string();
 }
 
-}  // namespace detail
-
 inline std::vector<std::string> write(const std::vector<const Entry*>& samples,
                                       const Options& opt = {}) {
     std::vector<std::string> outputs;
@@ -101,8 +97,8 @@ inline std::vector<std::string> write(const std::vector<const Entry*>& samples,
         if (!e)
             continue;
 
-        const auto cols = detail::intersect_cols(e->rnode(), opt.columns);
-        const auto out = detail::make_out_path(opt, *e, /*detvar*/ "");
+        const auto cols = intersect_cols(e->rnode(), opt.columns);
+        const auto out = make_out_path(opt, *e, /*detvar*/ "");
         e->rnode().Snapshot(opt.tree, out, cols).GetValue();
         outputs.push_back(out);
 
@@ -112,8 +108,8 @@ inline std::vector<std::string> write(const std::vector<const Entry*>& samples,
             if (!dv.node)
                 continue;
 
-            const auto cols = detail::intersect_cols(dv.rnode(), opt.columns);
-            const auto out = detail::make_out_path(opt, *e, tag);
+            const auto cols = intersect_cols(dv.rnode(), opt.columns);
+            const auto out = make_out_path(opt, *e, tag);
             dv.rnode().Snapshot(opt.tree, out, cols).GetValue();
             outputs.push_back(out);
         }
@@ -121,11 +117,6 @@ inline std::vector<std::string> write(const std::vector<const Entry*>& samples,
 
     return outputs;
 }
-
-std::vector<std::string> write(const Hub& hub,
-                               std::string_view beamline,
-                               const std::vector<std::string>& periods,
-                               const Options& opt = {});
 
 }
 }
