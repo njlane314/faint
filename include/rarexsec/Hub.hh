@@ -51,8 +51,8 @@ class Hub {
 public:
     explicit Hub(const std::string& path);
 
-    std::vector<const rarexsec::Entry*> simulation(const std::string& beamline,
-                                                   const std::vector<std::string>& periods) const;
+    std::vector<const rarexsec::Entry*> simulation_entries(const std::string& beamline,
+                                                           const std::vector<std::string>& periods) const;
 
 
 private:

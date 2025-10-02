@@ -21,7 +21,7 @@ void example_macro() {
         const std::vector<std::string> periods = {"run1"};
 
         rarexsec::Hub hub(config_path);
-        const auto samples = hub.simulation(beamline, periods);
+        const auto samples = hub.simulation_entries(beamline, periods);
 
         std::cout << "Loaded beamline " << beamline << " for";
         for (const auto& period : periods) {

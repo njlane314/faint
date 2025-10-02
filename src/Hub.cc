@@ -75,8 +75,8 @@ rarexsec::Hub::Hub(const std::string& path) {
     }
 }
 
-std::vector<const rarexsec::Entry*> rarexsec::Hub::simulation(const std::string& beamline,
-                                                              const std::vector<std::string>& periods) const {
+std::vector<const rarexsec::Entry*> rarexsec::Hub::simulation_entries(const std::string& beamline,
+                                                                      const std::vector<std::string>& periods) const {
     std::vector<const Entry*> out;
     auto it_bl = db_.find(beamline);
     if (it_bl == db_.end()) return out;
