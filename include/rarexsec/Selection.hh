@@ -43,18 +43,19 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
         case Preset::Empty:
             return node;
         case Preset::Trigger:
-            return node.Filter([k = rec.kind](float pe_beam, float pe_veto, bool sw){
+            return node.Filter([k = rec.kind](float pe_beam, float pe_veto, int sw){
                                    const bool requires_dataset_gate =
                                        (k == sample::origin::beam ||
                                         k == sample::origin::strangeness ||
                                         k == sample::origin::dirt);
                                    const bool dataset_gate = requires_dataset_gate
                                                                 ? (pe_beam > trigger_min_beam_pe &&
-                                                                   pe_veto < trigger_max_veto_pe)
+                                                                   pe_veto < trigger_max_veto_pe &&
+                                                                   sw > 0)
                                                                 : true;
-                                   return dataset_gate && sw;
+                                   return dataset_gate;
                                },
-                               {"pe_beam", "pe_veto", "software_trigger"});
+                               {"optical_filter_pe_beam", "optical_filter_pe_veto", "software_trigger"});
         case Preset::Slice:
             return node.Filter([](int ns, float topo){
                                    return ns == slice_required_count &&
@@ -69,7 +70,7 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                                    return cf >= topology_min_contained_fraction &&
                                           cl >= topology_min_cluster_fraction;
                                },
-                               {"contained_fraction", "cluster_fraction"});
+                               {"contained_fraction", "slice_cluster_fraction"});
         case Preset::Muon:
             return node.Filter(
                 [](const ROOT::RVec<float>& scores,
