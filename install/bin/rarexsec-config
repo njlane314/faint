@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+print_usage() {
+  cat <<'USAGE'
+Usage: rarexsec-config [OPTIONS]
+
+Options:
+  --prefix         Print the base installation prefix
+  --libdir         Print the library directory
+  --includedir     Print the include directory
+  --cflags         Print the compiler include flags
+  --libs           Print the linker flags for linking against rarexsec
+  --version        Print the rarexsec version string
+  --git-revision   Print the source control revision hash
+  --cxx-std        Print the C++ standard used to build the library
+  --use-root       Print whether ROOT support is enabled
+  -h, --help       Show this help message
+USAGE
+}
+
+script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+prefix_default=$(cd "$script_dir/.." && pwd)
+prefix=${RAREXSEC_PREFIX:-$prefix_default}
+libdir="$prefix/lib"
+includedir="$prefix/include"
+
+if [[ $# -eq 0 ]]; then
+  print_usage
+  exit 0
+fi
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --prefix)
+      echo "$prefix"
+      ;;
+    --libdir)
+      echo "$libdir"
+      ;;
+    --includedir)
+      echo "$includedir"
+      ;;
+    --cflags)
+      echo "-I$includedir"
+      ;;
+    --libs)
+      echo "-L$libdir -lrarexsec"
+      ;;
+    --version)
+      echo "2cab4d9-dirty"
+      ;;
+    --git-revision)
+      echo "2cab4d9"
+      ;;
+    --cxx-std)
+      echo "c++17"
+      ;;
+    --use-root)
+      echo "yes"
+      ;;
+    -h|--help)
+      print_usage
+      exit 0
+      ;;
+    *)
+      echo "rarexsec-config: unknown option '$1'" >&2
+      print_usage >&2
+      exit 1
+      ;;
+  esac
+  shift
+done

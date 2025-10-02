@@ -93,7 +93,7 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
         node = node.Define(
             "is_signal",
             [](int ch){ return ch == 15 || ch == 16; },
-            {"channel_definitions"});
+            {"analysis_channels"});
 
         node = node.Define(
             "recognised_signal",
@@ -107,7 +107,6 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
         node = node.Define("is_strange", [] { return false; });
         node = node.Define("scattering_mode", [] { return -1; });
         node = node.Define("analysis_channels", [nonmc_channel] { return nonmc_channel; });
-        node = node.Define("channel_definitions", [](int ch){ return ch; }, {"analysis_channels"});
         node = node.Define("is_signal", [] { return false; });
         node = node.Define("recognised_signal", [] { return false; });
     }
