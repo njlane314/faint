@@ -7,7 +7,7 @@
 
 #include "rarexsec/Processor.hh"
 
-rarexsec::Data rarexsec::Hub::sample(const Entry& rec) {
+rarexsec::Frame rarexsec::Hub::sample(const Entry& rec) {
     constexpr const char* tree = "nuselection/EventSelectionFilter";
 
     auto df_ptr = std::make_shared<ROOT::RDataFrame>(tree, rec.file);
@@ -20,7 +20,7 @@ rarexsec::Data rarexsec::Hub::sample(const Entry& rec) {
     else if (rec.kind == sample::origin::strangeness)
         node = node.Filter([](bool s){ return  s; }, {"is_strange"});
 
-    return Data{df_ptr, std::move(node)};
+    return Frame{df_ptr, std::move(node)};
 }
 
 rarexsec::Hub::Hub(const std::string& path) {
