@@ -48,12 +48,12 @@ class Hub {
 public:
     explicit Hub(const std::string& path);
 
-    std::vector<const Entry*> simulation(const std::string& beamline,
-                                         const std::vector<std::string>& periods) const;
+    std::vector<const rarexsec::Entry*> simulation(const std::string& beamline,
+                                                   const std::vector<std::string>& periods) const;
 
 
 private:
-    using period_map   = std::unordered_map<std::string, std::vector<Entry>>;
+    using period_map   = std::unordered_map<std::string, std::vector<rarexsec::Entry>>;
     using beamline_map = std::unordered_map<std::string, period_map>;
     beamline_map db_;
 
