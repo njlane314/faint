@@ -80,27 +80,26 @@ $(OBJ) $(LIB) $(BIN):
 
 $(OBJ)/%.o: $(SRC)/%.cc | $(OBJ)
 	@mkdir -p $(dir $@)
-	
-$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.cpp | $(OBJ)
 	@mkdir -p $(dir $@)
-$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(SHARED): $(OBJS) | $(LIB)
-$(CXX) $(SHAREDFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+	$(CXX) $(SHAREDFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 	@echo Built $@
 
 $(STATIC): $(OBJS) | $(LIB)
-$(AR) rcs $@ $^
+	$(AR) rcs $@ $^
 	@echo Built $@
 
 $(CONFIG_OUT): $(CONFIG_IN) | $(BIN)
 	sed -e 's|@@VERSION@@|$(VERSION)|g' \
-	    -e 's|@@GIT_REVISION@@|$(GIT_REV)|g' \
-	    -e 's|@@CXX_STD@@|$(CXXSTD)|g' \
-	    -e 's|@@USE_ROOT@@|yes|g' \
-	    $< > $@
+	-e 's|@@GIT_REVISION@@|$(GIT_REV)|g' \
+	-e 's|@@CXX_STD@@|$(CXXSTD)|g' \
+	-e 's|@@USE_ROOT@@|yes|g' \
+	$< > $@
 	chmod +x $@
 
 PREFIX?=$(TOP)/install
@@ -110,36 +109,36 @@ INSTALL_BIN:=$(PREFIX)/bin
 INSTALL_SCRIPTS:=$(PREFIX)/scripts
 
 install: all
-@mkdir -p $(INSTALL_LIB) $(INSTALL_INC) $(INSTALL_BIN) $(INSTALL_SCRIPTS)
-@cp -a $(LIB)/* $(INSTALL_LIB)/
-@rsync -a --delete $(INC)/ $(INSTALL_INC)/
-@cp -a $(CONFIG_OUT) $(INSTALL_BIN)/
-@[ -f $(TOP)/rarexsec-root.sh ] && cp -a $(TOP)/rarexsec-root.sh $(INSTALL_BIN)/rarexsec-root || true
-@[ -f $(TOP)/setup_rarexsec.C ] && cp -a $(TOP)/setup_rarexsec.C $(INSTALL_SCRIPTS)/ || true
-@echo Installed to $(PREFIX)
+	@mkdir -p $(INSTALL_LIB) $(INSTALL_INC) $(INSTALL_BIN) $(INSTALL_SCRIPTS)
+	@cp -a $(LIB)/* $(INSTALL_LIB)/
+	@rsync -a --delete $(INC)/ $(INSTALL_INC)/
+	@cp -a $(CONFIG_OUT) $(INSTALL_BIN)/
+	@[ -f $(TOP)/rarexsec-root.sh ] && cp -a $(TOP)/rarexsec-root.sh $(INSTALL_BIN)/rarexsec-root || true
+	@[ -f $(TOP)/setup_rarexsec.C ] && cp -a $(TOP)/setup_rarexsec.C $(INSTALL_SCRIPTS)/ || true
+	@echo Installed to $(PREFIX)
 
 run: $(SHARED)
-@command -v root >/dev/null 2>&1 || (echo ROOT executable not found && exit 1)
-@root -l -q -e 'gSystem->Load("$(abspath $(SHARED))"); gSystem->AddIncludePath("-I$(abspath $(INC))"); gROOT->ProcessLine(".x $(TOP)/setup_rarexsec.C$(ARGS)");'
+	@command -v root >/dev/null 2>&1 || (echo ROOT executable not found && exit 1)
+	@root -l -q -e 'gSystem->Load("$(abspath $(SHARED))"); gSystem->AddIncludePath("-I$(abspath $(INC))"); gROOT->ProcessLine(".x $(TOP)/setup_rarexsec.C$(ARGS)");'
 
 print:
-@echo CXX=$(CXX)
-@echo CPPFLAGS=$(CPPFLAGS)
-@echo CXXFLAGS=$(CXXFLAGS)
-@echo LDFLAGS=$(LDFLAGS)
-@echo LDLIBS=$(LDLIBS)
-@echo SRCS=$(SRCS)
-@echo OBJS=$(OBJS)
-@echo SHARED=$(SHARED)
-@echo STATIC=$(STATIC)
-@echo SOEXT=$(SOEXT)
-@echo JSON_INCLUDE_FLAGS=$(JSON_INCLUDE_FLAGS)
+	@echo CXX=$(CXX)
+	@echo CPPFLAGS=$(CPPFLAGS)
+	@echo CXXFLAGS=$(CXXFLAGS)
+	@echo LDFLAGS=$(LDFLAGS)
+	@echo LDLIBS=$(LDLIBS)
+	@echo SRCS=$(SRCS)
+	@echo OBJS=$(OBJS)
+	@echo SHARED=$(SHARED)
+	@echo STATIC=$(STATIC)
+	@echo SOEXT=$(SOEXT)
+	@echo JSON_INCLUDE_FLAGS=$(JSON_INCLUDE_FLAGS)
 
 clean:
-@rm -rf $(OBJ) $(LIB) $(BIN)
+	@rm -rf $(OBJ) $(LIB) $(BIN)
 
 distclean: clean
-@rm -rf $(PREFIX)
+	@rm -rf $(PREFIX)
 
 DEPS:=$(OBJS:.o=.d)
 -include $(DEPS)
