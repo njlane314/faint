@@ -45,7 +45,7 @@ void example_macro_preset() {
 
         std::cout << "Using preset: " << preset_to_string(preset) << "\n";
 
-        const auto samples = hub.simulation(beamline, periods);
+        const auto samples = hub.simulation_entries(beamline, periods);
         std::cout << "Found " << samples.size() << " simulation samples" << std::endl;
 
         for (const auto* entry : samples) {
