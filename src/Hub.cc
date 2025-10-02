@@ -6,17 +6,16 @@
 
 #include "Processor.hh"
 
-rarexsec::Data rarexsec::Hub::sample(const std::string& file,
-                                         sample::origin kind) {
+rarexsec::Data rarexsec::Hub::sample(const sample::Entry& rec) {
     constexpr const char* tree = "nuselection/EventSelectionFilter";
 
-    auto df_ptr = std::make_shared<ROOT::RDataFrame>(tree, file);
+    auto df_ptr = std::make_shared<ROOT::RDataFrame>(tree, rec.file);
     ROOT::RDF::RNode node = *df_ptr;
 
-    node = processor().run(node, kind);
+    node = processor().run(node, rec);
 
-    if (kind == sample::origin::beam) node = node.Filter("!is_strange");
-    else if (kind == sample::origin::strangeness) node = node.Filter("is_strange");
+    if (rec.kind == sample::origin::beam) node = node.Filter("!is_strange");
+    else if (rec.kind == sample::origin::strangeness) node = node.Filter("is_strange");
 
     return Data{df_ptr, node};
 }
@@ -44,7 +43,7 @@ rarexsec::Hub::Hub(const std::string& path) {
                 rec.file     = s.at("file").get<std::string>();
                 rec.pot      = s.value("pot", 0.0);
 
-                rec.nominal = sample(rec.file, rec.kind);
+                rec.nominal = sample(rec);
 
                 if (s.contains("detvars")) {
                     const auto& dvs = s.at("detvars");
