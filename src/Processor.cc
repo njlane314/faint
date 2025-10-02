@@ -89,17 +89,17 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
             },
             {"in_fiducial", "neutrino_pdg", "interaction_ccnc", "mc_n_strange", "mc_n_pion", "mc_n_proton", "count_pi_zero", "count_gamma"});
 
-            node = node.Define(
-                "is_signal",
-                [](int ch){ return ch == 15 || ch == 16; },
-                {"channel_definitions"});
+        node = node.Define(
+            "is_signal",
+            [](int ch){ return ch == 15 || ch == 16; },
+            {"channel_definitions"});
 
-            node = node.Define(
-                "recognised_signal",
-                [](bool is_sig, float purity, float completeness) {
-                    return is_sig && purity > 0.5f && completeness > 0.1f;
-                },
-                {"is_signal", "neutrino_purity_from_pfp", "neutrino_completeness_from_pfp"});
+        node = node.Define(
+            "recognised_signal",
+            [](bool is_sig, float purity, float completeness) {
+                return is_sig && purity > 0.5f && completeness > 0.1f;
+            },
+            {"is_signal", "neutrino_purity_from_pfp", "neutrino_completeness_from_pfp"});
     } 
 
     return node;
