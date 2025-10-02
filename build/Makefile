@@ -113,7 +113,8 @@ install: all
 	@cp -a $(LIB)/* $(INSTALL_LIB)/
 	@rsync -a --delete $(INC)/ $(INSTALL_INC)/
 	@cp -a $(CONFIG_OUT) $(INSTALL_BIN)/
-	@[ -f $(TOP)/rarexsec-root.sh ] && cp -a $(TOP)/rarexsec-root.sh $(INSTALL_BIN)/rarexsec-root || true
+        @[ -f $(TOP)/rarexsec-root.sh ] && chmod +x $(TOP)/rarexsec-root.sh || true
+        @[ -f $(TOP)/rarexsec-root.sh ] && cp -a $(TOP)/rarexsec-root.sh $(INSTALL_BIN)/rarexsec-root || true
 	@[ -f $(TOP)/setup_rarexsec.C ] && cp -a $(TOP)/setup_rarexsec.C $(INSTALL_SCRIPTS)/ || true
 	@echo Installed to $(PREFIX)
 
