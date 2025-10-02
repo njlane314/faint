@@ -72,8 +72,8 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
             "analysis_channels",
             [](bool fv, int nu, int ccnc, int s, int npi, int np, int npi0, int ngamma) {
                 if (!fv) {
-                    if (nu == 0) return 1;   // out-of-fv, no neutrino?
-                    return 2;                // out-of-fv, with neutrino
+                    if (nu == 0) return 1;   // out-fv
+                    return 2;                // ext
                 }
                 if (ccnc == 1) return 14;    // NC in-fv
                 if (ccnc == 0 && s > 0) {
@@ -121,155 +121,19 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
         },
         {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y", "reco_neutrino_vertex_sce_z"});
 
-    if (!node.HasColumn("n_pfps_gen2")) {
-        node = node.Define(
-            "n_pfps_gen2",
-            [](const ROOT::RVec<unsigned>& gens) {
-                return ROOT::VecOps::Sum(gens == 2u);
-            },
-            {"pfp_generations"});
-    }
-
-    if (!node.HasColumn("n_pfps_gen3")) {
-        node = node.Define(
-            "n_pfps_gen3",
-            [](const ROOT::RVec<unsigned>& gens) {
-                return ROOT::VecOps::Sum(gens == 3u);
-            },
-            {"pfp_generations"});
-    }
-
-    if (node.HasColumn("track_shower_scores")) {
-        node = node.Define(
-            "muon_mask",
-            [](const ROOT::RVec<float>& scores, const ROOT::RVec<float>& llr,
-               const ROOT::RVec<float>& lengths, const ROOT::RVec<float>& dists,
-               const ROOT::RVec<float>& start_x, const ROOT::RVec<float>& start_y,
-               const ROOT::RVec<float>& start_z, const ROOT::RVec<float>& end_x,
-               const ROOT::RVec<float>& end_y, const ROOT::RVec<float>& end_z,
-               const ROOT::RVec<unsigned>& gens) {
-                ROOT::RVec<bool> mask(scores.size());
-                for (std::size_t i = 0; i < scores.size(); ++i) {
-                    const bool fid_start = rarexsec::fiducial::is_in_reco_volume(
-                        start_x[i], start_y[i], start_z[i]);
-                    const bool fid_end = rarexsec::fiducial::is_in_reco_volume(
-                        end_x[i], end_y[i], end_z[i]);
-                    mask[i] = rarexsec::selection::passes_muon_track_selection(
-                        scores[i], llr[i], lengths[i], dists[i], gens[i], fid_start, fid_end);
-                }
-                return mask;
-            },
-            {"track_shower_scores", "trk_llr_pid_v", "track_length",
-             "track_distance_to_vertex", "track_start_x", "track_start_y",
-             "track_start_z", "track_end_x", "track_end_y", "track_end_z",
-             "pfp_generations"});
-
-        const auto filter_float = [](const ROOT::RVec<float>& vals,
-                                     const ROOT::RVec<bool>& mask) {
-            ROOT::RVec<float> out;
-            out.reserve(vals.size());
-            for (std::size_t i = 0; i < vals.size(); ++i) {
-                if (mask[i]) out.push_back(vals[i]);
+    node = node.Define(
+        "muon_mask",
+        [](const ROOT::RVec<float>& s, const ROOT::RVec<float>& llr, const ROOT::RVec<float>& l, const ROOT::RVec<float>& d, const ROOT::RVec<unsigned>& g) {
+            ROOT::RVec<bool> mask(s.size());
+            for (std::size_t i = 0; i < s.size(); ++i) {
+                mask[i] = rarexsec::selection::passes_muon_track_selection(
+                    s[i], llr[i], l[i], d[i], g[i]);
             }
-            return out;
-        };
+            return mask;
+        },
+        {"track_shower_scores", "trk_llr_pid_v", "track_length", "track_distance_to_vertex", "pfp_generations"});
 
-        const auto filter_uint = [](const ROOT::RVec<unsigned>& vals,
-                                    const ROOT::RVec<bool>& mask) {
-            ROOT::RVec<unsigned> out;
-            out.reserve(vals.size());
-            for (std::size_t i = 0; i < vals.size(); ++i) {
-                if (mask[i]) out.push_back(vals[i]);
-            }
-            return out;
-        };
-
-        const auto filter_costheta = [](const ROOT::RVec<float>& theta,
-                                        const ROOT::RVec<bool>& mask) {
-            ROOT::RVec<float> out;
-            out.reserve(theta.size());
-            for (std::size_t i = 0; i < theta.size(); ++i) {
-                if (mask[i]) out.push_back(std::cos(theta[i]));
-            }
-            return out;
-        };
-
-        node = node.Define("muon_trk_score_v", filter_float,
-                           {"track_shower_scores", "muon_mask"});
-        node = node.Define("muon_trk_llr_pid_v", filter_float,
-                           {"trk_llr_pid_v", "muon_mask"});
-        node = node.Define("muon_trk_start_x_v", filter_float,
-                           {"track_start_x", "muon_mask"});
-        node = node.Define("muon_trk_start_y_v", filter_float,
-                           {"track_start_y", "muon_mask"});
-        node = node.Define("muon_trk_start_z_v", filter_float,
-                           {"track_start_z", "muon_mask"});
-        node = node.Define("muon_trk_end_x_v", filter_float,
-                           {"track_end_x", "muon_mask"});
-        node = node.Define("muon_trk_end_y_v", filter_float,
-                           {"track_end_y", "muon_mask"});
-        node = node.Define("muon_trk_end_z_v", filter_float,
-                           {"track_end_z", "muon_mask"});
-        node = node.Define("muon_trk_length_v", filter_float,
-                           {"track_length", "muon_mask"});
-        node = node.Define("muon_trk_distance_v", filter_float,
-                           {"track_distance_to_vertex", "muon_mask"});
-        node = node.Define("muon_pfp_generation_v", filter_uint,
-                           {"pfp_generations", "muon_mask"});
-        node = node.Define("muon_track_costheta", filter_costheta,
-                           {"track_theta", "muon_mask"});
-
-        if (node.HasColumn("n_muons_tot")) {
-            node = node.Redefine(
-                "n_muons_tot",
-                [](const ROOT::RVec<bool>& mask) {
-                    return static_cast<unsigned long>(ROOT::VecOps::Sum(mask));
-                },
-                {"muon_mask"});
-        } else {
-            node = node.Define(
-                "n_muons_tot",
-                [](const ROOT::RVec<bool>& mask) {
-                    return static_cast<unsigned long>(ROOT::VecOps::Sum(mask));
-                },
-                {"muon_mask"});
-        }
-
-        if (node.HasColumn("has_muon")) {
-            node = node.Redefine(
-                "has_muon",
-                [](unsigned long n_muons) { return n_muons > 0UL; },
-                {"n_muons_tot"});
-        } else {
-            node = node.Define(
-                "has_muon",
-                [](unsigned long n_muons) { return n_muons > 0UL; },
-                {"n_muons_tot"});
-        }
-    } else {
-        if (!node.HasColumn("n_muons_tot")) {
-            node = node.Define("n_muons_tot", [] { return 0UL; });
-        }
-        if (!node.HasColumn("has_muon")) {
-            node = node.Define("has_muon", [] { return false; });
-        }
-    }
-
-    if (node.HasColumn("software_trigger_pre_ext")) {
-        node = node.Define(
-            "software_trigger",
-            [](unsigned run, int pre, int post) {
-                return run < 16880 ? pre > 0 : post > 0;
-            },
-            {"run", "software_trigger_pre_ext", "software_trigger_post_ext"});
-    } else if (node.HasColumn("software_trigger_pre")) {
-        node = node.Define(
-            "software_trigger",
-            [](unsigned run, int pre, int post) {
-                return run < 16880 ? pre > 0 : post > 0;
-            },
-            {"run", "software_trigger_pre", "software_trigger_post"});
-    }
+    // define a has_muon definition  
 
     return node;
 }
