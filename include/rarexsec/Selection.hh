@@ -27,11 +27,11 @@ inline constexpr float max_distance = 4.0f;
 inline constexpr unsigned required_generation = 2u;
 
 enum class Preset {
-    All,
+    Empty,
+    Trigger,
+    Slice, 
     FiducialOnly,
     MuonOnly,
-    Baseline,
-    PreOnly,
     FlashOnly,
     TopologyOnly,
     Final
@@ -39,8 +39,22 @@ enum class Preset {
 
 inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::Entry& rec) {
     switch (p) {
-        case Preset::All:
+        case Preset::Empty:
             return node;
+         case Preset::Trigger:
+            return node.Filter([k = rec.kind](float pe_beam, float pe_veto, bool sw){
+                                   const bool requires_dataset_gate =
+                                       (k == sample::origin::beam ||
+                                        k == sample::origin::strangeness ||
+                                        k == sample::origin::dirt);
+                                   const bool dataset_gate = requires_dataset_gate
+                                                                ? (pe_beam > min_beam_pe &&
+                                                                   pe_veto < max_veto_pe)
+                                                                : true;
+                                   return dataset_gate && sw;
+                               },
+                               {"pe_beam", "pe_veto", "software_trigger"});
+        // define a slice preset here
         case Preset::FiducialOnly:
             return node.Filter([](bool fv){ return fv; },
                                {"in_reco_fiducial"});
@@ -69,22 +83,8 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                  "track_length",
                  "track_distance_to_vertex",
                  "pfp_generations"});
-        case Preset::Baseline:
-            return node.Filter([](bool fv, bool mu){ return fv && mu; },
-                               {"in_reco_fiducial", "has_muon"});
-        case Preset::PreOnly:
-            return node.Filter([k = rec.kind](float pe_beam, float pe_veto, bool sw){
-                                   const bool requires_dataset_gate =
-                                       (k == sample::origin::beam ||
-                                        k == sample::origin::strangeness ||
-                                        k == sample::origin::dirt);
-                                   const bool dataset_gate = requires_dataset_gate
-                                                                ? (pe_beam > min_beam_pe &&
-                                                                   pe_veto < max_veto_pe)
-                                                                : true;
-                                   return dataset_gate && sw;
-                               },
-                               {"pe_beam", "pe_veto", "software_trigger"});
+
+       
         case Preset::FlashOnly:
             return node.Filter([](int ns, float topo, int n2g){
                                    return ns == required_slices &&
@@ -100,7 +100,7 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                                {"contained_fraction", "cluster_fraction"});
         case Preset::Final:
         default: {
-            auto filtered = apply(node, Preset::PreOnly, rec);
+            auto filtered = apply(node, Preset::Trigger, rec);
             filtered = apply(filtered, Preset::FlashOnly, rec);
             filtered = apply(filtered, Preset::TopologyOnly, rec);
             return apply(filtered, Preset::Baseline, rec);
