@@ -17,7 +17,6 @@ inline constexpr float min_beam_pe = 0.f;
 inline constexpr float max_veto_pe = 20.f;
 inline constexpr int required_slices = 1;
 inline constexpr float min_topological_score = 0.06f;
-inline constexpr int min_generation2_pfps = 2;
 inline constexpr float min_contained_fraction = 0.7f;
 inline constexpr float min_cluster_fraction = 0.5f;
 inline constexpr float min_score = 0.5f;
@@ -29,19 +28,18 @@ inline constexpr unsigned required_generation = 2u;
 enum class Preset {
     Empty,
     Trigger,
-    Slice, 
-    FiducialOnly,
-    MuonOnly,
-    FlashOnly,
-    TopologyOnly,
-    Final
+    Slice,
+    Fiducial,
+    Topology,
+    Muon,
+    InclsuiveMuCC
 };
 
 inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::Entry& rec) {
     switch (p) {
         case Preset::Empty:
             return node;
-         case Preset::Trigger:
+        case Preset::Trigger:
             return node.Filter([k = rec.kind](float pe_beam, float pe_veto, bool sw){
                                    const bool requires_dataset_gate =
                                        (k == sample::origin::beam ||
@@ -54,11 +52,22 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                                    return dataset_gate && sw;
                                },
                                {"pe_beam", "pe_veto", "software_trigger"});
-        // define a slice preset here
-        case Preset::FiducialOnly:
+        case Preset::Slice:
+            return node.Filter([](int ns, float topo, int n2g){
+                                   return ns == required_slices &&
+                                          topo > min_topological_score;
+                               },
+                               {"num_slices", "topological_score"});
+        case Preset::Fiducial:
             return node.Filter([](bool fv){ return fv; },
                                {"in_reco_fiducial"});
-        case Preset::MuonOnly:
+        case Preset::Topology:
+            return node.Filter([](float cf, float cl){
+                                   return cf >= min_contained_fraction &&
+                                          cl >= min_cluster_fraction;
+                               },
+                               {"contained_fraction", "cluster_fraction"});
+        case Preset::Muon:
             return node.Filter(
                 [](const ROOT::RVec<float>& scores,
                    const ROOT::RVec<float>& llrs,
@@ -83,27 +92,13 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
                  "track_length",
                  "track_distance_to_vertex",
                  "pfp_generations"});
-
-       
-        case Preset::FlashOnly:
-            return node.Filter([](int ns, float topo, int n2g){
-                                   return ns == required_slices &&
-                                          topo > min_topological_score &&
-                                          n2g >= min_generation2_pfps;
-                               },
-                               {"num_slices", "topological_score", "generation2_pfps"});
-        case Preset::TopologyOnly:
-            return node.Filter([](float cf, float cl){
-                                   return cf >= min_contained_fraction &&
-                                          cl >= min_cluster_fraction;
-                               },
-                               {"contained_fraction", "cluster_fraction"});
-        case Preset::Final:
+        case Preset::InclusiveMuCC:
         default: {
             auto filtered = apply(node, Preset::Trigger, rec);
-            filtered = apply(filtered, Preset::FlashOnly, rec);
-            filtered = apply(filtered, Preset::TopologyOnly, rec);
-            return apply(filtered, Preset::Baseline, rec);
+            filtered = apply(filtered, Preset::Slice, rec);
+            filtered = apply(filtered, Preset::Fiducial, rec);
+            filtered = apply(filtered, Preset::Topology, rec);
+            return apply(filtered, Preset::Muon, rec);
         }
     }
 }
