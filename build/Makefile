@@ -120,7 +120,7 @@ install: all
 
 run: $(SHARED)
 	@command -v root >/dev/null 2>&1 || (echo ROOT executable not found && exit 1)
-	@root -l -q -e 'gSystem->Load("$(abspath $(SHARED))"); gSystem->AddIncludePath("-I$(abspath $(INC))"); gROOT->ProcessLine(".x $(TOP)/setup_rarexsec.C$(ARGS)");'
+	@root -l -q -e 'gSystem->Load("$(abspath $(SHARED))"); gSystem->AddIncludePath("-I$(abspath $(INC))"); gROOT->ProcessLine(".x $(abspath $(TOP)/setup_rarexsec.C)(\"$(abspath $(SHARED))\",\"$(abspath $(INC))\")");'
 
 print:
 	@echo CXX=$(CXX)
