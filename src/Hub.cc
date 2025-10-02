@@ -15,8 +15,10 @@ rarexsec::Data rarexsec::Hub::sample(const Entry& rec) {
 
     node = processor().run(node, rec);
 
-    if (rec.kind == sample::origin::beam) node = node.Filter("!is_strange");
-    else if (rec.kind == sample::origin::strangeness) node = node.Filter("is_strange");
+    if (rec.kind == sample::origin::beam)
+        node = node.Filter([](bool s){ return !s; }, {"is_strange"});
+    else if (rec.kind == sample::origin::strangeness)
+        node = node.Filter([](bool s){ return  s; }, {"is_strange"});
 
     return Data{df_ptr, std::move(node)};
 }
