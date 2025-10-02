@@ -79,20 +79,21 @@ $(OBJ) $(LIB) $(BIN):
 	@mkdir -p $@
 
 $(OBJ)/%.o: $(SRC)/%.cc | $(OBJ)
-@mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
+	
 $(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.cpp | $(OBJ)
-@mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 $(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(SHARED): $(OBJS) | $(LIB)
 $(CXX) $(SHAREDFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
-@echo Built $@
+	@echo Built $@
 
 $(STATIC): $(OBJS) | $(LIB)
 $(AR) rcs $@ $^
-@echo Built $@
+	@echo Built $@
 
 $(CONFIG_OUT): $(CONFIG_IN) | $(BIN)
 	sed -e 's|@@VERSION@@|$(VERSION)|g' \
