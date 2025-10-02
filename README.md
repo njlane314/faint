@@ -32,5 +32,17 @@ This command loads the generated libraries, configures ROOT include paths, and r
 Alternatively, you can call the setup macro manually from ROOT by providing the absolute library and include directories:
 
 ```bash
-root -l -q -e 'setup_rarexsec("$PWD/build/lib/librarexsec.so","$PWD/include")' macros/inspect_simulation_samples.C
+root -l -q -e 'setup_rarexsec("$PWD/build/lib/librarexsec.so","$PWD/include")' macros/example_macro.C
+```
+
+### Macro multiple entry points
+
+Define the functions together and call the one you need in a single command:
+
+```bash
+# macros/analysis_tools.C
+void scan_nominal() { /* ... */ }
+void scan_systematics() { /* ... */ }
+
+./rarexsec-root.sh -b -q 'macros/analysis_tools.C(\"scan_systematics()\")'
 ```
