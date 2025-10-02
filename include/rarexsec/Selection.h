@@ -1,12 +1,8 @@
-#ifndef FAINT_SELECTION_H
-#define FAINT_SELECTION_H
+#pragma once
 
 #include <string>
 
-#include <faint/FiducialVolume.h>
-#include <faint/Types.h>
-
-namespace faint {
+namespace rarexsec {
 namespace selection {
 
 namespace column {
@@ -110,5 +106,3 @@ private:
 
 }
 }
-
-#endif
