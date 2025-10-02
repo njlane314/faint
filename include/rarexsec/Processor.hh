@@ -14,4 +14,4 @@ public:
 
 const Processor& processor();
 
-} 
+}
