@@ -58,7 +58,7 @@ private:
     beamline_map db_;
 
     static Data sample(const Entry& rec);
-    static Data sample(const std::string& file, sample::origin kind);
+    static Data sample(const std::string& file, sample::origin kind, const Entry& prototype);
 };
 
 }

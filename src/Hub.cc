@@ -56,7 +56,7 @@ rarexsec::Hub::Hub(const std::string& path) {
                         const auto& desc = it_dv.value();
                         const std::string dv_file = desc.at("file").get<std::string>();
                         if (!dv_file.empty()) {
-                            rec.detvars.emplace(tag, sample(dv_file, rec.kind));
+                            rec.detvars.emplace(tag, sample(dv_file, rec.kind, rec));
                         }
                     }
                 }
@@ -67,10 +67,12 @@ rarexsec::Hub::Hub(const std::string& path) {
     }
 }
 
-rarexsec::Data rarexsec::Hub::sample(const std::string& file, sample::origin kind) {
-    Entry rec;
+rarexsec::Data rarexsec::Hub::sample(const std::string& file, sample::origin kind, const Entry& prototype) {
+    Entry rec = prototype;
     rec.file = file;
     rec.kind = kind;
+    rec.nominal = {};
+    rec.detvars.clear();
     return sample(rec);
 }
 
