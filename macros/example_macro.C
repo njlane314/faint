@@ -58,8 +58,7 @@ void example_macro() {
                 continue;
             }
 
-            std::cout << "Sample kind '" << origin_to_string(entry->kind) << "' from file "
-                      << entry->file << std::endl;
+            std::cout << "Sample kind '" << origin_to_string(entry->kind) << "' from file " << entry->file << std::endl;
 
             auto final_count = entry->rnode().Count();
             auto eval_final_count = final_count.GetValue();
@@ -70,8 +69,7 @@ void example_macro() {
                     continue;
                 }
                 auto detvar_count = detvar.second.rnode().Count().GetValue();
-                std::cout << "  Detector variation '" << detvar.first
-                          << "' entries: " << detvar_count << std::endl;
+                std::cout << "  Detector variation '" << detvar.first << "' entries: " << detvar_count << std::endl;
             }
 
             total_pot_nom += entry->pot_nom;
