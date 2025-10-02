@@ -78,14 +78,12 @@ inline bool passes_topology_selection(float contained_fraction,
 }
 
 inline bool passes_muon_track_selection(float score, float llr, float length,
-                                        float distance, unsigned generation,
-                                        bool fid_start, bool fid_end) {
+                                        float distance, unsigned generation) {
     return score > MuonTrackCut::min_score &&
            llr > MuonTrackCut::min_llr &&
            length > MuonTrackCut::min_length &&
            distance < MuonTrackCut::max_distance &&
-           generation == MuonTrackCut::required_generation && fid_start &&
-           fid_end;
+           generation == MuonTrackCut::required_generation;
 }
 
 inline bool passes_final_selection(bool pre, bool flash, bool fiducial,
