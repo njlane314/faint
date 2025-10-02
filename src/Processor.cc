@@ -53,7 +53,7 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
             {"count_kaon_plus", "count_kaon_minus", "count_kaon_zero", "count_lambda", "count_sigma_plus", "count_sigma_zero", "count_sigma_minus"});
             
         node = node.Define(
-            "interation_mode",
+            "scattering_mode",
             [](int mode) {
                 switch (mode) {
                     case 0:  return 0;   // QEL
@@ -105,7 +105,7 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
         const int nonmc_channel = is_data ? 0 : (is_ext ? 1 : 99);
         node = node.Define("in_fiducial", [] { return false; });
         node = node.Define("is_strange", [] { return false; });
-        node = node.Define("interation_mode", [] { return -1; });
+        node = node.Define("scattering_mode", [] { return -1; });
         node = node.Define("analysis_channels", [nonmc_channel] { return nonmc_channel; });
         node = node.Define("channel_definitions", [](int ch){ return ch; }, {"analysis_channels"});
         node = node.Define("is_signal", [] { return false; });
