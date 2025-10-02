@@ -1,5 +1,4 @@
 {
-  "ntupledir": "/exp/uboone/data/users/nlane/ntuples",
   "beamlines": {
     "numi-fhc": {
       "run1": {

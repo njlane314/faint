@@ -486,7 +486,6 @@ def main() -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     out_path = outdir / "samples.json"
     catalogue = {
-        "ntupledir": str(ntuple_dir),
         "beamlines": beamlines_out,
     }
     with open(out_path, "w") as f:
