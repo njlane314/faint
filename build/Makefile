@@ -42,20 +42,18 @@ CXXFLAGS+=-std=$(CXXSTD)
 endif
 CPPFLAGS+=$(shell $(ROOTCONFIG) --cflags)
 
-# Attempt to locate nlohmann_json provided by the environment setup.
-JSON_INCLUDE_FLAG:=
-ifneq ($(strip $(NLOHMANN_JSON_CFLAGS)),)
-JSON_INCLUDE_FLAG:=$(NLOHMANN_JSON_CFLAGS)
-else ifneq ($(strip $(NLOHMANN_JSON_INC)),)
-JSON_INCLUDE_FLAG:=-I$(NLOHMANN_JSON_INC)
-else ifneq ($(strip $(NLOHMANN_JSON_INCLUDE_DIRS)),)
-JSON_INCLUDE_FLAG:=-I$(NLOHMANN_JSON_INCLUDE_DIRS)
-else ifneq ($(strip $(NLOHMANN_JSON_FQ_DIR)),)
-JSON_INCLUDE_FLAG:=-I$(NLOHMANN_JSON_FQ_DIR)/include
-else ifneq ($(strip $(NLOHMANN_JSON_DIR)),)
-JSON_INCLUDE_FLAG:=-I$(NLOHMANN_JSON_DIR)/include
+define _split_paths
+$(strip $(foreach path,$(subst :, ,$(1)),$(if $(path),$(path))))
+endef
+
+JSON_INCLUDE_FLAGS:=$(strip $(NLOHMANN_JSON_CFLAGS))
+ifeq ($(JSON_INCLUDE_FLAGS),)
+JSON_INCLUDE_DIRS:=$(call _split_paths,$(NLOHMANN_JSON_INC) $(NLOHMANN_JSON_INCLUDE_DIRS))
+JSON_INCLUDE_DIRS+=$(addsuffix /include,$(call _split_paths,$(NLOHMANN_JSON_FQ_DIR) $(NLOHMANN_JSON_DIR)))
+JSON_INCLUDE_FLAGS:=$(strip $(foreach dir,$(JSON_INCLUDE_DIRS),-I$(dir)))
 endif
-CPPFLAGS+=$(JSON_INCLUDE_FLAG)
+
+CPPFLAGS+=$(JSON_INCLUDE_FLAGS)
 LDFLAGS+=$(shell $(ROOTCONFIG) --ldflags)
 LDLIBS+=$(shell $(ROOTCONFIG) --libs)
 
@@ -130,7 +128,7 @@ print:
 	@echo SHARED=$(SHARED)
 	@echo STATIC=$(STATIC)
 	@echo SOEXT=$(SOEXT)
-	@echo JSON_INCLUDE_FLAG=$(JSON_INCLUDE_FLAG)
+        @echo JSON_INCLUDE_FLAGS=$(JSON_INCLUDE_FLAGS)
 
 clean:
 	@rm -rf $(OBJ) $(LIB) $(BIN)
