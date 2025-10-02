@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <string>
 
-#include "rarexsec/FiducialVolume.hh"
+#include "rarexsec/Volume.hh"
 #include "rarexsec/Hub.hh"
 
 namespace rarexsec {
