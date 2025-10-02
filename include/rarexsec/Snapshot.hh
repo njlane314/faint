@@ -13,7 +13,6 @@
 #include <vector>
 
 namespace rarexsec {
-
 namespace snapshot {
 
 struct Options {
@@ -56,8 +55,7 @@ inline const std::vector<std::string>& default_columns() {
     return cols;
 }
 
-inline std::vector<std::string> intersect_cols(ROOT::RDF::RNode node,
-                                               const std::vector<std::string>& wanted) {
+inline std::vector<std::string> intersect_cols(ROOT::RDF::RNode node, const std::vector<std::string>& wanted) {
     auto have = node.GetColumnNames();
     std::unordered_set<std::string> avail(have.begin(), have.end());
     const auto& req = wanted.empty() ? default_columns() : wanted;
@@ -71,15 +69,13 @@ inline std::vector<std::string> intersect_cols(ROOT::RDF::RNode node,
     return out;
 }
 
-inline std::string make_out_path(const Options& opt,
-                                 const Entry& e,
-                                 const std::string& detvar_tag) {
+inline std::string make_out_path(const Options& opt, const Entry& e, const std::string& detvar) {
     const auto base = std::filesystem::path(e.file).filename().string();
     std::string name = sanitise(e.beamline) + "_" +
                        sanitise(e.period) + "_" +
                        sanitise(origin_to_string(e.kind));
-    if (!detvar_tag.empty()) {
-        name += "__" + sanitise(detvar_tag);
+    if (!detvar.empty()) {
+        name += "__" + sanitise(detvar);
     }
     name += "__" + sanitise(base);
     name += ".root";

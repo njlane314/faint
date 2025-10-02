@@ -1,11 +1,11 @@
 #include "rarexsec/Hub.hh"
+#include "rarexsec/Processor.hh"
+
 #include <nlohmann/json.hpp>
 #include <algorithm>
 #include <fstream>
 #include <stdexcept>
 #include <utility>
-
-#include "rarexsec/Processor.hh"
 
 rarexsec::Frame rarexsec::Hub::sample(const Entry& rec) {
     constexpr const char* tree = "nuselection/EventSelectionFilter";
