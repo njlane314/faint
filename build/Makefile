@@ -5,20 +5,20 @@ BUILD_DIR := $(TOP_DIR)/build
 OBJ_DIR := $(BUILD_DIR)/obj
 LIB_DIR := $(BUILD_DIR)/lib
 
-SCRIPTDIR   := $(TOP_DIR)/scripts
+SCRIPTDIR   := $(TOP_DIR)
 VERSION     ?= $(shell cd $(TOP_DIR) && git describe --tags --always --dirty 2>/dev/null || echo 0.0.0)
 GIT_REV     := $(shell cd $(TOP_DIR) && git rev-parse --short HEAD 2>/dev/null || echo unknown)
 # Extract c++ standard from CXXFLAGS or default:
 CXX_STD_STR ?= $(or $(patsubst -std=%,%,$(filter -std=%,$(CXXFLAGS))),c++17)
 USE_ROOT    ?= yes   # your project uses ROOT; set 'no' if ever optional
 
-CONFIG_IN   := $(SCRIPTDIR)/faint-config.in
-CONFIG_OUT  := $(BUILD_DIR)/bin/faint-config
-ROOT_WRAPPER:= $(SCRIPTDIR)/faint-root.sh
-SETUP_MACRO := $(SCRIPTDIR)/setup_faint.C
+CONFIG_IN   := $(SCRIPTDIR)/rarexsec-config.in
+CONFIG_OUT  := $(BUILD_DIR)/bin/rarexsec-config
+ROOT_WRAPPER:= $(SCRIPTDIR)/rarexsec-root.sh
+SETUP_MACRO := $(SCRIPTDIR)/setup_rarexsec.C
 
-PROJECT_SHARED_LIB_NAME := faint
-ROOT_SHARED_LIB_NAME := faint_root
+PROJECT_SHARED_LIB_NAME := rarexsec
+ROOT_SHARED_LIB_NAME := rarexsec_root
 SHARED_LIB := $(LIB_DIR)/lib$(PROJECT_SHARED_LIB_NAME)
 ROOT_SHARED_LIB := $(LIB_DIR)/lib$(ROOT_SHARED_LIB_NAME)
 
@@ -126,7 +126,7 @@ USER_LDFLAGS := $(LDFLAGS)
 
 BASE_CXXFLAGS := -std=$(CXX_STD) -Wall -Wextra -Wpedantic -fPIC -I$(INCLUDE_DIR) \
                   $(ROOT_CXXFLAGS) $(EXTRA_INC) $(EXTRA_CXXFLAGS) \
-                  -DFAINT_VERSION=\"$(PROJECT_VERSION)\"
+                  -DRAREXSEC_VERSION=\"$(PROJECT_VERSION)\"
 CXXFLAGS := $(OPTFLAGS) $(BASE_CXXFLAGS) $(USER_CXXFLAGS)
 
 LINK_FLAGS := $(ROOT_LDFLAGS) $(EXTRA_LDFLAGS) $(USER_LDFLAGS)
@@ -144,9 +144,9 @@ ifeq ($(strip $(SRCS)),)
   $(warning No sources found under '$(SRC_DIR)'.)
 endif
 
-ROOT_DICT_HEADERS_REL := faint/proc/EventProcessor.h faint/proc/PreSelection.h \
-                          faint/proc/MuonSelector.h faint/Selection.h \
-                          faint/proc/TruthClassifier.h faint/proc/Weighter.h
+ROOT_DICT_HEADERS_REL := rarexsec/proc/EventProcessor.h rarexsec/proc/PreSelection.h \
+                          rarexsec/proc/MuonSelector.h rarexsec/Selection.h \
+                          rarexsec/proc/TruthClassifier.h rarexsec/proc/Weighter.h
 ROOT_DICT_HEADERS := $(addprefix $(INCLUDE_DIR)/,$(ROOT_DICT_HEADERS_REL))
 ROOT_DICT_SRC := $(OBJ_DIR)/$(ROOT_SHARED_LIB_NAME)_dict.cxx
 ROOT_DICT_OBJ := $(OBJ_DIR)/$(ROOT_SHARED_LIB_NAME)_dict.o
@@ -210,12 +210,12 @@ $(LIB_DIR)/lib$(PROJECT_SHARED_LIB_NAME).a: $(OBJS) | $(LIB_DIR)
 	@echo "Built $@"
 
 ifeq ($(USE_ROOT),yes)
-$(ROOT_DICT_OBJ): $(SRC_DIR)/faintLinkDef.h $(ROOT_DICT_HEADERS) | $(OBJ_DIR)
+$(ROOT_DICT_OBJ): $(SRC_DIR)/rarexsecLinkDef.h $(ROOT_DICT_HEADERS) | $(OBJ_DIR)
 	@$(MKDIR) $(dir $@)
 	$(RM) $(ROOT_DICT_SRC) $(ROOT_DICT_PCM)
-	$(ROOTCLING) -f $(ROOT_DICT_SRC) -c -I$(INCLUDE_DIR) $(ROOTCLING_CXXFLAGS) $(EXTRA_INC) \
-	$(ROOT_DICT_HEADERS_REL) \
-	$(SRC_DIR)/faintLinkDef.h
+        $(ROOTCLING) -f $(ROOT_DICT_SRC) -c -I$(INCLUDE_DIR) $(ROOTCLING_CXXFLAGS) $(EXTRA_INC) \
+        $(ROOT_DICT_HEADERS_REL) \
+        $(SRC_DIR)/rarexsecLinkDef.h
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $(ROOT_DICT_SRC) -o $@
 
 $(ROOT_SHARED_LIB).$(SOEXT): $(SHARED_LIB).$(SOEXT) $(ROOT_DICT_OBJ) $(ROOT_DICT_PCM_OUT) | $(LIB_DIR)
@@ -240,7 +240,7 @@ ifeq ($(USE_ROOT),yes)
 endif
 	@rsync -a --delete $(INCLUDE_DIR)/ $(INSTALL_INCDIR)/
 	@cp -a $(CONFIG_OUT) $(PREFIX)/bin/
-	@cp -a $(ROOT_WRAPPER) $(PREFIX)/bin/faint-root
+        @cp -a $(ROOT_WRAPPER) $(PREFIX)/bin/rarexsec-root
 	@cp -a $(SETUP_MACRO) $(PREFIX)/scripts/
 	@echo "Installed to $(PREFIX)"
 	@echo "  - libs:    $(INSTALL_LIBDIR)"

@@ -1,6 +1,6 @@
 # Framework for Analysis of Infrequent cross‑secTions
 
-The FAINT project provides reusable building blocks for neutrino cross-section
+The rarexsec project provides reusable building blocks for neutrino cross-section
 studies together with helper scripts and example ROOT macros.
 
 ## Prerequisites
@@ -24,8 +24,8 @@ You can quickly check that ROOT is discoverable with `root-config --version`.
 
 1. Clone the repository and enter it:
    ```bash
-   git clone https://github.com/<your-org>/faint.git
-   cd faint
+   git clone https://github.com/<your-org>/rarexsec.git
+   cd rarexsec
    ```
 2. Build the project libraries from the provided `build/Makefile`:
    ```bash
@@ -44,25 +44,25 @@ and static libraries only; dictionary generation is skipped in that case.
 
 ## Running the example ROOT macro
 
-After building, the faint libraries must be discoverable by ROOT.  The
-`scripts/faint-root.sh` wrapper sets up the include and library paths and
+After building, the rarexsec libraries must be discoverable by ROOT.  The
+`rarexsec-root.sh` wrapper sets up the include and library paths and
 executes any macro you pass to it.  From the repository root run:
 
 ```bash
-./scripts/faint-root.sh -b -q macros/example_macro.C
+./rarexsec-root.sh -b -q macros/example_macro.C
 ```
 
 This command loads the generated libraries, configures ROOT include paths, and
 runs the `example_macro()` entry point defined in `macros/example_macro.C`.  Drop
-`-b -q` to open an interactive ROOT session preloaded with the FAINT API.
+`-b -q` to open an interactive ROOT session preloaded with the rarexsec API.
 
 Alternatively, you can call the setup macro manually from ROOT by providing the
 absolute library and include directories:
 
 ```bash
-root -l -q -e 'setup_faint("$PWD/build/lib/libfaint.so","$PWD/include")' macros/example_macro.C
+root -l -q -e 'setup_rarexsec("$PWD/build/lib/librarexsec.so","$PWD/include")' macros/example_macro.C
 ```
 
 Replace the library suffix with `.dylib` on macOS.  Once the environment is
-configured, any custom macro can use the headers under `include/faint/` and
+configured, any custom macro can use the headers under `include/rarexsec/` and
 link against the libraries in `build/lib/`.
