@@ -6,15 +6,19 @@
 
 using json = nlohmann::json;
 
-static std::vector<std::string> vec_str(const json& v) {
-    if (v.is_string()) return { v.get<std::string>() };
-    if (v.is_array())  return v.get<std::vector<std::string>>();
-    return {};
-}
-
-static std::vector<std::string> fetch_list(const json& obj, const char* key) {
+static std::string fetch_file(const json& obj, const char* key) {
     if (!obj.contains(key)) return {};
-    return vec_str(obj.at(key));
+    const auto& value = obj.at(key);
+    if (value.is_string()) return value.get<std::string>();
+    if (value.is_array()) {
+        auto files = value.get<std::vector<std::string>>();
+        if (files.empty()) return {};
+        if (files.size() != 1) {
+            throw std::runtime_error("expected a single file entry");
+        }
+        return files.front();
+    }
+    return {};
 }
 
 rarexsec::sample::origin rarexsec::Hub::origin_from(const std::string& s) {
@@ -30,14 +34,12 @@ bool rarexsec::Hub::is_simulation(sample::origin k) {
     return k != sample::origin::data;
 }
 
-rarexsec::Data rarexsec::Hub::make_frame(const std::string file,
-                                          sample::origin kind) {
+rarexsec::Data rarexsec::Hub::make_frame(const std::string& file,
+                                         sample::origin kind) {
     constexpr const char* kTree = "nuselection/EventSelectionFilter";
     constexpr const char* kTruthStrange = "is_strange";
 
-    // define the root dataframe here from a single file
-
-    auto df_ptr = std::make_shared<ROOT::RDataFrame>(*file);
+    auto df_ptr = std::make_shared<ROOT::RDataFrame>(kTree, file);
     ROOT::RDF::RNode node = *df_ptr;
 
     if (kind == sample::origin::beam) node = node.Filter(std::string(kTruthStrange) + " == 0", "truth_beam");
@@ -66,7 +68,10 @@ rarexsec::Hub::Hub(const std::string& path) {
                 rec.beamline = beamline;
                 rec.period   = period;
                 rec.kind     = origin_from(s.at("kind").get<std::string>());
-                rec.file     = s.at("file").get<std::string>();
+                rec.file     = fetch_file(s, "file");
+                if (rec.file.empty()) {
+                    throw std::runtime_error("sample entry is missing required file path");
+                }
                 rec.pot      = s.value("pot", 0.0);
 
                 rec.nominal = make_frame(rec.file, rec.kind);
@@ -76,7 +81,7 @@ rarexsec::Hub::Hub(const std::string& path) {
                     for (auto it_dv = dvs.begin(); it_dv != dvs.end(); ++it_dv) {
                         const std::string tag = it_dv.key();
                         const auto& desc = it_dv.value();
-                        std::string dv_file = fetch_list(desc, "file");
+                        const std::string dv_file = fetch_file(desc, "file");
                         if (!dv_file.empty()) {
                             rec.detvars.emplace(tag, make_frame(dv_file, rec.kind));
                         }

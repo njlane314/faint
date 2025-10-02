@@ -54,8 +54,8 @@ private:
     static sample::origin origin_from(const std::string& s);
     static bool is_simulation(sample::origin k);
 
-    static Data make_frame(const std::vector<std::string>& files,
-                            sample::origin kind);
+    static Data make_frame(const std::string& file,
+                           sample::origin kind);
 };
 
 } // namespace rarexsec
