@@ -101,12 +101,10 @@ inline std::vector<std::string> write(const std::vector<const Entry*>& samples,
         if (!e)
             continue;
 
-        {
-            const auto cols = detail::intersect_cols(e->rnode(), opt.columns);
-            const auto out = detail::make_out_path(opt, *e, /*detvar*/ "");
-            e->rnode().Snapshot(opt.tree, out, cols).GetValue();
-            outputs.push_back(out);
-        }
+        const auto cols = detail::intersect_cols(e->rnode(), opt.columns);
+        const auto out = detail::make_out_path(opt, *e, /*detvar*/ "");
+        e->rnode().Snapshot(opt.tree, out, cols).GetValue();
+        outputs.push_back(out);
 
         for (const auto& kv : e->detvars) {
             const auto& tag = kv.first;
