@@ -37,14 +37,6 @@ struct Entry {
     double trig_eff = 0.0;
     Data nominal;
     std::unordered_map<std::string, Data> detvars;
-    Entry stripped_copy(const std::string& new_file, sample::origin new_kind) const {
-        Entry copy = *this;
-        copy.file = new_file;
-        copy.kind = new_kind;
-        copy.nominal = {};
-        copy.detvars.clear();
-        return copy;
-    }
     const ROOT::RDF::RNode& rnode() const { return nominal.node; }
     const Data* detvar(const std::string& tag) const {
         auto it = detvars.find(tag);
@@ -66,7 +58,6 @@ private:
     beamline_map db_;
 
     static Data sample(const Entry& rec);
-    static Data sample(const std::string& file, sample::origin kind, const Entry& prototype);
 };
 
 }
