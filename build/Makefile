@@ -80,6 +80,7 @@ $(OBJ) $(LIB) $(BIN):
 
 $(OBJ)/%.o: $(SRC)/%.cc | $(OBJ)
 	@mkdir -p $(dir $@)
+	
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.cpp | $(OBJ)
