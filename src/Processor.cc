@@ -36,6 +36,9 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
         node = node.Define("w_nominal", [](double w) { return w; }, {"w_base"});
     }
 
+
+    // add truth definitions here
+
     return node;
 }
 
