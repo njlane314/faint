@@ -1,7 +1,9 @@
 #pragma once
 #include <ROOT/RDataFrame.hxx>
+#include <ROOT/RVec.hxx>
 #include <RtypesCore.h>
 #include <iostream>
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -24,6 +26,12 @@ inline constexpr float min_length = 10.0f;
 inline constexpr float max_distance = 4.0f;
 inline constexpr unsigned required_generation = 2u;
 
+bool passes_muon_track_selection(float score,
+                                 float llr,
+                                 float length,
+                                 float distance,
+                                 unsigned generation);
+
 enum class Preset {
     All,
     FiducialOnly,
@@ -43,8 +51,29 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
             return node.Filter([](bool fv){ return fv; },
                                {"in_reco_fiducial"});
         case Preset::MuonOnly:
-            return node.Filter([](bool mu){ return mu; },
-                               {"has_muon"});
+            return node.Filter(
+                [](const ROOT::RVec<float>& scores,
+                   const ROOT::RVec<float>& llrs,
+                   const ROOT::RVec<float>& lengths,
+                   const ROOT::RVec<float>& distances,
+                   const ROOT::RVec<unsigned>& generations) {
+                    const auto n = scores.size();
+                    for (std::size_t i = 0; i < n; ++i) {
+                        if (passes_muon_track_selection(scores[i],
+                                                         llrs[i],
+                                                         lengths[i],
+                                                         distances[i],
+                                                         generations[i])) {
+                            return true;
+                        }
+                    }
+                    return false;
+                },
+                {"track_shower_scores",
+                 "trk_llr_pid_v",
+                 "track_length",
+                 "track_distance_to_vertex",
+                 "pfp_generations"});
         case Preset::Baseline:
             return node.Filter([](bool fv, bool mu){ return fv && mu; },
                                {"in_reco_fiducial", "has_muon"});
