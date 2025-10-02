@@ -85,20 +85,6 @@ enum class Preset {
     Final
 };
 
-inline const char* to_string(Preset p) {
-    switch (p) {
-        case Preset::All: return "All";
-        case Preset::FiducialOnly: return "FiducialOnly";
-        case Preset::MuonOnly: return "MuonOnly";
-        case Preset::Baseline: return "Baseline";
-        case Preset::PreOnly: return "PreOnly";
-        case Preset::FlashOnly: return "FlashOnly";
-        case Preset::TopologyOnly: return "TopologyOnly";
-        case Preset::Final: return "Final";
-        default: return "Unknown";
-    }
-}
-
 inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::Entry& rec) {
     switch (p) {
         case Preset::All:
