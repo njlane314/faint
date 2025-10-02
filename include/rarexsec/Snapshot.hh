@@ -14,9 +14,6 @@
 
 namespace rarexsec {
 
-struct Entry;
-class Hub;
-
 namespace snapshot {
 
 struct Options {
