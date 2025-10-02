@@ -1,5 +1,5 @@
-#include "Processor.hh"
-#include "Hub.hh"
+#include "rarexsec/Processor.hh"
+#include "rarexsec/Hub.hh"
 #include <cmath>
 
 ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec::Entry rec) const {
