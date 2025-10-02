@@ -22,12 +22,13 @@ void snapshot_macro() {
         const std::vector<std::string> periods = {"run1"};
 
         rarexsec::Hub hub(config_path);
+        const auto samples = hub.simulation(beamline, periods);
 
         rarexsec::snapshot::Options opt;
         opt.outdir = "snapshots";
         opt.tree = "analysis";
 
-        auto outputs = rarexsec::snapshot::write(hub, beamline, periods, opt);
+        auto outputs = rarexsec::snapshot::write(samples, opt);
 
         if (outputs.empty()) {
             std::cout << "[snapshot] no files were written (no matching samples?).\n";
