@@ -1,35 +1,38 @@
 #include "Processor.hh"
+#include "Hub.hh"
+#include <cmath>
 
 ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec::Entry rec) const {
     const bool is_data = (rec.kind == rarexsec::sample::origin::data);
     const bool is_ext = (rec.kind == rarexsec::sample::origin::ext);
+    const bool is_mc = !is_data && !is_ext;
 
     node = node.Define("is_data",         [is_data]{ return is_data; });
     node = node.Define("is_simulation",   [is_data]{ return !is_data; });
 
-    node = node.Define("w_nominal", []{ return 1.0; }); 
+    double scale_mc  = 1.0;
+    if (is_mc && rec.pot > 0.0 && rec.pot_eff > 0.0) 
+        scale_mc = rec.pot_eff / rec.pot;                  
 
-    if (!is_data || !is_ext) {
-        double scale = 1.0;
-        if (rec.pot > 0.0 && rec.pot_eff > 0.0)
-            scale = rec.pot_eff / rec.pot;
-        node = node.Define("w_base", [scale]() { return is_data ? scale : 1.0; });
-    
-        node = node.Define("w_nominal",
-            [](double w, float w_spline, float w_tune) {
-                double out = w;
-                out *= w_spline * w_tune;
+    double scale_ext = 1.0;
+    if (is_ext && rec.trig > 0.0 && rec.trig_eff > 0.0) 
+        scale_ext = rec.trig_eff / rec.trig;            
 
-                if (!std::isfinite(out) || out < 0)
-                    return 1.0;
+    node = node.Define("w_base", [is_mc, is_ext, scale_mc, scale_ext] {
+        return is_mc ? scale_mc : (is_ext ? scale_ext : 1.0); 
+    });
+
+    if (is_mc) {
+        node = node.Define(
+            "w_nominal",
+            [](double w, double w_spline, double w_tune) {
+                double out = w * w_spline * w_tune;
+                if (!std::isfinite(out) || out < 0.0) return 1.0;
                 return out;
             },
-        {"w_base", "weightSpline", "weightTune"});
-    } else if (is_ext)
-        double scale = 1.0;
-        if (rec.trigs > 0 && rec.trigs_eff > 0) 
-            scale = static_cast<double>(rec.trigs_eff) / static_cast<double>(rec.trigs);
-        node = node.Define("w_nominal", [scale]() { return scale; });
+            {"w_base", "weightSpline", "weightTune"});
+    } else {
+        node = node.Define("w_nominal", [](double w) { return w; }, {"w_base"});
     }
 
     return node;

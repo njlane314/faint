@@ -41,7 +41,11 @@ rarexsec::Hub::Hub(const std::string& path) {
                 rec.period   = period;
                 rec.kind     = sample::origin_from(s.at("kind").get<std::string>());
                 rec.file     = s.at("file").get<std::string>();
+                
                 rec.pot      = s.value("pot", 0.0);
+                rec.pot_eff  = s.value("pot_eff", 0.0);
+                rec.trig     = s.value("trig", 0.0);
+                rec.trig_eff = s.value("trig_eff", 0.0);
 
                 rec.nominal = sample(rec);
 

@@ -4,10 +4,12 @@
 
 namespace rarexsec {
 
+struct Entry;
+
 class Processor {
 public:
     ROOT::RDF::RNode run(ROOT::RDF::RNode node,
-                         sample::origin kind) const;
+                         const Entry& rec) const;
 };
 
 const Processor& processor();

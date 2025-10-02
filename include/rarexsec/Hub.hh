@@ -31,8 +31,10 @@ struct Entry {
     std::string period;
     sample::origin kind = sample::origin::unknown;
     std::string file;
-    double pot = 0.0;
-    double trig = 0.0;
+    double pot      = 0.0; 
+    double pot_eff  = 0.0; 
+    double trig     = 0.0; 
+    double trig_eff = 0.0; 
     Data nominal;
     std::unordered_map<std::string, Data> detvars;
     const ROOT::RDF::RNode& rnode() const { return nominal.node; }
