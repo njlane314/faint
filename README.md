@@ -34,3 +34,16 @@ Alternatively, you can call the setup macro manually from ROOT by providing the 
 ```bash
 root -l -q -e 'setup_rarexsec("$PWD/build/lib/librarexsec.so","$PWD/include")' macros/example_macro.C
 ```
+
+### Defining multiple entry points in one macro file
+
+Define the functions together and call the one you need in a single command:
+
+```bash
+# macros/analysis_tools.C
+void scan_nominal() { /* ... */ }
+void scan_systematics() { /* ... */ }
+
+./rarexsec-root.sh -b -q 'macros/analysis_tools.C(\"scan_systematics()\")'
+```
+
