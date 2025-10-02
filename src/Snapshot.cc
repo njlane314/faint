@@ -115,13 +115,5 @@ std::vector<std::string> write(const std::vector<const Entry*>& samples,
     return outputs;
 }
 
-std::vector<std::string> write(const Hub& hub,
-                               std::string_view beamline,
-                               const std::vector<std::string>& periods,
-                               const Options& opt) {
-    auto sims = hub.simulation(std::string(beamline), periods);
-    return write(sims, opt);
-}
-
 }
 }
