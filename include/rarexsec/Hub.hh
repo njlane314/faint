@@ -31,12 +31,20 @@ struct Entry {
     std::string period;
     sample::origin kind = sample::origin::unknown;
     std::string file;
-    double pot      = 0.0; 
-    double pot_eff  = 0.0; 
-    double trig     = 0.0; 
-    double trig_eff = 0.0; 
+    double pot      = 0.0;
+    double pot_eff  = 0.0;
+    double trig     = 0.0;
+    double trig_eff = 0.0;
     Data nominal;
     std::unordered_map<std::string, Data> detvars;
+    Entry stripped_copy(const std::string& new_file, sample::origin new_kind) const {
+        Entry copy = *this;
+        copy.file = new_file;
+        copy.kind = new_kind;
+        copy.nominal = {};
+        copy.detvars.clear();
+        return copy;
+    }
     const ROOT::RDF::RNode& rnode() const { return nominal.node; }
     const Data* detvar(const std::string& tag) const {
         auto it = detvars.find(tag);

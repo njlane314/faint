@@ -68,12 +68,7 @@ rarexsec::Hub::Hub(const std::string& path) {
 }
 
 rarexsec::Data rarexsec::Hub::sample(const std::string& file, sample::origin kind, const Entry& prototype) {
-    Entry rec = prototype;
-    rec.file = file;
-    rec.kind = kind;
-    rec.nominal = {};
-    rec.detvars.clear();
-    return sample(rec);
+    return sample(prototype.stripped_copy(file, kind));
 }
 
 std::vector<const rarexsec::Entry*> rarexsec::Hub::simulation(const std::string& beamline,
