@@ -22,7 +22,7 @@ inline origin origin_from(const std::string& s) {
 }
 }
 
-struct Data {
+struct Frame {
     std::shared_ptr<ROOT::RDataFrame> df;
     std::optional<ROOT::RDF::RNode> node;
 
@@ -38,10 +38,10 @@ struct Entry {
     double pot_eqv  = 0.0;
     double trig_nom = 0.0;
     double trig_eqv = 0.0;
-    Data nominal;
-    std::unordered_map<std::string, Data> detvars;
+    Frame nominal;
+    std::unordered_map<std::string, Frame> detvars;
     ROOT::RDF::RNode rnode() const { return nominal.rnode(); }
-    const Data* detvar(const std::string& tag) const {
+    const Frame* detvar(const std::string& tag) const {
         auto it = detvars.find(tag);
         return it == detvars.end() ? nullptr : &it->second;
     }
@@ -60,7 +60,7 @@ private:
     using beamline_map = std::unordered_map<std::string, period_map>;
     beamline_map db_;
 
-    static Data sample(const Entry& rec);
+    static Frame sample(const Entry& rec);
 };
 
 }
