@@ -61,7 +61,7 @@ inline const std::vector<std::string>& default_columns() {
     return cols;
 }
 
-inline std::vector<std::string> intersect_cols(const ROOT::RDF::RNode& node,
+inline std::vector<std::string> intersect_cols(ROOT::RDF::RNode node,
                                                const std::vector<std::string>& wanted) {
     auto have = node.GetColumnNames();
     std::unordered_set<std::string> avail(have.begin(), have.end());
@@ -87,8 +87,7 @@ inline std::string make_out_path(const Options& opt,
         name += "__" + sanitise(detvar_tag);
     }
     name += "__" + sanitise(base);
-    if (!name.ends_with(".root"))
-        name += ".root";
+    name += ".root";
 
     std::filesystem::create_directories(opt.outdir);
     return (std::filesystem::path(opt.outdir) / name).string();
