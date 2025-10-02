@@ -32,7 +32,7 @@ bool rarexsec::Hub::is_simulation(sample::origin k) {
 
 rarexsec::Frame rarexsec::Hub::make_frame(const std::vector<std::string>& files,
                                           sample::origin kind) {
-    constexpr const char* kTree = "Events";
+    constexpr const char* kTree = "nuselection/EventSelectionFilter";
     constexpr const char* kTruthStrange = "is_strange";
 
     auto chain = std::make_shared<TChain>(kTree);
