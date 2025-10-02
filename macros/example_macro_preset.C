@@ -22,11 +22,41 @@ void example_macro_preset() {
 
         rarexsec::Hub hub(config_path);
 
-        const auto preset = rarexsec::selection::Preset::Baseline;
-        std::cout << "Using preset: " << rarexsec::selection::to_string(preset) << "\n";
+        const auto preset = rarexsec::selection::Preset::InclusiveMuCC;
+        auto preset_to_string = [](rarexsec::selection::Preset value) {
+            switch (value) {
+                case rarexsec::selection::Preset::Empty:
+                    return "Empty";
+                case rarexsec::selection::Preset::Trigger:
+                    return "Trigger";
+                case rarexsec::selection::Preset::Slice:
+                    return "Slice";
+                case rarexsec::selection::Preset::Fiducial:
+                    return "Fiducial";
+                case rarexsec::selection::Preset::Topology:
+                    return "Topology";
+                case rarexsec::selection::Preset::Muon:
+                    return "Muon";
+                case rarexsec::selection::Preset::InclusiveMuCC:
+                default:
+                    return "InclusiveMuCC";
+            }
+        };
 
-        auto summary = rarexsec::selection::evaluate(hub, beamline, periods, preset, "w_nominal");
-        rarexsec::selection::print(summary);
+        std::cout << "Using preset: " << preset_to_string(preset) << "\n";
+
+        const auto samples = hub.simulation(beamline, periods);
+        std::cout << "Found " << samples.size() << " simulation samples" << std::endl;
+
+        for (const auto* entry : samples) {
+            if (!entry) {
+                continue;
+            }
+
+            auto node = rarexsec::selection::apply(entry->rnode(), preset, *entry);
+            const auto selected = node.Count().GetValue();
+            std::cout << "Sample '" << entry->file << "' selected entries: " << selected << std::endl;
+        }
     } catch (const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
