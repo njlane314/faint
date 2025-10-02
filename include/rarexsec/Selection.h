@@ -1,12 +1,12 @@
-#ifndef FAINT_SELECTION_H
-#define FAINT_SELECTION_H
+#pragma once
 
+#include <cstddef>
 #include <string>
 
-#include <faint/FiducialVolume.h>
-#include <faint/Types.h>
+#include "rarexsec/FiducialVolume.hh"
+#include "rarexsec/Hub.hh"
 
-namespace faint {
+namespace rarexsec {
 namespace selection {
 
 namespace column {
@@ -44,10 +44,11 @@ struct MuonTrackCut {
     static constexpr unsigned required_generation = 2u;
 };
 
-inline bool passes_pre_selection(SampleOrigin origin, float pe_beam,
+inline bool passes_pre_selection(sample::origin origin, float pe_beam,
                                  float pe_veto, bool software_trigger) {
     const bool requires_dataset_gate =
-        (origin == SampleOrigin::kMonteCarlo || origin == SampleOrigin::kDirt);
+        (origin == sample::origin::beam || origin == sample::origin::strangeness ||
+         origin == sample::origin::dirt);
     const bool dataset_gate = requires_dataset_gate
                                   ? (pe_beam > PreCut::min_beam_pe &&
                                      pe_veto < PreCut::max_veto_pe)
@@ -111,4 +112,3 @@ private:
 }
 }
 
-#endif
