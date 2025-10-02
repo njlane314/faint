@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <fstream>
 #include <stdexcept>
+#include <utility>
 
 #include "rarexsec/Processor.hh"
 
@@ -17,7 +18,7 @@ rarexsec::Data rarexsec::Hub::sample(const Entry& rec) {
     if (rec.kind == sample::origin::beam) node = node.Filter("!is_strange");
     else if (rec.kind == sample::origin::strangeness) node = node.Filter("is_strange");
 
-    return Data{df_ptr, node};
+    return Data{df_ptr, std::move(node)};
 }
 
 rarexsec::Hub::Hub(const std::string& path) {
