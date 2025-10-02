@@ -8,7 +8,8 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
     const bool is_mc = !is_data && !is_ext;
 
     node = node.Define("is_data",         [is_data]{ return is_data; });
-    node = node.Define("is_simulation",   [is_data]{ return !is_data; });
+    node = node.Define("is_mc",           [is_mc]{ return is_mc; });
+    node = node.Define("is_ext",          [is_ext]{ return is_ext; }); 
 
     double scale_mc  = 1.0;
     if (is_mc && rec.pot > 0.0 && rec.pot_eff > 0.0) 
