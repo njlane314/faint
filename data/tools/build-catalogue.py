@@ -13,14 +13,28 @@ import re
 import subprocess
 import shutil
 import uproot
-from typing import Set, Tuple, List, Dict
+from typing import Set, Tuple, List, Dict, Optional
 
-DEFAULT_RUN_DB = "/exp/uboone/data/uboonebeam/beamdb/run.db"
+# --- Paths & defaults ---------------------------------------------------------
+DEFAULT_RUN_DB  = "/exp/uboone/data/uboonebeam/beamdb/run.db"
+# Choose the recommended v3 beam-quality cut DB for NuMI (EA9*, tortgt*, ...):
+DEFAULT_NUMI_DB = "/exp/uboone/data/uboonebeam/beamdb/numi_v3.db"
+
+# Optional prescale DB helper
+try:
+    sys.path.append("/exp/uboone/data/uboonebeam/beamdb")
+    import confDB  # provides confDB.confDB().getAllPrescaleFactors(run)
+    _CONFDB = confDB.confDB()
+except Exception:
+    _CONFDB = None
+
 HADD_TMPDIR = Path("/pnfs/uboone/scratch/users/nlane/tmp/")
 MIN_FREE_GB = 5.0
 DEFAULT_JOBS = min(8, os.cpu_count() or 1)
 CATALOGUE_SUBDIR = Path("data") / "catalogues"
 logging.basicConfig(level=logging.INFO, format="%(levelname)s | %(message)s")
+
+# --- Small helpers ------------------------------------------------------------
 
 def norm_run(run: str) -> str:
     digits = "".join(ch for ch in run if ch.isdigit())
@@ -134,6 +148,8 @@ def pot_sum_via_iterate(input_dir: str) -> float:
         pot_sum += float(chunk["pot"].sum())
     return pot_sum
 
+# --- (run,subrun) extraction from ROOT ---------------------------------------
+
 def _extract_pairs_from_file(f: Path) -> Set[Tuple[int, int]]:
     pairs: Set[Tuple[int, int]] = set()
     try:
@@ -184,7 +200,14 @@ def _collect_pairs_from_files(files: List[str]) -> Set[Tuple[int, int]]:
         pairs |= _extract_pairs_from_file(Path(p))
     return pairs
 
-def _sum_ext_triggers_from_pairs(run_db: str, pairs: Set[Tuple[int, int]]) -> tuple[int, List[Tuple[int, int]], Dict[int, int]]:
+# --- DB helpers: EXT triggers & NuMI metrics ----------------------------------
+
+def _sum_ext_triggers_from_pairs(run_db: str, pairs: Set[Tuple[int, int]]
+                                ) -> tuple[int, List[Tuple[int, int]], Dict[int, int]]:
+    """
+    Sum raw EXTTrig from runinfo for the provided (run,subrun) pairs.
+    Returns total, missing pairs (not in DB), and a run->sum map.
+    """
     if not pairs:
         return 0, [], {}
     conn = sqlite3.connect(run_db)
@@ -198,13 +221,6 @@ def _sum_ext_triggers_from_pairs(run_db: str, pairs: Set[Tuple[int, int]]) -> tu
         FROM runinfo r
         JOIN pairs p ON r.run = p.run AND r.subrun = p.subrun;
     """).fetchone()[0]
-    missing_rows = cur.execute("""
-        SELECT p.run, p.subrun
-        FROM pairs p
-        LEFT JOIN runinfo r ON r.run = p.run AND r.subrun = p.subrun
-        WHERE r.run IS NULL;
-    """).fetchall()
-    missing_pairs = [(int(x["run"]), int(x["subrun"])) for x in missing_rows]
     by_run_rows = cur.execute("""
         SELECT r.run AS run, IFNULL(SUM(r.EXTTrig), 0) AS ext_sum
         FROM runinfo r
@@ -212,9 +228,95 @@ def _sum_ext_triggers_from_pairs(run_db: str, pairs: Set[Tuple[int, int]]) -> tu
         GROUP BY r.run
         ORDER BY r.run;
     """).fetchall()
-    by_run = {int(r["run"]): int(r["ext_sum"]) for r in by_run_rows}
+    missing_rows = cur.execute("""
+        SELECT p.run, p.subrun
+        FROM pairs p
+        LEFT JOIN runinfo r ON r.run = p.run AND r.subrun = p.subrun
+        WHERE r.run IS NULL;
+    """).fetchall()
     conn.close()
+    by_run = {int(r["run"]): int(r["ext_sum"]) for r in by_run_rows}
+    missing_pairs = [(int(x["run"]), int(x["subrun"])) for x in missing_rows]
     return int(total), missing_pairs, by_run
+
+def _sum_numi_metrics_from_pairs(numi_db: str, pairs: Set[Tuple[int, int]]
+                                ) -> tuple[float, float, Dict[int, Dict[str, float]]]:
+    """
+    Sum EA9CNT_wcut and tortgt_wcut from the NuMI DB for the given (run,subrun) pairs.
+    Returns (EA9CNT_wcut_total, tortgt_wcut_total, by_run_dict).
+    """
+    ea9_total, tortgt_total = 0.0, 0.0
+    if not pairs:
+        return ea9_total, tortgt_total, {}
+    conn = sqlite3.connect(numi_db)
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+    cur.execute("PRAGMA temp_store=MEMORY;")
+    cur.execute("CREATE TEMP TABLE pairs(run INTEGER, subrun INTEGER);")
+    cur.executemany("INSERT INTO pairs(run, subrun) VALUES (?, ?);", list(pairs))
+    row = cur.execute("""
+        SELECT IFNULL(SUM(n.EA9CNT_wcut), 0.0) AS ea9,
+               IFNULL(SUM(n.tortgt_wcut), 0.0) AS tortgt
+        FROM numi n
+        JOIN pairs p ON n.run = p.run AND n.subrun = p.subrun;
+    """).fetchone()
+    ea9_total   = float(row["ea9"] or 0.0)
+    tortgt_total= float(row["tortgt"] or 0.0)
+    by_run_rows = cur.execute("""
+        SELECT n.run AS run,
+               IFNULL(SUM(n.EA9CNT_wcut), 0.0) AS ea9,
+               IFNULL(SUM(n.tortgt_wcut), 0.0) AS tortgt
+        FROM numi n
+        JOIN pairs p ON n.run = p.run AND n.subrun = p.subrun
+        GROUP BY n.run
+        ORDER BY n.run;
+    """).fetchall()
+    conn.close()
+    by_run = {int(r["run"]): {"ea9_wcut": float(r["ea9"] or 0.0),
+                              "tortgt_wcut": float(r["tortgt"] or 0.0)}
+              for r in by_run_rows}
+    return ea9_total, tortgt_total, by_run
+
+def _prescale_for_run(run: int) -> Optional[float]:
+    """
+    Fetch the applicable prescale for EXT NUMI window for this run from confDB.
+    Preference: post-2018May key, else legacy key, else any EXT_ key.
+    Returns None if prescale is unavailable.
+    """
+    if _CONFDB is None:
+        return None
+    try:
+        pf = _CONFDB.getAllPrescaleFactors(int(run))
+        if not pf:
+            return None
+        for key in ("EXT_NUMIwin_2018May_FEMBeamTriggerAlgo",
+                    "EXT_NUMIwin_FEMBeamTriggerAlgo"):
+            if key in pf and pf[key] is not None:
+                return float(pf[key])
+        # Fallback: any EXT_ prescale key
+        for k, v in pf.items():
+            if k.startswith("EXT_") and v is not None:
+                return float(v)
+    except Exception:
+        return None
+    return None
+
+def _ext_triggers_prescaled(by_run_ext: Dict[int, int]) -> tuple[float, Dict[int, Dict[str, float]]]:
+    """
+    Multiply EXTTrig(run) by the run-specific prescale factor (if available).
+    Returns (total_prescaled, runwise_details).
+    """
+    total = 0.0
+    details: Dict[int, Dict[str, float]] = {}
+    for run, raw_count in by_run_ext.items():
+        ps = _prescale_for_run(run)
+        ps_used = float(ps) if (ps is not None and ps > 0) else 1.0
+        total += ps_used * float(raw_count)
+        details[run] = {"raw_exttrig": float(raw_count), "prescale": ps_used,
+                        "exttrig_prescaled": ps_used * float(raw_count)}
+    return total, details
+
+# --- Classification -----------------------------------------------------------
 
 def classify_kind(entry: dict) -> str:
     st = (entry.get("sample_type") or "").lower()
@@ -230,62 +332,61 @@ def classify_kind(entry: dict) -> str:
         return "strangeness"
     return "beam"
 
+# --- Core per-sample processing ----------------------------------------------
+
 def process_sample_entry(
     entry: dict,
     processed_analysis_path: Path,
     stage_outdirs: dict,
     run_pot: float,
-    ext_triggers: int,
+    ext_triggers_nominal: int,
     run_db: str,
+    numi_db: str,
     jobs: int,
     is_detvar: bool = False,
 ) -> bool:
+    """
+    HADDs the sample, records bookkeeping, and (for data/ext) extracts pairs and DB metrics.
+    Side-effects: embeds private keys (starting with "__") in 'entry' for period-level scaling.
+    """
     if not entry.get("active", True):
         sample_key = entry.get("sample_key", "UNKNOWN")
         print(f"  Skipping {'detector variation' if is_detvar else 'sample'}: {sample_key} (marked as inactive)")
         return False
+
     stage_name = entry.get("stage_name")
     sample_key = entry.get("sample_key")
     sample_type = (entry.get("sample_type", "mc") or "mc").lower()
+
     print(f"  Processing {'detector variation' if is_detvar else 'sample'}: {sample_key} (from stage: {stage_name})")
     print(f"    HADD execution for this {'sample' if not is_detvar else 'detector variation'}: Enabled")
+
     input_dir = resolve_input_dir(stage_name, stage_outdirs)
     if not input_dir:
-        print(
-            f"    Warning: Stage '{stage_name}' not found in XML outdirs. Skipping {'detector variation' if is_detvar else 'sample'} '{sample_key}'.",
-            file=sys.stderr,
-        )
+        print(f"    Warning: Stage '{stage_name}' not found in XML outdirs. Skipping '{sample_key}'.", file=sys.stderr)
         return False
+
     output_file = processed_analysis_path / f"{sample_key}.root"
     output_dir = output_file.parent
     output_dir.mkdir(parents=True, exist_ok=True)
     if not os.access(output_dir, os.W_OK):
-        print(
-            f"    Error: Output directory '{output_dir}' is not writable. Ensure it exists and you have write permission.",
-            file=sys.stderr,
-        )
+        print(f"    Error: Output directory '{output_dir}' is not writable.", file=sys.stderr)
         return False
     if output_file.exists():
         try:
             output_file.unlink()
         except OSError as exc:
-            print(
-                f"    Error: Cannot remove existing file '{output_file}': {exc}",
-                file=sys.stderr,
-            )
+            print(f"    Error: Cannot remove existing file '{output_file}': {exc}", file=sys.stderr)
             return False
+
     entry["relative_path"] = output_file.name
     entry["file"] = str(output_file)
+
     root_files = list(list_root_files(input_dir))
     if not root_files:
-        print(
-            f"    Warning: No ROOT files found in {input_dir}. HADD will be skipped.",
-            file=sys.stderr,
-        )
-        print(
-            f"    Note: No ROOT files found for '{sample_key}'. Skipping HADD but proceeding to record metadata (if applicable)."
-        )
-        source_files = []
+        print(f"    Warning: No ROOT files found in {input_dir}. HADD will be skipped.", file=sys.stderr)
+        print("    Note: Proceeding to record metadata (if applicable).")
+        source_files: List[str] = []
     else:
         use_parallel = jobs > 1
         chosen_tmp = HADD_TMPDIR
@@ -297,40 +398,66 @@ def process_sample_entry(
                 print(f"    Warning: Could not evaluate free space in '{chosen_tmp}': {e}. Falling back to single-process hadd.")
                 free_gb = 0.0
             if free_gb < MIN_FREE_GB:
-                print(f"    Note: Only {free_gb:.1f} GB free in '{chosen_tmp}'. Falling back to single-process hadd to avoid temp fills.")
+                print(f"    Note: Only {free_gb:.1f} GB free in '{chosen_tmp}'. Falling back to single-process hadd.")
                 use_parallel = False
         cmd = ["hadd", "-f"]
         if use_parallel:
             cmd += ["-j", str(jobs), "-d", str(chosen_tmp)]
         cmd += [str(output_file), *root_files]
         if not run_command(cmd, True):
-            print(
-                f"    Error: HADD failed for {sample_key}. Skipping further processing for this entry.",
-                file=sys.stderr,
-            )
+            print(f"    Error: HADD failed for {sample_key}. Skipping further processing.", file=sys.stderr)
             return False
         source_files = [str(output_file)]
+
+    # POT (from ntuple) for data/mc (pot_eff)
     pot_eff = 0.0
     try:
         if sample_type in {"mc"} or is_detvar or sample_type == "data":
-            if source_files:
-                pot_eff = get_total_pot_from_files_parallel(source_files, jobs)
-            else:
-                pot_eff = pot_sum_via_iterate(input_dir)
+            pot_eff = get_total_pot_from_files_parallel(source_files, jobs) if source_files else pot_sum_via_iterate(input_dir)
     except Exception as e:
         print(f"    Warning: POT evaluation failed for {sample_key}: {e}", file=sys.stderr)
         pot_eff = 0.0
+
+    # Prepare defaults
     trig_eff = 0
+    entry["__pairs"] = []
+    entry["__by_run_ext"] = {}
+    entry["__ext_trig_prescaled"] = 0.0
+    entry["__ext_prescale_details"] = {}
+    entry["__ea9_wcut"] = 0.0
+    entry["__tortgt_wcut"] = 0.0
+    entry["__numi_by_run"] = {}
+
+    # For EXT/DATA: collect (run,subrun) and query DBs
+    files_for_pairs = source_files if source_files else list(list_root_files(input_dir))
+    pairs = _collect_pairs_from_files(list(files_for_pairs)) if files_for_pairs else set()
+    entry["__pairs"] = sorted(list(pairs))
+
     if sample_type == "ext":
-        files_for_pairs = source_files if source_files else list(list_root_files(input_dir))
-        pairs = _collect_pairs_from_files(list(files_for_pairs))
+        # Sum EXTTrig (raw) and then apply prescales run-by-run
         total_ext, missing_pairs, by_run = _sum_ext_triggers_from_pairs(run_db, pairs)
         trig_eff = int(total_ext)
-        print(f"    EXT triggers (effective, from DB): {trig_eff}")
-        if not pairs:
-            print("    Note: No (run, subrun) pairs found in EXT files; check tree names/paths.", file=sys.stderr)
+        entry["__by_run_ext"] = by_run
+        prescaled_total, ps_details = _ext_triggers_prescaled(by_run)
+        entry["__ext_trig_prescaled"] = float(prescaled_total)
+        entry["__ext_prescale_details"] = ps_details
+
+        print(f"    EXT triggers (raw, from run.db): {trig_eff}")
+        if _CONFDB is None:
+            print("    Note: confDB not available -> EXT prescale not applied (using prescale=1.0).", file=sys.stderr)
+        print(f"    EXT triggers (prescaled): {entry['__ext_trig_prescaled']:.3f}")
         if missing_pairs:
-            print(f"    Note: {len(missing_pairs)} (run,subrun) pairs seen in files not found in DB (showing up to 5): {missing_pairs[:5]}")
+            print(f"    Note: {len(missing_pairs)} (run,subrun) pairs in EXT files not found in run.db (showing up to 5): {missing_pairs[:5]}")
+
+    if sample_type == "data":
+        # Sum EA9CNT_wcut and tortgt_wcut for these (run,subrun)
+        ea9, tortgt, by_run_numi = _sum_numi_metrics_from_pairs(numi_db, pairs)
+        entry["__ea9_wcut"] = float(ea9)
+        entry["__tortgt_wcut"] = float(tortgt)
+        entry["__numi_by_run"] = by_run_numi
+        print(f"    DATA NuMI metrics: EA9CNT_wcut={ea9:.3f}, tortgt_wcut={tortgt:.3f}")
+
+    # Record public bookkeeping
     if sample_type == "mc" or is_detvar:
         entry["pot"] = float(run_pot)
         entry["pot_eff"] = float(pot_eff)
@@ -339,8 +466,8 @@ def process_sample_entry(
     elif sample_type == "ext":
         entry["pot"] = 0.0
         entry["pot_eff"] = 0.0
-        entry["trig"] = int(ext_triggers)
-        entry["trig_eff"] = int(trig_eff)
+        entry["trig"] = int(ext_triggers_nominal)  # from recipe (nominal, if provided)
+        entry["trig_eff"] = int(trig_eff)          # from DB (raw)
     elif sample_type == "data":
         entry["pot"] = float(run_pot)
         entry["pot_eff"] = float(pot_eff or 0.0)
@@ -351,9 +478,13 @@ def process_sample_entry(
         entry["pot_eff"] = float(pot_eff)
         entry["trig"] = 0
         entry["trig_eff"] = 0
+
+    # Clean out internal knobs from the downstream record
     entry.pop("triggers", None)
     entry.pop("stage_name", None)
     return True
+
+# --- XML context --------------------------------------------------------------
 
 def load_xml_context(xml_paths: list[Path]) -> tuple[dict[str, str], dict[str, str]]:
     entities: dict[str, str] = {}
@@ -379,48 +510,72 @@ def default_xmls() -> list[Path]:
         Path("/exp/uboone/app/users/nlane/production/strangeness_mcc9/srcs/ubana/ubana/searchingforstrangeness/xml/numi_fhc_workflow_detvar.xml"),
     ]
 
+# --- Main ---------------------------------------------------------------------
+
 def main() -> None:
     repo_root = Path(__file__).resolve().parents[1]
-    ap = argparse.ArgumentParser(description="Aggregate ROOT samples from a recipe into a Hub-ready catalogue.")
+    ap = argparse.ArgumentParser(description="Aggregate ROOT samples from a recipe into a Hub-ready catalogue with EXT POT-equivalent scaling.")
     ap.add_argument("--recipe", type=Path, required=True, help="Path to recipe JSON (instance).")
+    ap.add_argument("--run-db", type=str, default=DEFAULT_RUN_DB, help="Path to run.db (runinfo table).")
+    ap.add_argument("--numi-db", type=str, default=DEFAULT_NUMI_DB, help="Path to NuMI DB (e.g. numi_v3.db).")
+    ap.add_argument("--jobs", type=int, default=DEFAULT_JOBS, help="Parallel jobs for hadd / file scan.")
     args = ap.parse_args()
-    jobs = DEFAULT_JOBS
-    run_db = DEFAULT_RUN_DB
+
+    jobs   = int(args.jobs)
+    run_db = str(args.run_db)
+    numi_db= str(args.numi_db)
+
     outdir = repo_root / CATALOGUE_SUBDIR
-    recipe_path = args.recipe
-    with open(recipe_path) as f:
+
+    with open(args.recipe) as f:
         cfg = json.load(f)
+
     if cfg.get("role") != "recipe":
         sys.exit(f"Expected role='recipe', found '{cfg.get('role')}'.")
     if cfg.get("recipe_kind", "instance") == "template":
         sys.exit("Refusing to run on a template. Copy it and set recipe_kind='instance'.")
+
     xml_paths = default_xmls()
     _entities, stage_outdirs = load_xml_context(xml_paths)
+
     ntuple_dir = Path(cfg["ntuple_base_directory"])
     ntuple_dir.mkdir(parents=True, exist_ok=True)
+
     beams_in: dict = cfg.get("beamlines", cfg.get("run_configurations", {}))
     beamlines_out: dict = {}
+
     for beam_key, run_block in beams_in.items():
         beam_active = bool(run_block.get("active", True))
         if not beam_active:
             logging.info("Skipping beam '%s' (active=false).", beam_key)
             continue
+
         beamline, mode = split_beam_key(beam_key)
         mode = mode.lower()
+
         for period, run_details in run_block.items():
             if period == "active":
                 continue
             logging.info("Processing %s:%s", beam_key, period)
-            is_ext = (mode == "ext")
-            run_pot = float(run_details.get("nominal_pot", run_details.get("pot", 0.0))) if not is_ext else 0.0
-            ext_trig = int(run_details.get("ext_triggers", 0)) if is_ext else 0
-            if not is_ext and run_pot == 0.0:
+            is_ext_period = (mode == "ext")
+
+            # These come from the recipe block; nominal_pot is used for data/mc, ext_triggers for ext
+            run_pot = float(run_details.get("nominal_pot", run_details.get("pot", 0.0))) if not is_ext_period else 0.0
+            ext_trig_nominal = int(run_details.get("ext_triggers", 0)) if is_ext_period else 0
+
+            if not is_ext_period and run_pot == 0.0:
                 logging.warning("No nominal POT provided for %s:%s (on-beam).", beam_key, period)
+
             samples_in = run_details.get("samples", []) or []
             if not samples_in:
                 logging.info("Skipping %s:%s (no samples).", beam_key, period)
                 continue
+
             samples_out: list[dict] = []
+            # We retain references to the processed entries for period-level EXT scaling
+            period_data_entries: List[dict] = []
+            period_ext_entries:  List[dict] = []
+
             for sample in samples_in:
                 s = dict(sample)
                 ok = process_sample_entry(
@@ -428,8 +583,9 @@ def main() -> None:
                     ntuple_dir,
                     stage_outdirs,
                     run_pot,
-                    ext_trig,
+                    ext_trig_nominal,
                     run_db,
+                    numi_db,
                     jobs,
                     is_detvar=False,
                 )
@@ -444,15 +600,58 @@ def main() -> None:
                             ntuple_dir,
                             stage_outdirs,
                             run_pot,
-                            ext_trig,
+                            ext_trig_nominal,
                             run_db,
+                            numi_db,
                             jobs,
                             is_detvar=True,
                         )
                         new_vars.append(dv2)
                     s["detector_variations"] = new_vars
+
+                # collect for later scaling
+                kind = classify_kind(s)
+                if kind == "data":
+                    period_data_entries.append(s)
+                if kind == "ext":
+                    period_ext_entries.append(s)
+
                 samples_out.append(s)
+
+            # ----- Period-level EXT effective POT computation -------------------
+            # Use the (first) DATA entry in this period as the reference for EA9 & tortgt (wcut)
+            ref_data = period_data_entries[0] if period_data_entries else None
+            ref_ea9  = float(ref_data["__ea9_wcut"]) if ref_data else 0.0
+            ref_tort = float(ref_data["__tortgt_wcut"]) if ref_data else 0.0
+
+            for s in period_ext_entries:
+                denom_prescaled = float(s.get("__ext_trig_prescaled", 0.0))
+                note_bits = []
+                if denom_prescaled <= 0.0:
+                    # Fallback to raw ext trig if prescale could not be applied
+                    denom_prescaled = float(s.get("trig_eff", 0) or 0.0)
+                    note_bits.append("prescale_missing_fallback_to_raw_EXTTrig")
+                pot_equiv = 0.0
+                if ref_ea9 > 0.0 and denom_prescaled > 0.0 and ref_tort > 0.0:
+                    pot_equiv = ref_tort * (ref_ea9 / denom_prescaled)
+
+                # Store all ingredients in the JSON for traceability
+                s["pot_equiv"] = float(pot_equiv)
+                s["pot_equiv_components"] = {
+                    "ea9cnt_wcut_ref": ref_ea9,
+                    "tortgt_wcut_ref": ref_tort,
+                    "ext_trig_prescaled": denom_prescaled,
+                    "ext_prescale_applied": (_CONFDB is not None),
+                    "notes": ";".join(note_bits) if note_bits else ""
+                }
+                # Keep the per-run diagnostics too (small dicts)
+                s["ext_prescale_details"] = s.get("__ext_prescale_details", {})
+                s["ext_by_run_raw"]       = s.get("__by_run_ext", {})
+                s["numi_by_run_ref"]      = ref_data.get("__numi_by_run", {}) if ref_data else {}
+
+            # ----- Pack output for this period ---------------------------------
             for s in samples_out:
+                # If "file" not present, rehydrate it from relative_path
                 if "file" not in s:
                     rp = s.get("relative_path")
                     if rp:
@@ -461,37 +660,31 @@ def main() -> None:
                 dv_list = s.pop("detector_variations", []) or []
                 detvars = {}
                 for dv in dv_list:
-                    dv_file = dv.get("file")
-                    if not dv_file:
-                        rp = dv.get("relative_path")
-                        if rp:
-                            dv_file = str(ntuple_dir / rp)
+                    dv_file = dv.get("file") or (str(ntuple_dir / dv.get("relative_path")) if dv.get("relative_path") else None)
                     tag = str(dv.get("variation_type") or dv.get("name") or dv.get("sample_key") or f"dv{len(detvars)+1}")
                     dv_desc = {"file": dv_file}
-                    if "pot" in dv:
-                        dv_desc["pot"] = dv["pot"]
-                    if "pot_eff" in dv:
-                        dv_desc["pot_eff"] = dv["pot_eff"]
-                    if "trig" in dv:
-                        dv_desc["trig"] = dv["trig"]
-                    if "trig_eff" in dv:
-                        dv_desc["trig_eff"] = dv["trig_eff"]
+                    for meta_key in ("pot", "pot_eff", "trig", "trig_eff", "pot_equiv"):
+                        if meta_key in dv:
+                            dv_desc[meta_key] = dv[meta_key]
                     detvars[tag] = dv_desc
                 if detvars:
                     s["detvars"] = detvars
-                for k in (
-                    "sample_key", "sample_type", "truth_filter", "exclusion_truth_filters",
-                    "relative_path", "variation_type", "stage_name"
-                ):
+                # Drop private keys from output
+                for k in list(s.keys()):
+                    if k.startswith("__"):
+                        s.pop(k, None)
+                # Drop fields not needed downstream
+                for k in ("sample_key", "sample_type", "truth_filter", "exclusion_truth_filters",
+                          "relative_path", "variation_type", "stage_name"):
                     s.pop(k, None)
+
             run_copy = dict(run_details)
             run_copy["samples"] = samples_out
             beamlines_out.setdefault(beam_key, {})[period] = run_copy
+
     outdir.mkdir(parents=True, exist_ok=True)
     out_path = outdir / "samples.json"
-    catalogue = {
-        "beamlines": beamlines_out,
-    }
+    catalogue = {"beamlines": beamlines_out}
     with open(out_path, "w") as f:
         json.dump(catalogue, f, indent=4)
     logging.info("Wrote catalogue: %s", out_path)
