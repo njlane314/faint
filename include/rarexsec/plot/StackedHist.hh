@@ -5,6 +5,7 @@
 #include "TH1.h"
 #include "THStack.h"
 #include "TLegend.h"
+#include "TLegendEntry.h"
 #include "TCanvas.h"
 #include "TPad.h"
 
@@ -48,6 +49,7 @@ private:
     std::unique_ptr<TH1D> data_hist_;
     std::unique_ptr<TH1D> sig_hist_;
     std::vector<int> chan_order_;
+    double signal_scale_ = 1.0;
 };
 
 }
