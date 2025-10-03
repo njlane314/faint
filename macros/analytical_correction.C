@@ -9,6 +9,7 @@
 #include <TFile.h>
 #include <TSystem.h>
 #include <TPad.h>
+#include <TPaletteAxis.h>
 
 #include <cmath>
 #include <algorithm>
@@ -109,7 +110,7 @@ namespace ana {
 
 // ------------------------- Plot builders (self-made) ------------------------------
 void draw_APS_vs_bg(const std::string& outdir) {
-    const int N = 600;
+    const int N = 1200;
     std::vector<double> x(N), y_nom(N), y_loL(N), y_hiL(N), y_noThr(N), y_polp(N), y_polm(N);
 
     // Variants: default Lmin, low Lmin, high Lmin; no thresholds; PΛ = ±0.4
@@ -187,9 +188,8 @@ void draw_APS_vs_bg(const std::string& outdir) {
     leg.SetFillStyle(0);
     leg.SetTextFont(42);
     leg.SetNColumns(2);
-    leg.AddEntry(g_nom , Form("Nominal: L_{min}=%.1f cm, p_{thr}^{p}=%.2f GeV, p_{thr}^{#pi}=%.2f GeV, P_{#Lambda}=0",
-            ana::gCfg.Lmin_cm, ana::gCfg.pthr_p, ana::gCfg.pthr_pi), "l");
-    leg.AddEntry(g_thr , "No daughter thresholds", "l");
+    leg.AddEntry(g_nom , Form("Nominal (L_{min}=%.1f cm)", ana::gCfg.Lmin_cm), "l");
+    leg.AddEntry(g_thr , "No thresholds", "l");
     leg.AddEntry(g_loL , "L_{min}=0.5 cm", "l");
     leg.AddEntry(g_hiL , "L_{min}=2.5 cm", "l");
     leg.AddEntry(g_polp, "P_{#Lambda}=+0.4", "l");
@@ -202,7 +202,7 @@ void draw_APS_vs_bg(const std::string& outdir) {
 
 void draw_Akin_vs_bg(const std::string& outdir) {
     // Show purely the kinematic factor (thresholds & polarisation) versus βγ
-    const int N = 600;
+    const int N = 1200;
     const double bg_min = 0.0, bg_max = 10.0;
     std::vector<double> x(N), y_nom(N), y_noThr(N), y_polp(N), y_polm(N);
 
@@ -258,10 +258,10 @@ void draw_Akin_vs_bg(const std::string& outdir) {
     leg.SetFillStyle(0);
     leg.SetTextFont(42);
     leg.SetNColumns(2);
-    leg.AddEntry(g_nom , Form("Nominal thresholds: p_{thr}^{p}=%.2f GeV, p_{thr}^{#pi}=%.2f GeV", ana::gCfg.pthr_p, ana::gCfg.pthr_pi), "l");
+    leg.AddEntry(g_nom , "Nominal thresholds", "l");
     leg.AddEntry(g_thr , "No thresholds", "l");
-    leg.AddEntry(g_polp, "Polarised P_{#Lambda}=+0.4", "l");
-    leg.AddEntry(g_polm, "Polarised P_{#Lambda}=-0.4", "l");
+    leg.AddEntry(g_polp, "P_{#Lambda}=+0.4", "l");
+    leg.AddEntry(g_polm, "P_{#Lambda}=-0.4", "l");
     leg.Draw();
 
     c.SaveAs((outdir + "/Akin_vs_bg.png").c_str());
@@ -294,9 +294,30 @@ void draw_APS_heatmap_Lmin_vs_bg(const std::string& outdir) {
 
     TCanvas c("c_heat","A_{PS}(#beta#gamma, L_{min})",900,700);
     gStyle->SetOptStat(0);
+    c.SetTopMargin(0.08);
+    c.SetBottomMargin(0.12);
+    c.SetLeftMargin(0.12);
+    c.SetRightMargin(0.18);
+
     h.SetContour(60);
     h.GetZaxis()->SetRangeUser(0.0, 0.7);
     h.Draw("COLZ");
+    c.Update();
+
+    if (auto* palette = dynamic_cast<TPaletteAxis*>(h.GetListOfFunctions()->FindObject("palette"))) {
+        palette->SetX1NDC(0.86);
+        palette->SetX2NDC(0.90);
+        palette->SetY1NDC(0.15);
+        palette->SetY2NDC(0.92);
+    }
+
+    auto* h_contours = static_cast<TH2D*>(h.Clone("hAPS_contours"));
+    if (h_contours) {
+        h_contours->SetDirectory(nullptr);
+        h_contours->SetLineColor(kGray+3);
+        h_contours->SetLineWidth(1);
+        h_contours->Draw("CONT3 SAME");
+    }
     c.SaveAs((outdir + "/APS_heatmap_Lmin_vs_bg.png").c_str());
     c.SaveAs((outdir + "/APS_heatmap_Lmin_vs_bg.pdf").c_str());
 }
