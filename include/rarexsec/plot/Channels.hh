@@ -25,24 +25,18 @@ public:
         return it->second;
     }
 
-    static std::string label(int code) {
-        return properties(code).tex_label;
-    }
-
-    static std::string name(int code) {
-        return properties(code).plain_name;
-    }
-
-    static int color(int code) {
-        return properties(code).fill_color;
-    }
-
-    static int fill_style(int code) {
-        return properties(code).fill_style;
-    }
+    static std::string label(int code)      { return properties(code).tex_label; }
+    static std::string name(int code)       { return properties(code).plain_name; }
+    static int         color(int code)      { return properties(code).fill_color; }
+    static int         fill_style(int code) { return properties(code).fill_style; }
 
     static const std::vector<int>& signal_keys() {
         static const std::vector<int> v = {15,16};
+        return v;
+    }
+
+    static const std::vector<int>& mc_keys() {
+        static const std::vector<int> v = {1,2,10,11,12,13,14,15,16,17,18,99};
         return v;
     }
 
