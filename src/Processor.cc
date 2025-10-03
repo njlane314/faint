@@ -11,10 +11,6 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
     const bool is_ext = (rec.kind == rarexsec::sample::origin::ext);
     const bool is_mc = !is_data && !is_ext;
 
-    //node = node.Define("is_data",         [is_data]{ return is_data; });
-    //node = node.Define("is_mc",           [is_mc]{ return is_mc; });
-    //node = node.Define("is_ext",          [is_ext]{ return is_ext; }); 
-
     float scale_mc  = 1.0f;
     if (is_mc && rec.pot_nom > 0.0 && rec.pot_eqv > 0.0)
         scale_mc = static_cast<float>(rec.pot_eqv / rec.pot_nom);

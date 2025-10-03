@@ -8,7 +8,8 @@
 #include "rarexsec/proc/Selection.hh"
 #include "rarexsec/Hub.hh"
 
-namespace rarexsec::plot {
+namespace rarexsec {
+namespace plot {
 
 enum class CutDir { LessThan, GreaterThan };
 
@@ -78,4 +79,5 @@ private:
     Options opt_;
 };
 
+}
 }
