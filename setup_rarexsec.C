@@ -1,42 +1,56 @@
 #include "TInterpreter.h"
 #include "TSystem.h"
 #include "TError.h"
-
+#include "TROOT.h"
+#include "TString.h"
 #include <string>
 
 namespace {
-
-const char* const kHeadersToInclude[] = {
-    "rarexsec/Hub.hh",
-    "rarexsec/Processor.hh",
-    "rarexsec/Plotter.hh",
-    "rarexsec/proc/Selection.hh",
-    "rarexsec/proc/Snapshot.hh",
-    "rarexsec/proc/Volume.hh",
-    "rarexsec/plot/StackedHist.hh",
-    "rarexsec/plot/Channels.hh"
-};
-
-void include_required_headers() {
-    for (const auto* header : kHeadersToInclude) {
-        const std::string directive = std::string("#include \"") + header + "\"";
-        gInterpreter->ProcessLine(directive.c_str());
+static void load_one_macro(const TString& path) {
+    if (path.IsNull()) return;
+    if (gSystem->AccessPathName(path.Data())) return;
+    const std::string inc = std::string("#include \"") + path.Data() + "\"";
+    gInterpreter->ProcessLine(inc.c_str());
+}
+static void auto_load_macros(const char* incdir) {
+    TString top = gSystem->Getenv("RAREXSEC");
+    if (top.IsNull() && incdir && *incdir) {
+        TString inc(incdir);
+        if (inc.EndsWith("/rarexsec")) inc = gSystem->DirName(inc);
+        if (inc.EndsWith("/include")) top = gSystem->DirName(inc);
+        else top = gSystem->DirName(inc);
+    }
+    if (!top.IsNull()) {
+        load_one_macro(top + "/scripts/rx_macros.C");
+        load_one_macro(top + "/macros/rx_macros.C");
+        load_one_macro(top + "/analysis/rx_macros.C");
+    } else {
+        load_one_macro("scripts/rx_macros.C");
+        load_one_macro("macros/rx_macros.C");
+        load_one_macro("analysis/rx_macros.C");
     }
 }
-
-} 
-
+}
+void rx_call(const char* fname) {
+    if (!fname || !*fname) { ::Error("rx_call","no function name"); return; }
+    std::string call = std::string(fname) + "()";
+    gInterpreter->ProcessLine(call.c_str());
+}
 void setup_rarexsec(const char* libpath, const char* incdir) {
-    if (libpath && libpath[0] != '\0') {
-        const Int_t loadStatus = gSystem->Load(libpath);
-        if (loadStatus < 0) {
-            ::Error("setup_rarexsec", "Failed to load library '%s' (status %d)", libpath, loadStatus);
+    if (libpath && *libpath) {
+        const Int_t status = gSystem->Load(libpath);
+        if (status < 0) { ::Error("setup_rarexsec","failed to load %s (%d)", libpath, status); }
+    }
+    if (incdir && *incdir) {
+        gInterpreter->AddIncludePath(incdir);
+        TString inc(incdir);
+        if (inc.EndsWith("/rarexsec")) {
+            TString parent = gSystem->DirName(inc);
+            gInterpreter->AddIncludePath(parent.Data());
+        } else {
+            TString sub = inc + "/rarexsec";
+            if (!gSystem->AccessPathName(sub.Data())) gInterpreter->AddIncludePath(sub.Data());
         }
     }
-
-    if (incdir && incdir[0] != '\0') {
-        gInterpreter->AddIncludePath(incdir);
-    }
-
-    include_required_headers();
+    auto_load_macros(incdir);
 }

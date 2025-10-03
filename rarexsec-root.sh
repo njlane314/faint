@@ -1,70 +1,61 @@
 #!/usr/bin/env bash
-set -e
-
-if [ -z "$RAREXSEC" ]; then
+set -euo pipefail
+if [[ -z "${RAREXSEC:-}" ]]; then
   SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-  if [ -f "${SCRIPT_DIR}/setup_rarexsec.C" ] || [ -d "${SCRIPT_DIR}/build" ]; then
+  if [[ -f "${SCRIPT_DIR}/setup_rarexsec.C" ]] || [[ -d "${SCRIPT_DIR}/build" ]]; then
     TOPDIR="${SCRIPT_DIR}"
   else
     TOPDIR="$( cd "${SCRIPT_DIR}/.." && pwd )"
   fi
 else
-  TOPDIR="$RAREXSEC"
+  TOPDIR="${RAREXSEC}"
 fi
-
-lib_candidates=(
-  "${TOPDIR}/build/lib"
-  "${TOPDIR}/lib"
-)
-for candidate in "${lib_candidates[@]}"; do
-  if [ -d "${candidate}" ]; then
-    LIBDIR="${candidate}"
-    break
-  fi
+export RAREXSEC="${TOPDIR}"
+LIBDIR=""
+for d in "${TOPDIR}/build/lib" "${TOPDIR}/lib"; do
+  [[ -d "$d" ]] && { LIBDIR="$d"; break; }
 done
 : "${LIBDIR:=${TOPDIR}/build/lib}"
-
-inc_candidates=(
-  "${TOPDIR}/include"
-  "${TOPDIR}/include/rarexsec"
-)
-for candidate in "${inc_candidates[@]}"; do
-  if [ -d "${candidate}" ]; then
-    INCDIR="${candidate}"
-    break
-  fi
+INCDIR=""
+for d in "${TOPDIR}/include" "${TOPDIR}/include/rarexsec"; do
+  [[ -d "$d" ]] && { INCDIR="$d"; break; }
 done
 : "${INCDIR:=${TOPDIR}/include}"
-
-macro_candidates=(
-  "${TOPDIR}/setup_rarexsec.C"
-  "${TOPDIR}/scripts/setup_rarexsec.C"
-)
-for candidate in "${macro_candidates[@]}"; do
-  if [ -f "${candidate}" ]; then
-    MACRO="${candidate}"
-    break
-  fi
+MACRO=""
+for f in "${TOPDIR}/setup_rarexsec.C" "${TOPDIR}/scripts/setup_rarexsec.C"; do
+  [[ -f "$f" ]] && { MACRO="$f"; break; }
 done
-
-if [ -z "${MACRO:-}" ]; then
+if [[ -z "$MACRO" ]]; then
   echo "rarexsec-root: could not locate setup_rarexsec.C" >&2
   exit 1
 fi
-
-JSON_INC_PATH="${JSON_INC:-${NLOHMANN_JSON_INC:-}}"
-if [ -n "${JSON_INC_PATH}" ]; then
-  export ROOT_INCLUDE_PATH="${JSON_INC_PATH}:${ROOT_INCLUDE_PATH}"
+uname_s="$(uname -s || true)"
+LIBEXT=$([[ "$uname_s" == "Darwin" ]] && echo "dylib" || echo "so")
+LIBPATH="${LIBDIR}/librarexsec.${LIBEXT}"
+if [[ ! -f "$LIBPATH" ]]; then
+  ALT=$([[ "$LIBEXT" == "so" ]] && echo "dylib" || echo "so")
+  [[ -f "${LIBDIR}/librarexsec.${ALT}" ]] && LIBPATH="${LIBDIR}/librarexsec.${ALT}"
 fi
-
-export LD_LIBRARY_PATH="${LIBDIR}:${LD_LIBRARY_PATH}"
-export ROOT_INCLUDE_PATH="${INCDIR}:${ROOT_INCLUDE_PATH}"
-
-LIBEXT="so"
-
-args=()
-for arg in "$@"; do
-  args+=("${arg//\\\"/\"}")
+export LD_LIBRARY_PATH="${LIBDIR}:${LD_LIBRARY_PATH:-}"
+if [[ "$uname_s" == "Darwin" ]]; then
+  export DYLD_LIBRARY_PATH="${LIBDIR}:${DYLD_LIBRARY_PATH:-}"
+fi
+export ROOT_INCLUDE_PATH="${INCDIR}:${ROOT_INCLUDE_PATH:-}"
+JSON_INC_PATH="${JSON_INC:-${NLOHMANN_JSON_INC:-}}"
+[[ -n "${JSON_INC_PATH}" ]] && export ROOT_INCLUDE_PATH="${JSON_INC_PATH}:${ROOT_INCLUDE_PATH}"
+CALL=""
+while (( "$#" )); do
+  case "$1" in
+    -h|--help) echo "Usage: $(basename "$0") -c|--call MacroName"; exit 0 ;;
+    -c|--call) CALL="${2:-}"; shift 2 ;;
+    --) shift; break ;;
+    *) echo "Usage: $(basename "$0") -c|--call MacroName" >&2; exit 2 ;;
+  esac
 done
-
-root -l -b -q -e "gROOT->LoadMacro(\"${MACRO}\"); setup_rarexsec(\"${LIBDIR}/librarexsec.${LIBEXT}\",\"${INCDIR}\");" "${args[@]}"
+if [[ -z "$CALL" ]]; then
+  echo "Usage: $(basename "$0") -c|--call MacroName" >&2
+  exit 2
+fi
+BOOT_CODE="gROOT->LoadMacro(\\\"${MACRO}\\\"); setup_rarexsec(\\\"${LIBPATH}\\\",\\\"${INCDIR}\\\");"
+EXEC_CODE="rx_call(\\\"${CALL}\\\");"
+root -l -b -q -e "${BOOT_CODE} ${EXEC_CODE}"
