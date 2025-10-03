@@ -62,4 +62,9 @@ export ROOT_INCLUDE_PATH="${INCDIR}:${ROOT_INCLUDE_PATH}"
 
 LIBEXT="so"
 
-root -l -b -q -e "gROOT->LoadMacro(\"${MACRO}\"); setup_rarexsec(\"${LIBDIR}/librarexsec.${LIBEXT}\",\"${INCDIR}\");" "$@"
+args=()
+for arg in "$@"; do
+  args+=("${arg//\\\"/\"}")
+done
+
+root -l -b -q -e "gROOT->LoadMacro(\"${MACRO}\"); setup_rarexsec(\"${LIBDIR}/librarexsec.${LIBEXT}\",\"${INCDIR}\");" "${args[@]}"
