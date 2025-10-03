@@ -1,11 +1,14 @@
 #include "rarexsec/plot/StackedHist.hh"
 #include "ROOT/RDFHelpers.hxx"
 #include "TArrow.h"
+#include "TCanvas.h"
 #include "TLine.h"
+#include <algorithm>
+#include <cctype>
+#include <filesystem>
 #include <map>
 #include <sstream>
 #include <iomanip>
-#include <algorithm>
 
 using namespace rarexsec;
 
@@ -19,6 +22,14 @@ namespace {
         for (int i = (pos == std::string::npos ? (int)x.size() : (int)pos) - 3; i > 0; i -= 3) x.insert(i, ",");
         return x;
     }
+    inline std::string sanitise(std::string s) {
+        for (char& c : s) {
+            if (!(std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_' || c == '.')) {
+                c = '_';
+            }
+        }
+        return s;
+    }
 }
 
 StackedHist::StackedHist(std::string plot_name,
@@ -28,9 +39,16 @@ StackedHist::StackedHist(std::string plot_name,
                                            std::vector<const Entry*> mc,
                                            std::vector<const Entry*> data,
                                            std::vector<int> channel_order)
-: IHistogramPlot(IHistogramPlot::sanitise(plot_name), std::move(out_dir))
-, spec_(std::move(spec)), opt_(std::move(opt))
-, mc_(std::move(mc)), data_(std::move(data)), chan_order_(std::move(channel_order)) {}
+: spec_(std::move(spec)), opt_(std::move(opt))
+, mc_(std::move(mc)), data_(std::move(data)), chan_order_(std::move(channel_order))
+, plot_name_(sanitise(std::move(plot_name))), output_directory_(std::move(out_dir)) {}
+
+void StackedHist::drawAndSave(const std::string& image_format) {
+    std::filesystem::create_directories(output_directory_);
+    TCanvas canvas(plot_name_.c_str(), plot_name_.c_str(), 800, 600);
+    draw(canvas);
+    canvas.SaveAs((output_directory_ + "/" + plot_name_ + "." + image_format).c_str());
+}
 
 void StackedHist::setup_pads_ratio(TCanvas& c, TPad*& p_main, TPad*& p_ratio) const {
     c.cd();
