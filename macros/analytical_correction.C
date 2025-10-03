@@ -16,6 +16,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <limits>
 
 #include "rarexsec/Plotter.hh"
 
@@ -82,12 +83,15 @@ namespace ana {
 
         const double cmin_p  = (Ethr_p/gamma  - Epst) / denom; // x ≥ cmin_p
         const double cmax_pi = (Epist - Ethr_pi/gamma) / denom; // x ≤ cmax_pi
+        const double raw_width = cmax_pi - cmin_p;
+        const double tol = 64 * std::numeric_limits<double>::epsilon() *
+                           std::max({std::abs(cmin_p), std::abs(cmax_pi), 1.0});
+        if (raw_width <= tol) return 0.0;
 
         const double l = std::clamp(cmin_p, -1.0, 1.0);
         const double u = std::clamp(cmax_pi, -1.0, 1.0);
-        constexpr double eps = 1e-12;
-        const double width = u - l;
-        if (width <= eps) return 0.0;
+        const double width = std::max(u - l, 0.0);
+        if (width <= 0.0) return 0.0;
 
         // Unpolarised fraction plus polarisation correction (Eqs. 6.7–6.8)
         const double Aiso = 0.5 * width;
