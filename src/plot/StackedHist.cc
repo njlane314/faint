@@ -4,33 +4,11 @@
 #include "TCanvas.h"
 #include "TLine.h"
 #include <algorithm>
-#include <cctype>
 #include <filesystem>
 #include <map>
-#include <sstream>
-#include <iomanip>
 
 using namespace rarexsec;
-
-namespace {
-    inline std::string fmt_commas(double v, int prec = -1) {
-        std::ostringstream s;
-        if (prec >= 0) s << std::fixed << std::setprecision(prec);
-        s << v;
-        auto x = s.str();
-        auto pos = x.find('.');
-        for (int i = (pos == std::string::npos ? (int)x.size() : (int)pos) - 3; i > 0; i -= 3) x.insert(i, ",");
-        return x;
-    }
-    inline std::string sanitise(std::string s) {
-        for (char& c : s) {
-            if (!(std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_' || c == '.')) {
-                c = '_';
-            }
-        }
-        return s;
-    }
-}
+using namespace rarexsec::plot;
 
 StackedHist::StackedHist(std::string plot_name,
                                            std::string out_dir,
@@ -41,7 +19,7 @@ StackedHist::StackedHist(std::string plot_name,
                                            std::vector<int> channel_order)
 : spec_(std::move(spec)), opt_(std::move(opt))
 , mc_(std::move(mc)), data_(std::move(data)), chan_order_(std::move(channel_order))
-, plot_name_(sanitise(std::move(plot_name))), output_directory_(std::move(out_dir)) {}
+, plot_name_(Plotter::sanitise(std::move(plot_name))), output_directory_(std::move(out_dir)) {}
 
 void StackedHist::draw_and_save(const std::string& image_format) {
     std::filesystem::create_directories(output_directory_);
@@ -255,7 +233,7 @@ void StackedHist::draw_legend(TPad* p, bool in_main) {
         const double sum = h->Integral();
         auto lab = rarexsec::Channels::label(ch);
         if (opt_.annotate_numbers) {
-            leg->AddEntry(h, (lab + " : " + fmt_commas(sum, 2)).c_str(), "f");
+            leg->AddEntry(h, (lab + " : " + Plotter::fmt_commas(sum, 2)).c_str(), "f");
         } else {
             leg->AddEntry(h, lab.c_str(), "f");
         }
@@ -316,7 +294,7 @@ void StackedHist::draw_watermark(TPad* p, double total_mc) const {
     lt.SetTextFont(42);
     lt.SetTextSize(0.05 * 0.8);
     lt.DrawLatex(1 - p->GetRightMargin() - 0.03, 1 - p->GetTopMargin() - 0.09, (std::string("Beamline, Periods: ") + bl + ", " + runs).c_str());
-    lt.DrawLatex(1 - p->GetRightMargin() - 0.03, 1 - p->GetTopMargin() - 0.15, (std::string("Total MC: ") + fmt_commas(total_mc, 2) + " events").c_str());
+    lt.DrawLatex(1 - p->GetRightMargin() - 0.03, 1 - p->GetTopMargin() - 0.15, (std::string("Total MC: ") + Plotter::fmt_commas(total_mc, 2) + " events").c_str());
 }
 
 void StackedHist::draw(TCanvas& canvas) {
