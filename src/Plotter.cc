@@ -1,4 +1,4 @@
-#include "rarexsec/plot/Plotter.hh"
+#include "rarexsec/Plotter.hh"
 #include "rarexsec/plot/StackedHist.hh"
 
 namespace rarexsec {

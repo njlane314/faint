@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "rarexsec/Volume.hh"
+#include "rarexsec/proc/Volume.hh"
 #include "rarexsec/Hub.hh"
 
 namespace rarexsec {

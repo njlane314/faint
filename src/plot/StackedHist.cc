@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <map>
-#include "rarexsec/Channels.hh"
+#include "rarexsec/plot/Channels.hh"
 
 rarexsec::plot::StackedHist::StackedHist(H1Spec spec,
                               Options opt,

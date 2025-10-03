@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include "ROOT/RDataFrame.hxx"
-#include "rarexsec/Selection.hh"
+#include "rarexsec/proc/Selection.hh"
 #include "rarexsec/Hub.hh"
 
 namespace rarexsec::plot {

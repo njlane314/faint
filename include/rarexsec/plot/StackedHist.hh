@@ -6,7 +6,7 @@
 #include "THStack.h"
 #include "TLegend.h"
 
-#include "rarexsec/plot/Plotter.hh"
+#include "rarexsec/Plotter.hh"
 
 namespace rarexsec {
 namespace plot {

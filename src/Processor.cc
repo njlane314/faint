@@ -1,7 +1,7 @@
 #include "rarexsec/Processor.hh"
 #include "rarexsec/Hub.hh"
-#include "rarexsec/Volume.hh"
-#include "rarexsec/Selection.hh"
+#include "rarexsec/proc/Volume.hh"
+#include "rarexsec/proc/Selection.hh"
 
 #include <ROOT/RVec.hxx>
 #include <cmath>
