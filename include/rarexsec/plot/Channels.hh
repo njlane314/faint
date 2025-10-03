@@ -41,11 +41,6 @@ public:
         return properties(code).fill_style;
     }
 
-    static const std::vector<int>& order() {
-        static const std::vector<int> v = {1,2,14,10,11,12,13,18,17,15,16,99};
-        return v;
-    }
-
     static const std::vector<int>& signal_keys() {
         static const std::vector<int> v = {15,16};
         return v;
