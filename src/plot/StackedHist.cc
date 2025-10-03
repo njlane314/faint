@@ -68,12 +68,12 @@ void rarexsec::plot::StackedHist::build_histograms() {
         if (it == booked.end() || it->second.empty()) continue;
         std::unique_ptr<TH1D> sum;
         for (auto& rr : it->second) {
-            TH1D* h = rr.GetValue();
+            const TH1D& h = rr.GetValue();
             if (!sum) {
-                sum.reset(static_cast<TH1D*>(h->Clone((spec_.id+"_mc_sum_ch"+std::to_string(ch)).c_str())));
+                sum.reset(static_cast<TH1D*>(h.Clone((spec_.id+"_mc_sum_ch"+std::to_string(ch)).c_str())));
                 sum->SetDirectory(nullptr);
             } else {
-                sum->Add(h);
+                sum->Add(&h);
             }
         }
         if (sum) {
@@ -123,12 +123,12 @@ void rarexsec::plot::StackedHist::build_histograms() {
             parts.push_back(n.Histo1D(spec_.model("_data_src"+std::to_string(ie)), var));
         }
         for (auto& rr : parts) {
-            TH1D* h = rr.GetValue();
+            const TH1D& h = rr.GetValue();
             if (!data_hist_) {
-                data_hist_.reset(static_cast<TH1D*>(h->Clone((spec_.id+"_data").c_str())));
+                data_hist_.reset(static_cast<TH1D*>(h.Clone((spec_.id+"_data").c_str())));
                 data_hist_->SetDirectory(nullptr);
             } else {
-                data_hist_->Add(h);
+                data_hist_->Add(&h);
             }
         }
         if (data_hist_) {
