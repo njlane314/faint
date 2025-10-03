@@ -10,16 +10,14 @@
 using namespace rarexsec;
 using namespace rarexsec::plot;
 
-StackedHist::StackedHist(std::string plot_name,
-                                           std::string out_dir,
-                                           Hist1D spec,
+StackedHist::StackedHist(Hist1D spec,
                                            Options opt,
                                            std::vector<const Entry*> mc,
                                            std::vector<const Entry*> data,
                                            std::vector<int> channel_order)
 : spec_(std::move(spec)), opt_(std::move(opt))
 , mc_(std::move(mc)), data_(std::move(data)), chan_order_(std::move(channel_order))
-, plot_name_(Plotter::sanitise(std::move(plot_name))), output_directory_(std::move(out_dir)) {}
+, plot_name_(Plotter::sanitise(spec_.name)), output_directory_(opt_.out_dir) {}
 
 void StackedHist::setup_pads_ratio(TCanvas& c, TPad*& p_main, TPad*& p_ratio) const {
     c.cd();

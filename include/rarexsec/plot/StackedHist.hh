@@ -17,13 +17,11 @@ namespace plot {
 
 class StackedHist {
 public:
-    StackedHist(std::string plot_name,
-                         std::string out_dir,
-                         Hist1D spec,
-                         Options opt,
-                         std::vector<const Entry*> mc,
-                         std::vector<const Entry*> data,
-                         std::vector<int> channel_order);
+    StackedHist(Hist1D spec,
+                Options opt,
+                std::vector<const Entry*> mc,
+                std::vector<const Entry*> data,
+                std::vector<int> channel_order);
     ~StackedHist() = default;
 
     void draw_and_save(const std::string& image_format);
