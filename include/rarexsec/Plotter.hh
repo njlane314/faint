@@ -59,7 +59,6 @@ struct Options {
 
     bool legend_on_top = true;
     double legend_split = 0.85;
-    std::vector<double> rebin_edges;
     std::shared_ptr<TMatrixDSym> total_cov;
     std::vector<double> syst_bin;
     bool show_ratio_band = true;

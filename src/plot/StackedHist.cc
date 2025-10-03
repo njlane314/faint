@@ -108,16 +108,6 @@ void rarexsec::plot::StackedHist::build_histograms() {
     std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
     const auto& channels = rarexsec::plot::Channels::mc_keys();
 
-    auto rebin_hist = [&](std::unique_ptr<TH1D>& hist, const std::string& suffix) {
-        if (!hist || opt_.rebin_edges.size() < 2) return;
-        const int nb = static_cast<int>(opt_.rebin_edges.size()) - 1;
-        std::string newname = hist->GetName();
-        newname += suffix;
-        auto* rebinned = hist->Rebin(nb, newname.c_str(), opt_.rebin_edges.data());
-        hist.reset(static_cast<TH1D*>(rebinned));
-        hist->SetDirectory(nullptr);
-    };
-
     for (size_t ie = 0; ie < mc_.size(); ++ie) {
         const Entry* e = mc_[ie];
         if (!e) continue;
@@ -149,7 +139,6 @@ void rarexsec::plot::StackedHist::build_histograms() {
             }
         }
         if (sum) {
-            rebin_hist(sum, "_rebin");
             double y = sum->Integral();
             yields.emplace_back(ch, y);
             sum_by_channel.emplace(ch, std::move(sum));
@@ -205,7 +194,6 @@ void rarexsec::plot::StackedHist::build_histograms() {
             }
         }
         if (data_hist_) {
-            rebin_hist(data_hist_, "_rebin");
             data_hist_->SetMarkerStyle(kFullCircle);
             data_hist_->SetMarkerSize(0.9);
             data_hist_->SetLineColor(kBlack);
