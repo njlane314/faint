@@ -1,12 +1,15 @@
 #pragma once
 #include <cctype>
 #include <iomanip>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
 #include "ROOT/RDataFrame.hxx"
 #include "rarexsec/proc/Selection.hh"
 #include "rarexsec/Hub.hh"
+
+class TMatrixDSym;
 
 namespace rarexsec {
 namespace plot {
@@ -46,16 +49,25 @@ struct Options {
     std::string image_format = "png";
     bool show_ratio = true;
     bool use_log_y = false;
+    bool overlay_signal = true;
     bool annotate_numbers = true;
-    bool overlay_signal = false;
-    std::vector<int> signal_channels = {15,16};
-    double y_min = 0.;
-    double y_max = -1.;
-    bool show_cuts = true;
+    double y_min = 0.0;
+    double y_max = -1.0;
+    double leg_x1 = 0.12, leg_y1 = 0.60, leg_x2 = 0.95, leg_y2 = 0.88;
+    std::vector<int> signal_channels;
+    bool show_cuts = false;
     std::vector<CutLine> cuts;
+
+    bool legend_on_top = true;
+    double legend_split = 0.85;
+    std::vector<double> rebin_edges;
+    std::shared_ptr<TMatrixDSym> total_cov;
+    std::vector<double> syst_bin;
+    bool show_ratio_band = true;
+    std::string x_title;
+    std::string y_title = "Events";
     std::string beamline;
     std::vector<std::string> periods;
-    double leg_x1 = 0.60, leg_y1 = 0.55, leg_x2 = 0.88, leg_y2 = 0.88;
 };
 
 class Plotter {
