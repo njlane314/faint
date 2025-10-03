@@ -4,18 +4,19 @@
 #include <TCanvas.h>
 #include <TGraph.h>
 #include <TLegend.h>
-#include <TLatex.h>
-#include <TLine.h>
 #include <TH2D.h>
 #include <TStyle.h>
 #include <TFile.h>
 #include <TSystem.h>
+#include <TPad.h>
 
 #include <cmath>
 #include <algorithm>
 #include <vector>
 #include <string>
 #include <iostream>
+
+#include "rarexsec/Plotter.hh"
 
 namespace ana {
 
@@ -140,6 +141,21 @@ void draw_APS_vs_bg(const std::string& outdir) {
 
     TCanvas c("c_APS","APS vs beta*gamma",900,700);
     gStyle->SetOptStat(0);
+
+    auto* pad_main = new TPad("pad_main", "pad_main", 0., 0.00, 1., 0.82);
+    auto* pad_legend = new TPad("pad_legend", "pad_legend", 0., 0.82, 1., 1.00);
+    pad_main->SetTopMargin(0.02);
+    pad_main->SetBottomMargin(0.12);
+    pad_main->SetLeftMargin(0.15);
+    pad_main->SetRightMargin(0.05);
+    pad_legend->SetTopMargin(0.05);
+    pad_legend->SetBottomMargin(0.05);
+    pad_legend->SetLeftMargin(0.02);
+    pad_legend->SetRightMargin(0.02);
+    pad_main->Draw();
+    pad_legend->Draw();
+
+    pad_main->cd();
     auto g_nom   = new TGraph(N, x.data(), y_nom.data());
     auto g_loL   = new TGraph(N, x.data(), y_loL.data());
     auto g_hiL   = new TGraph(N, x.data(), y_hiL.data());
@@ -165,8 +181,12 @@ void draw_APS_vs_bg(const std::string& outdir) {
     g_polp->Draw("L SAME");
     g_polm->Draw("L SAME");
 
-    TLegend leg(0.50,0.18,0.88,0.40);
+    pad_legend->cd();
+    TLegend leg(0.12, 0.05, 0.95, 0.95);
     leg.SetBorderSize(0);
+    leg.SetFillStyle(0);
+    leg.SetTextFont(42);
+    leg.SetNColumns(2);
     leg.AddEntry(g_nom , Form("Nominal: L_{min}=%.1f cm, p_{thr}^{p}=%.2f GeV, p_{thr}^{#pi}=%.2f GeV, P_{#Lambda}=0",
             ana::gCfg.Lmin_cm, ana::gCfg.pthr_p, ana::gCfg.pthr_pi), "l");
     leg.AddEntry(g_thr , "No daughter thresholds", "l");
@@ -175,10 +195,6 @@ void draw_APS_vs_bg(const std::string& outdir) {
     leg.AddEntry(g_polp, "P_{#Lambda}=+0.4", "l");
     leg.AddEntry(g_polm, "P_{#Lambda}=-0.4", "l");
     leg.Draw();
-
-    TLatex latex;
-    latex.SetNDC(); latex.SetTextSize(0.035);
-    latex.DrawLatex(0.13,0.92,"Analytical acceptance for #Lambda #rightarrow p#pi^{-}:  A_{PS}=B #times A_{length} #times A_{kin}");
 
     c.SaveAs((outdir + "/APS_vs_bg.png").c_str());
     c.SaveAs((outdir + "/APS_vs_bg.pdf").c_str());
@@ -202,6 +218,21 @@ void draw_Akin_vs_bg(const std::string& outdir) {
 
     TCanvas c("c_Akin","A_kin vs beta*gamma",900,700);
     gStyle->SetOptStat(0);
+
+    auto* pad_main = new TPad("pad_main", "pad_main", 0., 0.00, 1., 0.82);
+    auto* pad_legend = new TPad("pad_legend", "pad_legend", 0., 0.82, 1., 1.00);
+    pad_main->SetTopMargin(0.02);
+    pad_main->SetBottomMargin(0.12);
+    pad_main->SetLeftMargin(0.15);
+    pad_main->SetRightMargin(0.05);
+    pad_legend->SetTopMargin(0.05);
+    pad_legend->SetBottomMargin(0.05);
+    pad_legend->SetLeftMargin(0.02);
+    pad_legend->SetRightMargin(0.02);
+    pad_main->Draw();
+    pad_legend->Draw();
+
+    pad_main->cd();
     auto g_nom   = new TGraph(N, x.data(), y_nom.data());
     auto g_thr   = new TGraph(N, x.data(), y_noThr.data());
     auto g_polp  = new TGraph(N, x.data(), y_polp.data());
@@ -221,16 +252,17 @@ void draw_Akin_vs_bg(const std::string& outdir) {
     g_polp->Draw("L SAME");
     g_polm->Draw("L SAME");
 
-    TLegend leg(0.50,0.18,0.86,0.38);
+    pad_legend->cd();
+    TLegend leg(0.12, 0.05, 0.95, 0.95);
     leg.SetBorderSize(0);
+    leg.SetFillStyle(0);
+    leg.SetTextFont(42);
+    leg.SetNColumns(2);
     leg.AddEntry(g_nom , Form("Nominal thresholds: p_{thr}^{p}=%.2f GeV, p_{thr}^{#pi}=%.2f GeV", ana::gCfg.pthr_p, ana::gCfg.pthr_pi), "l");
     leg.AddEntry(g_thr , "No thresholds", "l");
     leg.AddEntry(g_polp, "Polarised P_{#Lambda}=+0.4", "l");
     leg.AddEntry(g_polm, "Polarised P_{#Lambda}=-0.4", "l");
     leg.Draw();
-
-    TLatex latex; latex.SetNDC(); latex.SetTextSize(0.035);
-    latex.DrawLatex(0.13,0.92,"Two-body threshold factor  A_{kin}  (Eqs. 6.4–6.8)");
 
     c.SaveAs((outdir + "/Akin_vs_bg.png").c_str());
     c.SaveAs((outdir + "/Akin_vs_bg.pdf").c_str());
@@ -265,9 +297,6 @@ void draw_APS_heatmap_Lmin_vs_bg(const std::string& outdir) {
     h.SetContour(60);
     h.GetZaxis()->SetRangeUser(0.0, 0.7);
     h.Draw("COLZ");
-    TLatex latex; latex.SetNDC(); latex.SetTextSize(0.035);
-    latex.DrawLatex(0.13,0.92,Form("A_{PS}=B#timesA_{length}#timesA_{kin};  L_{max}=%.0f cm,  p_{thr}^{p}=%.2f GeV,  p_{thr}^{#pi}=%.2f GeV",
-            ana::gCfg.Lmax_cm, ana::gCfg.pthr_p, ana::gCfg.pthr_pi));
     c.SaveAs((outdir + "/APS_heatmap_Lmin_vs_bg.png").c_str());
     c.SaveAs((outdir + "/APS_heatmap_Lmin_vs_bg.pdf").c_str());
 }
@@ -286,6 +315,7 @@ void analytical_correction() {
 
     const std::string outdir = "plots/analytical";
     gSystem->mkdir(outdir.c_str(), kTRUE);
+    rarexsec::plot::Plotter{}.set_global_style();
     gStyle->SetNumberContours(60);
 
     std::cout << "[analytical] Using: Lmin=" << ana::gCfg.Lmin_cm << " cm, "
