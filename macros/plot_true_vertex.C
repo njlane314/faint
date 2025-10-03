@@ -1,26 +1,13 @@
 #include <ROOT/RDataFrame.hxx>
-#include <TCanvas.h>
 #include <TSystem.h>
-#include <TH1D.h>
+#include <ROOT/RDFHelpers.hxx>
 #include <rarexsec/Hub.hh>
+#include <rarexsec/Plotter.hh>
 
 #include <array>
-#include <memory>
 #include <stdexcept>
 #include <string>
-
-namespace {
-struct VertexPlot {
-    std::string column;
-    std::string hist_name;
-    std::string hist_title;
-    std::string canvas_name;
-    std::string output_path;
-    int bins;
-    double min;
-    double max;
-};
-}
+#include <vector>
 
 void plot_true_vertex() {
     ROOT::EnableImplicitMT();
@@ -42,34 +29,49 @@ void plot_true_vertex() {
     const std::string out_dir = "plots/" + beamline + "/" + periods.front();
     gSystem->mkdir(out_dir.c_str(), true);
 
-    const std::array<VertexPlot, 3> plots = {
-        VertexPlot{"neutrino_vertex_x", "h_true_vertex_x", "True neutrino vertex X;x^{true}_{#nu} [cm];Events", "c_true_vertex_x", out_dir + "/true_vertex_x.png", 50, 0., 256.},
-        VertexPlot{"neutrino_vertex_y", "h_true_vertex_y", "True neutrino vertex Y;y^{true}_{#nu} [cm];Events", "c_true_vertex_y", out_dir + "/true_vertex_y.png", 50, -116., 116.},
-        VertexPlot{"neutrino_vertex_z", "h_true_vertex_z", "True neutrino vertex Z;z^{true}_{#nu} [cm];Events", "c_true_vertex_z", out_dir + "/true_vertex_z.png", 80, 0., 1036.}
+    rarexsec::plot::Options plot_options;
+    plot_options.out_dir = out_dir;
+    plot_options.image_format = "png";
+    plot_options.show_ratio = false;
+    plot_options.beamline = beamline;
+    plot_options.periods = periods;
+
+    rarexsec::plot::Plotter plotter(plot_options);
+
+    const std::array<rarexsec::plot::H1Spec, 3> plots = {
+        rarexsec::plot::H1Spec{
+            .id = "true_vertex_x",
+            .title = "True neutrino vertex X;x^{true}_{#nu} [cm];Events",
+            .expr = "neutrino_vertex_x",
+            .weight = "w_nominal",
+            .nbins = 50,
+            .xmin = 0.,
+            .xmax = 256.,
+            .sel = rarexsec::selection::Preset::Empty
+        },
+        rarexsec::plot::H1Spec{
+            .id = "true_vertex_y",
+            .title = "True neutrino vertex Y;y^{true}_{#nu} [cm];Events",
+            .expr = "neutrino_vertex_y",
+            .weight = "w_nominal",
+            .nbins = 50,
+            .xmin = -116.,
+            .xmax = 116.,
+            .sel = rarexsec::selection::Preset::Empty
+        },
+        rarexsec::plot::H1Spec{
+            .id = "true_vertex_z",
+            .title = "True neutrino vertex Z;z^{true}_{#nu} [cm];Events",
+            .expr = "neutrino_vertex_z",
+            .weight = "w_nominal",
+            .nbins = 80,
+            .xmin = 0.,
+            .xmax = 1036.,
+            .sel = rarexsec::selection::Preset::Empty
+        }
     };
 
-    for (const auto& plot : plots) {
-        TH1D total_hist(plot.hist_name.c_str(), plot.hist_title.c_str(), plot.bins, plot.min, plot.max);
-        total_hist.Sumw2();
-
-        std::size_t sample_index = 0;
-        for (const auto* entry : samples) {
-            if (!entry) {
-                continue;
-            }
-            auto hist = entry->rnode().Histo1D({plot.hist_name + "_" + std::to_string(sample_index++), plot.hist_title.c_str(), plot.bins, plot.min, plot.max}, plot.column);
-            auto* hist_ptr = hist->GetPtr();
-            hist_ptr->SetDirectory(nullptr);
-            total_hist.Add(hist_ptr);
-        }
-
-        if (total_hist.GetEntries() <= 0.) {
-            throw std::runtime_error("Histogram " + plot.hist_name + " has no entries");
-        }
-
-        auto canvas = std::make_unique<TCanvas>(plot.canvas_name.c_str(), plot.canvas_name.c_str(), 800, 600);
-        total_hist.SetLineWidth(2);
-        total_hist.Draw("hist");
-        canvas->SaveAs(plot.output_path.c_str());
+    for (const auto& plot_spec : plots) {
+        plotter.draw_stack_by_channel(plot_spec, samples);
     }
 }
