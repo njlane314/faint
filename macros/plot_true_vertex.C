@@ -37,7 +37,7 @@ void plot_true_vertex() {
 
     rarexsec::plot::Options plot_options;
     plot_options.out_dir = out_dir;
-    plot_options.image_format = "png";
+    plot_options.image_format = "pdf";
     plot_options.show_ratio = false;
     plot_options.overlay_signal = false;
     plot_options.legend_on_top = true;
