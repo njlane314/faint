@@ -43,7 +43,7 @@ StackedHist::StackedHist(std::string plot_name,
 , mc_(std::move(mc)), data_(std::move(data)), chan_order_(std::move(channel_order))
 , plot_name_(sanitise(std::move(plot_name))), output_directory_(std::move(out_dir)) {}
 
-void StackedHist::drawAndSave(const std::string& image_format) {
+void StackedHist::draw_and_save(const std::string& image_format) {
     std::filesystem::create_directories(output_directory_);
     TCanvas canvas(plot_name_.c_str(), plot_name_.c_str(), 800, 600);
     draw(canvas);
