@@ -6,7 +6,6 @@
 #include "THStack.h"
 #include "TLegend.h"
 #include "TPad.h"
-#include "TFile.h"
 #include "TLatex.h"
 #include "rarexsec/plot/Plotter.hh"
 #include "rarexsec/Channels.hh"
