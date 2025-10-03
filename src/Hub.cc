@@ -89,3 +89,17 @@ std::vector<const rarexsec::Entry*> rarexsec::Hub::simulation_entries(const std:
     }
     return out;
 }
+
+std::vector<const rarexsec::Entry*> rarexsec::Hub::data_entries(
+    const std::string& beamline, const std::vector<std::string>& periods) const {
+    std::vector<const Entry*> out;
+    auto it_bl = db_.find(beamline);
+    if (it_bl == db_.end()) return out;
+    for (const auto& per : periods) {
+        auto it_p = it_bl->second.find(per);
+        if (it_p == it_bl->second.end()) continue;
+        for (const auto& rec : it_p->second)
+            if (rec.kind == sample::origin::data) out.push_back(&rec);
+    }
+    return out;
+}

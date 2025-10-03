@@ -53,6 +53,8 @@ public:
 
     std::vector<const rarexsec::Entry*> simulation_entries(const std::string& beamline,
                                                            const std::vector<std::string>& periods) const;
+    std::vector<const rarexsec::Entry*> data_entries(const std::string& beamline,
+                                                    const std::vector<std::string>& periods) const;
 
 
 private:
