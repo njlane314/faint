@@ -5,6 +5,8 @@
 #include "TH1.h"
 #include "THStack.h"
 #include "TLegend.h"
+#include "TCanvas.h"
+#include "TPad.h"
 
 #include "rarexsec/Plotter.hh"
 
