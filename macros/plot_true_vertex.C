@@ -47,7 +47,7 @@ void plot_true_vertex() {
     const std::array<rarexsec::plot::H1Spec, 3> plots = {
         rarexsec::plot::H1Spec{
             .id = "true_vertex_x",
-            .title = "True neutrino vertex X;x^{true}_{#nu} [cm];Events",
+            .title = ";x^{true}_{#nu} [cm];Events",
             .expr = "neutrino_vertex_x",
             .weight = "w_nominal",
             .nbins = 50,
@@ -57,7 +57,7 @@ void plot_true_vertex() {
         },
         rarexsec::plot::H1Spec{
             .id = "true_vertex_y",
-            .title = "True neutrino vertex Y;y^{true}_{#nu} [cm];Events",
+            .title = ";y^{true}_{#nu} [cm];Events",
             .expr = "neutrino_vertex_y",
             .weight = "w_nominal",
             .nbins = 50,
@@ -67,7 +67,7 @@ void plot_true_vertex() {
         },
         rarexsec::plot::H1Spec{
             .id = "true_vertex_z",
-            .title = "True neutrino vertex Z;z^{true}_{#nu} [cm];Events",
+            .title = ";z^{true}_{#nu} [cm];Events",
             .expr = "neutrino_vertex_z",
             .weight = "w_nominal",
             .nbins = 80,

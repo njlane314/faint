@@ -28,8 +28,16 @@ struct H1Spec {
     double xmax = 1.;
     selection::Preset sel = selection::Preset::Empty;
 
+    std::string axis_title() const {
+        if (title.empty()) return "";
+        const auto pos = title.find(';');
+        if (pos == std::string::npos) return ";" + title;
+        return title.substr(pos);
+    }
+
     ROOT::RDF::TH1DModel model(const std::string& suffix) const {
-        return ROOT::RDF::TH1DModel((id + suffix).c_str(), title.c_str(), nbins, xmin, xmax);
+        const auto axes = axis_title();
+        return ROOT::RDF::TH1DModel((id + suffix).c_str(), axes.c_str(), nbins, xmin, xmax);
     }
 };
 

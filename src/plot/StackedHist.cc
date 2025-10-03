@@ -42,7 +42,8 @@ void rarexsec::plot::StackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p
 }
 
 void rarexsec::plot::StackedHist::build_histograms() {
-    stack_ = std::make_unique<THStack>((spec_.id + "_stack").c_str(), spec_.title.c_str());
+    const auto axes = spec_.axis_title();
+    stack_ = std::make_unique<THStack>((spec_.id + "_stack").c_str(), axes.c_str());
     signal_scale_ = 1.0;
     std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
     const auto& channels = rarexsec::plot::Channels::mc_keys();
