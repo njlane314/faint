@@ -57,6 +57,8 @@ public:
                                const std::vector<const Entry*>& mc,
                                const std::vector<const Entry*>& data = {}) const;
 
+    virtual void setGlobalStyle() const;
+
     static std::string fmt_commas(double v, int prec = -1) {
         std::ostringstream s;
         if (prec >= 0) s << std::fixed << std::setprecision(prec);
