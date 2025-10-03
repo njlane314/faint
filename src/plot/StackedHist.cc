@@ -77,12 +77,13 @@ void StackedHist::setup_pads_legend_top(TCanvas& c, TPad*& p_main, TPad*& p_leg)
 void StackedHist::build_histograms() {
     stack_ = std::make_unique<THStack>((spec_.name + "_stack").c_str(), spec_.title.c_str());
     std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
+    const auto channels = chan_order_;
     for (const Entry* e : mc_) {
         if (!e) continue;
         auto n0 = selection::apply(e->rnode(), spec_.sel, *e);
         auto n  = (spec_.expr.empty() ? n0 : n0.Define("_rx_expr_", spec_.expr));
         const std::string var = spec_.expr.empty() ? spec_.name : "_rx_expr_";
-        for (int ch : chan_order_) {
+        for (int ch : channels) {
             auto nf = n.Filter([ch](int c){ return c==ch; }, {"analysis_channels"});
             auto h  = nf.Histo1D({(spec_.name+"_mc_ch"+std::to_string(ch)).c_str(),
                                   spec_.title.c_str(), spec_.nbins, spec_.xmin, spec_.xmax},
@@ -90,7 +91,15 @@ void StackedHist::build_histograms() {
             booked[ch].push_back(h);
         }
     }
-    for (int ch : chan_order_) {
+
+    struct ChannelHist {
+        int channel;
+        double yield;
+        std::unique_ptr<TH1D> hist;
+    };
+    std::vector<ChannelHist> channel_hists;
+
+    for (int ch : channels) {
         auto it = booked.find(ch);
         if (it == booked.end() || it->second.empty()) continue;
         std::unique_ptr<TH1D> sum;
@@ -104,13 +113,26 @@ void StackedHist::build_histograms() {
             }
         }
         if (sum) {
-            sum->SetFillColor(rarexsec::Channels::color(ch));
-            sum->SetFillStyle(rarexsec::Channels::fill_style(ch));
-            sum->SetLineColor(kBlack);
-            sum->SetLineWidth(1);
-            stack_->Add(sum.get(), "HIST");
-            mc_ch_hists_.push_back(std::move(sum));
+            channel_hists.push_back({ch, sum->Integral(), std::move(sum)});
         }
+    }
+
+    std::stable_sort(channel_hists.begin(), channel_hists.end(), [](const ChannelHist& a, const ChannelHist& b) {
+        if (a.yield == b.yield) return a.channel < b.channel;
+        return a.yield > b.yield;
+    });
+
+    chan_order_.clear();
+    for (auto& ch_hist : channel_hists) {
+        auto& sum = ch_hist.hist;
+        const int ch = ch_hist.channel;
+        sum->SetFillColor(rarexsec::Channels::color(ch));
+        sum->SetFillStyle(rarexsec::Channels::fill_style(ch));
+        sum->SetLineColor(kBlack);
+        sum->SetLineWidth(1);
+        stack_->Add(sum.get(), "HIST");
+        mc_ch_hists_.push_back(std::move(sum));
+        chan_order_.push_back(ch);
     }
     for (auto& uptr : mc_ch_hists_) {
         if (!mc_total_) {
