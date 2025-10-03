@@ -6,6 +6,7 @@
 #include "TColor.h"
 
 namespace rarexsec {
+namespace plot {
 
 class Channels {
 public:
@@ -71,4 +72,5 @@ private:
     }
 };
 
+}
 }
