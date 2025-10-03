@@ -5,6 +5,7 @@
 #include "TLine.h"
 #include "TLatex.h"
 #include "TMatrixDSym.h"
+#include "TList.h"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -227,6 +228,15 @@ void rarexsec::plot::StackedHist::build_histograms() {
 void rarexsec::plot::StackedHist::draw_stack_and_unc(TPad* p_main, double& max_y) {
     if (!p_main) return;
     p_main->cd();
+
+    if (auto* hists = stack_->GetHists()) {
+        for (TObject* obj = hists->First(); obj != nullptr; obj = hists->After(obj)) {
+            if (auto* hist = dynamic_cast<TH1*>(obj)) {
+                hist->SetLineColor(kBlack);
+            }
+        }
+    }
+
     stack_->Draw("HIST");
     TH1* frame = stack_->GetHistogram();
     if (frame) {
