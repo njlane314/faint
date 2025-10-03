@@ -1,4 +1,4 @@
-# RareXSec
+# rarexsec
 
 ## Build instructions
 
