@@ -43,7 +43,6 @@ private:
     void draw_legend(TPad* p, bool in_main);
     void draw_cuts(TPad* p, double max_y);
     void draw_watermark(TPad* p, double total_mc) const;
-    void save_rootsidecars() const;
 
     Hist1D spec_;
     Options opt_;

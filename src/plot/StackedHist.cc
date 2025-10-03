@@ -297,23 +297,6 @@ void StackedHist::draw_watermark(TPad* p, double total_mc) const {
     lt.DrawLatex(1 - p->GetRightMargin() - 0.03, 1 - p->GetTopMargin() - 0.15, (std::string("Total MC: ") + fmt_commas(total_mc, 2) + " events").c_str());
 }
 
-void StackedHist::save_rootsidecars() const {
-    const std::string base = output_directory_ + "/" + plot_name_;
-    TFile fout((base + ".root").c_str(), "RECREATE");
-    if (stack_)    stack_->Write("mc_stack");
-    if (mc_total_) mc_total_->Write("mc_total");
-    if (data_hist_) data_hist_->Write("data");
-    if (!mc_ch_hists_.empty()) {
-        auto* d = fout.mkdir("mc_by_channel");
-        d->cd();
-        for (size_t i = 0; i < mc_ch_hists_.size(); ++i) {
-            const int ch = chan_order_.at(i);
-            mc_ch_hists_[i]->Write((std::string("ch_") + std::to_string(ch)).c_str());
-        }
-    }
-    fout.Close();
-}
-
 void StackedHist::draw(TCanvas& canvas) {
     build_histograms();
     TPad *p_main = nullptr, *p_second = nullptr;
@@ -331,5 +314,4 @@ void StackedHist::draw(TCanvas& canvas) {
     if (opt_.show_ratio && data_hist_ && mc_total_) draw_ratio(p_second);
     p_main->RedrawAxis();
     canvas.Update();
-    save_rootsidecars();
 }
