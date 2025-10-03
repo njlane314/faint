@@ -5,13 +5,16 @@
 #include <rarexsec/Plotter.hh>
 
 #include <array>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 void plot_true_vertex() {
+    std::cout << "Starting plot_true_vertex macro" << std::endl;
     ROOT::EnableImplicitMT();
 
+    std::cout << "Loading librexsec library" << std::endl;
     if (gSystem->Load("librarexsec") < 0) {
         throw std::runtime_error("Failed to load librexsec");
     }
@@ -21,12 +24,15 @@ void plot_true_vertex() {
     const std::vector<std::string> periods = {"run1"};
 
     rarexsec::Hub hub(config_path);
+    std::cout << "Retrieving simulation entries for beamline '" << beamline << "'" << std::endl;
     const auto samples = hub.simulation_entries(beamline, periods);
     if (samples.empty()) {
         throw std::runtime_error("No simulation samples found for the requested configuration");
     }
+    std::cout << "Retrieved " << samples.size() << " simulation samples" << std::endl;
 
     const std::string out_dir = "plots/" + beamline + "/" + periods.front();
+    std::cout << "Creating output directory: " << out_dir << std::endl;
     gSystem->mkdir(out_dir.c_str(), true);
 
     rarexsec::plot::Options plot_options;
@@ -72,6 +78,9 @@ void plot_true_vertex() {
     };
 
     for (const auto& plot_spec : plots) {
+        std::cout << "Drawing plot: " << plot_spec.id << std::endl;
         plotter.draw_stack_by_channel(plot_spec, samples);
     }
+
+    std::cout << "Finished plot_true_vertex macro" << std::endl;
 }
