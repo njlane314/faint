@@ -26,22 +26,8 @@ void StackedHist::draw_and_save(const std::string& image_format) {
     TCanvas canvas(plot_name_.c_str(), plot_name_.c_str(), 800, 600);
     draw(canvas);
 
-    auto formats_from = [](const std::string& fmt) {
-        std::vector<std::string> formats;
-        std::stringstream ss(fmt);
-        std::string token;
-        while (std::getline(ss, token, ',')) {
-            token.erase(token.begin(), std::find_if(token.begin(), token.end(), [](unsigned char ch){ return !std::isspace(ch); }));
-            token.erase(std::find_if(token.rbegin(), token.rend(), [](unsigned char ch){ return !std::isspace(ch); }).base(), token.end());
-            if (!token.empty()) formats.push_back(std::move(token));
-        }
-        if (formats.empty()) formats.push_back("png");
-        return formats;
-    };
-
-    for (const auto& fmt : formats_from(image_format)) {
-        canvas.SaveAs((output_directory_ + "/" + plot_name_ + "." + fmt).c_str());
-    }
+    const std::string fmt = image_format.empty() ? "png" : image_format;
+    canvas.SaveAs((output_directory_ + "/" + plot_name_ + "." + fmt).c_str());
 
 }
 
