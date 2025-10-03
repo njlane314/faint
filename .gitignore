@@ -7,3 +7,5 @@ snapshot/*
 *.dylib
 *.a
 *.out
+
+plots/*
