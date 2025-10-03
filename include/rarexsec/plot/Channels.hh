@@ -9,7 +9,7 @@ namespace rarexsec {
 
 class Channels {
 public:
-    struct StratumProperties {
+    struct Properties {
         int key;
         std::string plain_name;
         std::string tex_label;
@@ -17,7 +17,7 @@ public:
         int fill_style;
     };
 
-    static const StratumProperties& properties(int code) {
+    static const Properties& properties(int code) {
         const auto& m = mapping();
         auto it = m.find(code);
         if (it == m.end()) return m.at(99);
@@ -51,8 +51,8 @@ public:
     }
 
 private:
-    static const std::map<int, StratumProperties>& mapping() {
-        static const std::map<int, StratumProperties> m = {
+    static const std::map<int, Properties>& mapping() {
+        static const std::map<int, Properties> m = {
             {0,  {0,  "data",               "Data",                               kBlack,     1001}},
             {1,  {1,  "external",           "Cosmic",                             kTeal+2,    3345}},
             {2,  {2,  "out_fv",             "Out FV",                             kYellow-7,  1001}},
