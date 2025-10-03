@@ -241,6 +241,9 @@ void rarexsec::plot::StackedHist::draw_stack_and_unc(TPad* p_main, double& max_y
     p_main->cd();
     stack_->Draw("HIST");
     TH1* frame = stack_->GetHistogram();
+    if (frame) {
+        frame->SetLineWidth(2);
+    }
     if (frame && spec_.xmin < spec_.xmax) frame->GetXaxis()->SetLimits(spec_.xmin, spec_.xmax);
     if (frame) {
         frame->GetXaxis()->SetNdivisions(510);
@@ -414,31 +417,42 @@ void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const
     p->cd();
     TLatex lt;
     lt.SetNDC();
-    lt.SetTextAlign(33);
+    const double x = p->GetLeftMargin() + 0.03;
+    double y = 1 - p->GetTopMargin() - 0.03;
+
+    const std::string title = opt_.watermark_title.empty()
+                                ? std::string("rarexsec, Preliminary")
+                                : opt_.watermark_title;
+
+    lt.SetTextAlign(13);
     lt.SetTextFont(62);
     lt.SetTextSize(0.05);
-    lt.DrawLatex(1 - p->GetRightMargin() - 0.03,
-                 1 - p->GetTopMargin() - 0.03,
-                 "#bf{rarexsec, Preliminary}");
+    lt.DrawLatex(x, y, ("#bf{" + title + "}").c_str());
 
-    std::string bl = opt_.beamline.empty() ? "N/A" : opt_.beamline;
-    std::string runs = opt_.periods.empty() ? "N/A" : [&]{
-        std::string s;
-        for (size_t i = 0; i < opt_.periods.size(); ++i) {
-            s += opt_.periods[i];
-            if (i + 1 < opt_.periods.size()) s += ", ";
-        }
-        return s;
-    }();
+    std::vector<std::string> lines = opt_.watermark_lines;
+    if (lines.empty()) {
+        std::string bl = opt_.beamline.empty() ? "N/A" : opt_.beamline;
+        std::string runs = opt_.periods.empty() ? "N/A" : [&]{
+            std::string s;
+            for (size_t i = 0; i < opt_.periods.size(); ++i) {
+                s += opt_.periods[i];
+                if (i + 1 < opt_.periods.size()) s += ", ";
+            }
+            return s;
+        }();
+        lines.push_back("Beamline, Periods: " + bl + ", " + runs);
+        lines.push_back("Total MC: " + rarexsec::plot::Plotter::fmt_commas(total_mc, 2) + " events");
+    }
 
     lt.SetTextFont(42);
-    lt.SetTextSize(0.05 * 0.8);
-    lt.DrawLatex(1 - p->GetRightMargin() - 0.03,
-                 1 - p->GetTopMargin() - 0.09,
-                 (std::string("Beamline, Periods: ") + bl + ", " + runs).c_str());
-    lt.DrawLatex(1 - p->GetRightMargin() - 0.03,
-                 1 - p->GetTopMargin() - 0.15,
-                 (std::string("Total MC: ") + rarexsec::plot::Plotter::fmt_commas(total_mc, 2) + " events").c_str());
+    const double line_size = 0.05 * 0.8;
+    lt.SetTextSize(line_size);
+    const double step = line_size * 1.2;
+    for (const auto& line : lines) {
+        y -= step;
+        if (y < 0) break;
+        lt.DrawLatex(x, y, line.c_str());
+    }
 }
 
 void rarexsec::plot::StackedHist::draw(TCanvas& canvas) {

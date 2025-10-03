@@ -67,6 +67,8 @@ struct Options {
     std::string y_title = "Events";
     std::string beamline;
     std::vector<std::string> periods;
+    std::string watermark_title = "rarexsec, Preliminary";
+    std::vector<std::string> watermark_lines;
 };
 
 class Plotter {
