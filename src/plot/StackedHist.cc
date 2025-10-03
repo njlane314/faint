@@ -11,12 +11,11 @@ using namespace rarexsec;
 using namespace rarexsec::plot;
 
 StackedHist::StackedHist(Hist1D spec,
-                                           Options opt,
-                                           std::vector<const Entry*> mc,
-                                           std::vector<const Entry*> data,
-                                           std::vector<int> channel_order)
+                            Options opt,
+                            std::vector<const Entry*> mc,
+                            std::vector<const Entry*> data)
 : spec_(std::move(spec)), opt_(std::move(opt))
-, mc_(std::move(mc)), data_(std::move(data)), chan_order_(std::move(channel_order))
+, mc_(std::move(mc)), data_(std::move(data)), 
 , plot_name_(Plotter::sanitise(spec_.name)), output_directory_(opt_.out_dir) {}
 
 void StackedHist::setup_pads_ratio(TCanvas& c, TPad*& p_main, TPad*& p_ratio) const {
@@ -46,7 +45,7 @@ void StackedHist::setup_pads_legend_top(TCanvas& c, TPad*& p_main, TPad*& p_leg)
 void StackedHist::build_histograms() {
     stack_ = std::make_unique<THStack>((spec_.name + "_stack").c_str(), spec_.title.c_str());
     std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
-    const auto channels = chan_order_;
+    const auto channels = // define channels here
     for (const Entry* e : mc_) {
         if (!e) continue;
         auto n0 = selection::apply(e->rnode(), spec_.sel, *e);

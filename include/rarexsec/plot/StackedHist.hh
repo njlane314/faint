@@ -20,8 +20,7 @@ public:
     StackedHist(Hist1D spec,
                 Options opt,
                 std::vector<const Entry*> mc,
-                std::vector<const Entry*> data,
-                std::vector<int> channel_order);
+                std::vector<const Entry*> data);
     ~StackedHist() = default;
 
     void draw_and_save(const std::string& image_format);
@@ -43,7 +42,6 @@ private:
     Options opt_;
     std::vector<const Entry*> mc_;
     std::vector<const Entry*> data_;
-    std::vector<int> chan_order_;
     std::string plot_name_;
     std::string output_directory_;
     std::unique_ptr<THStack> stack_;
