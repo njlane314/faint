@@ -21,7 +21,7 @@ ROOT::RDF::RNode with_expr(ROOT::RDF::RNode n, const H1Spec& spec) {
 std::unique_ptr<TH1D> sum_hists(const std::vector<ROOT::RDF::RResultPtr<TH1D>>& parts,
                                 const std::string& name) {
     std::unique_ptr<TH1D> total;
-    for (auto const& rr : parts) {
+    for (auto rr : parts) {
         const TH1D& h = rr.GetValue();
         if (!total) {
             total.reset(static_cast<TH1D*>(h.Clone(name.c_str())));
