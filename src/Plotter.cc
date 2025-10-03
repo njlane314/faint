@@ -7,12 +7,12 @@
 void rarexsec::plot::Plotter::draw_stack_by_channel(const H1Spec& spec,
                                     const std::vector<const Entry*>& mc,
                                     const std::vector<const Entry*>& data) const {
-    setGlobalStyle();
+    set_global_style();
     StackedHist plot(spec, opt_, mc, data);
     plot.draw_and_save(opt_.image_format);
 }
 
-void rarexsec::plot::Plotter::setGlobalStyle() const {
+void rarexsec::plot::Plotter::set_global_style() const {
     const int font_style = 42;
     TStyle* style = new TStyle("PlotterStyle", "Plotter Style");
     style->SetTitleFont(font_style, "X");
