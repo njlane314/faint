@@ -14,18 +14,19 @@
 #include "rarexsec/Selection.hh"
 #include "rarexsec/Hub.hh"
 
-namespace rarexsec::plot {
+namespace rarexsec {
+namespace plot {
 
-class StackedByChannelPlot : public IHistogramPlot {
+class StackedHist {
 public:
-    StackedByChannelPlot(std::string plot_name,
+    StackedHist(std::string plot_name,
                          std::string out_dir,
                          Hist1D spec,
                          Options opt,
                          std::vector<const Entry*> mc,
                          std::vector<const Entry*> data,
                          std::vector<int> channel_order);
-    ~StackedByChannelPlot() override = default;
+    ~StackedHist() override = default;
 
 protected:
     void draw(TCanvas& canvas) override;
@@ -53,4 +54,5 @@ private:
     std::unique_ptr<TH1D> sig_hist_;
 };
 
+}
 }

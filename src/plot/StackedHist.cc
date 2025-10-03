@@ -1,4 +1,4 @@
-#include "rarexsec/plot/StackedByChannelPlot.hh"
+#include "rarexsec/plot/StackedHist.hh"
 #include "ROOT/RDFHelpers.hxx"
 #include "TArrow.h"
 #include "TLine.h"
@@ -21,9 +21,7 @@ namespace {
     }
 }
 
-namespace rarexsec::plot {
-
-StackedByChannelPlot::StackedByChannelPlot(std::string plot_name,
+StackedHist::StackedHist(std::string plot_name,
                                            std::string out_dir,
                                            Hist1D spec,
                                            Options opt,
@@ -34,7 +32,7 @@ StackedByChannelPlot::StackedByChannelPlot(std::string plot_name,
 , spec_(std::move(spec)), opt_(std::move(opt))
 , mc_(std::move(mc)), data_(std::move(data)), chan_order_(std::move(channel_order)) {}
 
-void StackedByChannelPlot::setup_pads_ratio(TCanvas& c, TPad*& p_main, TPad*& p_ratio) const {
+void StackedHist::setup_pads_ratio(TCanvas& c, TPad*& p_main, TPad*& p_ratio) const {
     c.cd();
     p_main  = new TPad("pad_main","pad_main", 0.,0.30,1.,1.);
     p_ratio = new TPad("pad_ratio","pad_ratio",0.,0.,  1.,0.30);
@@ -46,7 +44,7 @@ void StackedByChannelPlot::setup_pads_ratio(TCanvas& c, TPad*& p_main, TPad*& p_
     p_main->Draw(); p_ratio->Draw();
 }
 
-void StackedByChannelPlot::setup_pads_legend_top(TCanvas& c, TPad*& p_main, TPad*& p_leg) const {
+void StackedHist::setup_pads_legend_top(TCanvas& c, TPad*& p_main, TPad*& p_leg) const {
     const double split = 0.85;
     c.cd();
     p_main = new TPad("pad_main","pad_main", 0.,0.,  1.,split);
@@ -58,7 +56,7 @@ void StackedByChannelPlot::setup_pads_legend_top(TCanvas& c, TPad*& p_main, TPad
     p_leg->Draw(); p_main->Draw();
 }
 
-void StackedByChannelPlot::build_histograms() {
+void StackedHist::build_histograms() {
     stack_ = std::make_unique<THStack>((spec_.name + "_stack").c_str(), spec_.title.c_str());
     std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked;
     for (const Entry* e : mc_) {
@@ -150,7 +148,7 @@ void StackedByChannelPlot::build_histograms() {
     }
 }
 
-void StackedByChannelPlot::draw_stack_and_unc(TPad* p_main, double& max_y) {
+void StackedHist::draw_stack_and_unc(TPad* p_main, double& max_y) {
     p_main->cd();
     stack_->Draw("HIST");
     if (mc_total_) {
@@ -179,7 +177,7 @@ void StackedByChannelPlot::draw_stack_and_unc(TPad* p_main, double& max_y) {
     }
 }
 
-void StackedByChannelPlot::draw_ratio(TPad* p_ratio) {
+void StackedHist::draw_ratio(TPad* p_ratio) {
     if (!p_ratio || !data_hist_ || !mc_total_) return;
     p_ratio->cd();
     auto ratio = std::unique_ptr<TH1D>(static_cast<TH1D*>(data_hist_->Clone((spec_.name+"_ratio").c_str())));
@@ -196,7 +194,7 @@ void StackedByChannelPlot::draw_ratio(TPad* p_ratio) {
     ratio->Draw("E1");
 }
 
-void StackedByChannelPlot::draw_legend(TPad* p, bool in_main) {
+void StackedHist::draw_legend(TPad* p, bool in_main) {
     p->cd();
     double x1 = in_main ? 0.60 : 0.12;
     double y1 = in_main ? 0.55 : 0.01;
@@ -236,7 +234,7 @@ void StackedByChannelPlot::draw_legend(TPad* p, bool in_main) {
     leg->Draw();
 }
 
-void StackedByChannelPlot::draw_cuts(TPad* p, double max_y) {
+void StackedHist::draw_cuts(TPad* p, double max_y) {
     if (opt_.cuts.empty()) return;
     p->cd();
     const double y = max_y * 0.85;
@@ -257,7 +255,7 @@ void StackedByChannelPlot::draw_cuts(TPad* p, double max_y) {
     }
 }
 
-void StackedByChannelPlot::draw_watermark(TPad* p, double total_mc) const {
+void StackedHist::draw_watermark(TPad* p, double total_mc) const {
     p->cd();
     const std::string bl = opt_.beamline.empty() ? "N/A" : opt_.beamline;
     std::string runs;
@@ -281,7 +279,7 @@ void StackedByChannelPlot::draw_watermark(TPad* p, double total_mc) const {
     lt.DrawLatex(1 - p->GetRightMargin() - 0.03, 1 - p->GetTopMargin() - 0.15, (std::string("Total MC: ") + fmt_commas(total_mc, 2) + " events").c_str());
 }
 
-void StackedByChannelPlot::save_rootsidecars() const {
+void StackedHist::save_rootsidecars() const {
     const std::string base = output_directory_ + "/" + plot_name_;
     TFile fout((base + ".root").c_str(), "RECREATE");
     if (stack_)    stack_->Write("mc_stack");
@@ -298,7 +296,7 @@ void StackedByChannelPlot::save_rootsidecars() const {
     fout.Close();
 }
 
-void StackedByChannelPlot::draw(TCanvas& canvas) {
+void StackedHist::draw(TCanvas& canvas) {
     build_histograms();
     TPad *p_main = nullptr, *p_second = nullptr;
     if (opt_.show_ratio && data_hist_ && mc_total_) {
@@ -316,6 +314,4 @@ void StackedByChannelPlot::draw(TCanvas& canvas) {
     p_main->RedrawAxis();
     canvas.Update();
     save_rootsidecars();
-}
-
 }
