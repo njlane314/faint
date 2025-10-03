@@ -1,7 +1,7 @@
-# Ignore build artifacts and intermediate files
 build/
 build/obj/*
 install/*
+snapshot/*
 *.o
 *.so
 *.dylib
