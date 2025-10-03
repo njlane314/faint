@@ -39,6 +39,10 @@ void plot_true_vertex() {
     plot_options.out_dir = out_dir;
     plot_options.image_format = "png";
     plot_options.show_ratio = false;
+    plot_options.overlay_signal = false;
+    plot_options.legend_on_top = true;
+    plot_options.legend_split = 0.85;
+    plot_options.y_title = "Events";
     plot_options.beamline = beamline;
     plot_options.periods = periods;
 

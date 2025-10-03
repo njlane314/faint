@@ -30,7 +30,7 @@ protected:
 private:
     bool want_ratio() const { return opt_.show_ratio && data_hist_ && mc_total_; }
     void build_histograms();
-    void setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_ratio) const;
+    void setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_ratio, TPad*& p_legend) const;
     void draw_stack_and_unc(TPad* p_main, double& max_y);
     void draw_ratio(TPad* p_ratio);
     void draw_legend(TPad* p);
@@ -50,6 +50,7 @@ private:
     std::unique_ptr<TH1D> sig_hist_;
     std::vector<int> chan_order_;
     double signal_scale_ = 1.0;
+    mutable std::vector<std::unique_ptr<TH1D>> legend_proxies_;
 };
 
 }
