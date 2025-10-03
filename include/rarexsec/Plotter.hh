@@ -8,8 +8,7 @@
 #include "ROOT/RDataFrame.hxx"
 #include "rarexsec/proc/Selection.hh"
 #include "rarexsec/Hub.hh"
-
-class TMatrixDSym;
+#include "TMatrixDSymfwd.h"
 
 namespace rarexsec {
 namespace plot {
