@@ -1,4 +1,7 @@
 #pragma once
+#include <cctype>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
 #include "ROOT/RDataFrame.hxx"
@@ -46,6 +49,29 @@ public:
     void draw_stack_by_channel(const Hist1D& spec,
                                const std::vector<const Entry*>& mc,
                                const std::vector<const Entry*>& data = {}) const;
+
+    static std::string fmt_commas(double v, int prec = -1) {
+        std::ostringstream s;
+        if (prec >= 0) s << std::fixed << std::setprecision(prec);
+        s << v;
+        auto x = s.str();
+        auto pos = x.find('.');
+        for (int i = (pos == std::string::npos ? static_cast<int>(x.size()) : static_cast<int>(pos)) - 3;
+             i > 0; i -= 3) {
+            x.insert(i, ",");
+        }
+        return x;
+    }
+
+    static std::string sanitise(std::string s) {
+        for (char& c : s) {
+            if (!(std::isalnum(static_cast<unsigned char>(c)) || c == '-' || c == '_' || c == '.')) {
+                c = '_';
+            }
+        }
+        return s;
+    }
+
 private:
     Options opt_;
 };
