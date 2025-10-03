@@ -10,7 +10,9 @@
 #include <cmath>
 #include <filesystem>
 #include <iomanip>
+#include <map>
 #include <sstream>
+#include <utility>
 #include "rarexsec/plot/Channels.hh"
 
 namespace {
@@ -417,9 +419,22 @@ void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const
     const std::string line1 = "#bf{#muBooNE Simulation, Preliminary}";
 
     const auto sum_pot = [](const std::vector<const rarexsec::Entry*>& entries) {
+        constexpr double rel_tol = 1e-6;
         double total = 0.0;
+        std::map<std::pair<std::string, std::string>, std::vector<double>> seen;
         for (const auto* e : entries) {
-            if (e && e->pot_nom > 0.0) total += e->pot_nom;
+            if (!e || e->pot_nom <= 0.0) continue;
+            const auto key = std::make_pair(e->beamline, e->period);
+            auto& values = seen[key];
+            const double pot = e->pot_nom;
+            const bool already_accounted = std::any_of(values.begin(), values.end(), [&](double v) {
+                const double scale = std::max(1.0, std::max(std::abs(v), std::abs(pot)));
+                return std::abs(v - pot) <= rel_tol * scale;
+            });
+            if (!already_accounted) {
+                values.push_back(pot);
+                total += pot;
+            }
         }
         return total;
     };
