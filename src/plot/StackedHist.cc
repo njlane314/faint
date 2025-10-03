@@ -319,20 +319,21 @@ void rarexsec::plot::StackedHist::draw_ratio(TPad* p_ratio) {
 void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     if (!p) return;
     p->cd();
-    TLegend leg(0.12, 0.0, 0.95, 0.75);
+    legend_ = std::make_unique<TLegend>(0.12, 0.0, 0.95, 0.75);
+    auto* leg = legend_.get();
     if (!opt_.legend_on_top) {
-        leg.SetX1NDC(opt_.leg_x1); leg.SetY1NDC(opt_.leg_y1);
-        leg.SetX2NDC(opt_.leg_x2); leg.SetY2NDC(opt_.leg_y2);
+        leg->SetX1NDC(opt_.leg_x1); leg->SetY1NDC(opt_.leg_y1);
+        leg->SetX2NDC(opt_.leg_x2); leg->SetY2NDC(opt_.leg_y2);
     }
-    leg.SetBorderSize(0);
-    leg.SetFillStyle(0);
-    leg.SetTextFont(42);
+    leg->SetBorderSize(0);
+    leg->SetFillStyle(0);
+    leg->SetTextFont(42);
 
     int n_entries = static_cast<int>(mc_ch_hists_.size());
     if (mc_total_) ++n_entries;
     if (sig_hist_) ++n_entries;
     if (data_hist_) ++n_entries;
-    if (n_entries > 0) leg.SetNColumns(n_entries > 4 ? 3 : 2);
+    if (n_entries > 0) leg->SetNColumns(n_entries > 4 ? 3 : 2);
 
     legend_proxies_.clear();
 
@@ -348,8 +349,8 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
         proxy->SetDirectory(nullptr);
         proxy->Reset("ICES");
 
-        auto* entry = leg.AddEntry(proxy.get(), label.c_str(), "f");
-        leg.SetEntrySeparation(0.01);
+        auto* entry = leg->AddEntry(proxy.get(), label.c_str(), "f");
+        leg->SetEntrySeparation(0.01);
         legend_proxies_.push_back(std::move(proxy));
         (void)entry;
     }
@@ -363,7 +364,7 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
         proxy->SetFillStyle(3004);
         proxy->SetLineColor(kBlack);
         proxy->SetLineWidth(1);
-        leg.AddEntry(proxy.get(), "Stat. #oplus Syst. Unc.", "f");
+        leg->AddEntry(proxy.get(), "Stat. #oplus Syst. Unc.", "f");
         legend_proxies_.push_back(std::move(proxy));
     }
 
@@ -372,14 +373,14 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
         if (signal_scale_ != 1.0) {
             sig_label += " (x" + rarexsec::plot::Plotter::fmt_commas(signal_scale_, 2) + ")";
         }
-        leg.AddEntry(sig_hist_.get(), sig_label.c_str(), "l");
+        leg->AddEntry(sig_hist_.get(), sig_label.c_str(), "l");
     }
 
     if (data_hist_) {
-        leg.AddEntry(data_hist_.get(), "Data", "lep");
+        leg->AddEntry(data_hist_.get(), "Data", "lep");
     }
 
-    leg.Draw();
+    leg->Draw();
 }
 
 void rarexsec::plot::StackedHist::draw_cuts(TPad* p, double max_y) {
