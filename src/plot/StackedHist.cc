@@ -9,7 +9,8 @@
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
-#include <map>
+#include <iomanip>
+#include <sstream>
 #include "rarexsec/plot/Channels.hh"
 
 namespace {
@@ -412,44 +413,98 @@ void rarexsec::plot::StackedHist::draw_cuts(TPad* p, double max_y) {
 void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const {
     if (!p) return;
     p->cd();
-    TLatex lt;
-    lt.SetNDC();
-    const double x = p->GetLeftMargin() + 0.03;
-    double y = 1 - p->GetTopMargin() - 0.03;
 
-    const std::string title = opt_.watermark_title.empty()
-                                ? std::string("rarexsec, Preliminary")
-                                : opt_.watermark_title;
+    const std::string line1 = "#bf{#muBooNE Simulation, Preliminary}";
 
-    lt.SetTextAlign(13);
-    lt.SetTextFont(62);
-    lt.SetTextSize(0.05);
-    lt.DrawLatex(x, y, ("#bf{" + title + "}").c_str());
+    const auto sum_pot = [](const std::vector<const rarexsec::Entry*>& entries) {
+        double total = 0.0;
+        for (const auto* e : entries) {
+            if (e && e->pot_nom > 0.0) total += e->pot_nom;
+        }
+        return total;
+    };
 
-    std::vector<std::string> lines = opt_.watermark_lines;
-    if (lines.empty()) {
-        std::string bl = opt_.beamline.empty() ? "N/A" : opt_.beamline;
-        std::string runs = opt_.periods.empty() ? "N/A" : [&]{
-            std::string s;
-            for (size_t i = 0; i < opt_.periods.size(); ++i) {
-                s += opt_.periods[i];
-                if (i + 1 < opt_.periods.size()) s += ", ";
-            }
-            return s;
-        }();
-        lines.push_back("Beamline, Periods: " + bl + ", " + runs);
-        lines.push_back("Total MC: " + rarexsec::plot::Plotter::fmt_commas(total_mc, 2) + " events");
+    double pot_value = opt_.total_protons_on_target;
+    if (pot_value <= 0.0) pot_value = sum_pot(data_);
+    if (pot_value <= 0.0) pot_value = sum_pot(mc_);
+
+    auto format_pot = [](double value) {
+        std::ostringstream ss;
+        ss << std::scientific << std::setprecision(2) << value;
+        auto text = ss.str();
+        const auto pos = text.find('e');
+        if (pos != std::string::npos) {
+            const int exponent = std::stoi(text.substr(pos + 1));
+            text = text.substr(0, pos) + " #times 10^{" + std::to_string(exponent) + "}";
+        }
+        return text;
+    };
+
+    const std::string pot_str = pot_value > 0.0 ? format_pot(pot_value) : "N/A";
+
+    const auto first_non_empty = [](const std::vector<const rarexsec::Entry*>& entries,
+                                    auto getter) -> std::string {
+        for (const auto* e : entries) {
+            if (!e) continue;
+            auto value = getter(*e);
+            if (!value.empty()) return value;
+        }
+        return {};
+    };
+
+    auto beam_name = opt_.beamline;
+    if (beam_name.empty()) beam_name = first_non_empty(data_, [](const auto& e) { return e.beamline; });
+    if (beam_name.empty()) beam_name = first_non_empty(mc_, [](const auto& e) { return e.beamline; });
+    if (beam_name == "numi_fhc") beam_name = "NuMI FHC";
+    else if (beam_name == "numi_rhc") beam_name = "NuMI RHC";
+    if (beam_name.empty()) beam_name = "N/A";
+
+    std::vector<std::string> runs = opt_.run_numbers;
+    if (runs.empty()) runs = opt_.periods;
+    if (runs.empty()) {
+        auto run = first_non_empty(data_, [](const auto& e) { return e.period; });
+        if (run.empty()) run = first_non_empty(mc_, [](const auto& e) { return e.period; });
+        if (!run.empty()) runs.push_back(std::move(run));
     }
 
-    lt.SetTextFont(42);
-    const double line_size = 0.05 * 0.8;
-    lt.SetTextSize(line_size);
-    const double step = line_size * 1.2;
-    for (const auto& line : lines) {
-        y -= step;
-        if (y < 0) break;
-        lt.DrawLatex(x, y, line.c_str());
+    auto format_run = [](std::string label) {
+        if (label.rfind("run", 0) == 0) label.erase(0, 3);
+        try {
+            label = rarexsec::plot::Plotter::fmt_commas(std::stod(label), 0);
+        } catch (...) {
+        }
+        return label;
+    };
+
+    std::string runs_str = "N/A";
+    if (!runs.empty()) {
+        std::ostringstream ss;
+        for (size_t i = 0; i < runs.size(); ++i) {
+            if (i) ss << ", ";
+            ss << format_run(runs[i]);
+        }
+        runs_str = ss.str();
     }
+
+    std::string region_label = opt_.analysis_region_label.empty() ? "N/A" : opt_.analysis_region_label;
+
+    const std::string line2 = "Beam(s), Run(s): " + beam_name + ", " + runs_str +
+                              " (" + pot_str + " POT)";
+    const std::string line3 = "Analysis Region: " + region_label + " (" +
+                              rarexsec::plot::Plotter::fmt_commas(total_mc, 2) + " events)";
+
+    TLatex watermark;
+    watermark.SetNDC();
+    watermark.SetTextAlign(33);
+    watermark.SetTextFont(62);
+    watermark.SetTextSize(0.05);
+    const double x = 1 - p->GetRightMargin() - 0.03;
+    const double top = 1 - p->GetTopMargin();
+    watermark.DrawLatex(x, top - 0.03, line1.c_str());
+    watermark.SetTextFont(42);
+    watermark.SetTextSize(0.05 * 0.8);
+    watermark.DrawLatex(x, top - 0.09, line2.c_str());
+    watermark.DrawLatex(x, top - 0.15, line3.c_str());
 }
 
 void rarexsec::plot::StackedHist::draw(TCanvas& canvas) {
