@@ -44,6 +44,8 @@ void rarexsec::plot::Plotter::set_global_style() const {
     style->SetPadBorderMode(0);
     style->SetStatColor(0);
     style->SetFrameBorderMode(0);
+    style->SetLineWidth(2);
+    style->SetFrameLineWidth(2);
     style->SetTitleFillColor(0);
     style->SetTitleBorderSize(0);
     gROOT->SetStyle("PlotterStyle");
