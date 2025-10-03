@@ -30,6 +30,27 @@ static void apply_total_errors(TH1D& h, const TMatrixDSym* cov, const std::vecto
     }
 }
 
+static std::string selection_label(rarexsec::selection::Preset preset) {
+    using rarexsec::selection::Preset;
+    switch (preset) {
+        case Preset::Trigger:
+            return "Trigger Selection";
+        case Preset::Slice:
+            return "Slice Selection";
+        case Preset::Fiducial:
+            return "Fiducial Selection";
+        case Preset::Topology:
+            return "Topology Selection";
+        case Preset::Muon:
+            return "Muon Selection";
+        case Preset::InclusiveMuCC:
+            return "Inclusive Muon CC Selection";
+        case Preset::Empty:
+        default:
+            return "Empty Selection";
+    }
+}
+
 }
 
 rarexsec::plot::StackedHist::StackedHist(H1Spec spec,
@@ -486,7 +507,8 @@ void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const
         runs_str = ss.str();
     }
 
-    std::string region_label = opt_.analysis_region_label.empty() ? "N/A" : opt_.analysis_region_label;
+    std::string region_label = opt_.analysis_region_label;
+    if (region_label.empty()) region_label = selection_label(spec_.sel);
 
     const std::string line2 = "Beam(s), Run(s): " + beam_name + ", " + runs_str +
                               " (" + pot_str + " POT)";
