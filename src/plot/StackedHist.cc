@@ -210,17 +210,17 @@ void rarexsec::plot::StackedHist::draw_ratio(TPad* p_ratio) {
 
 void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     p->cd();
-    TLegend leg(opt_.leg_x1, opt_.leg_y1, opt_.leg_x2, opt_.leg_y2);
-    leg.SetBorderSize(0);
-    leg.SetFillStyle(0);
-    leg.SetTextFont(42);
+    auto* leg = new TLegend(opt_.leg_x1, opt_.leg_y1, opt_.leg_x2, opt_.leg_y2);
+    leg->SetBorderSize(0);
+    leg->SetFillStyle(0);
+    leg->SetTextFont(42);
 
     int n_entries = static_cast<int>(mc_ch_hists_.size());
     if (mc_total_) ++n_entries;
     if (sig_hist_) ++n_entries;
     if (data_hist_) ++n_entries;
     if (n_entries > 0) {
-        leg.SetNColumns(n_entries > 4 ? 3 : 2);
+        leg->SetNColumns(n_entries > 4 ? 3 : 2);
     }
 
     for (size_t i = 0; i < mc_ch_hists_.size(); ++i) {
@@ -230,7 +230,7 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
         if (opt_.annotate_numbers) {
             label += " : " + rarexsec::plot::Plotter::fmt_commas(sum, 2);
         }
-        auto* entry = leg.AddEntry(static_cast<TObject*>(nullptr), label.c_str(), "f");
+        auto* entry = leg->AddEntry(static_cast<TObject*>(nullptr), label.c_str(), "f");
         if (entry) {
             entry->SetFillColor(rarexsec::plot::Channels::color(ch));
             entry->SetFillStyle(rarexsec::plot::Channels::fill_style(ch));
@@ -240,7 +240,7 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     }
 
     if (mc_total_) {
-        auto* entry = leg.AddEntry(static_cast<TObject*>(nullptr), "Stat. #oplus Syst. Unc.", "f");
+        auto* entry = leg->AddEntry(static_cast<TObject*>(nullptr), "Stat. #oplus Syst. Unc.", "f");
         if (entry) {
             entry->SetFillColor(kBlack);
             entry->SetFillStyle(3004);
@@ -254,7 +254,7 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
         if (signal_scale_ != 1.0) {
             sig_label += " (x" + rarexsec::plot::Plotter::fmt_commas(signal_scale_, 2) + ")";
         }
-        auto* entry = leg.AddEntry(static_cast<TObject*>(nullptr), sig_label.c_str(), "l");
+        auto* entry = leg->AddEntry(static_cast<TObject*>(nullptr), sig_label.c_str(), "l");
         if (entry) {
             entry->SetLineColor(kGreen+2);
             entry->SetLineStyle(kDashed);
@@ -263,7 +263,7 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     }
 
     if (data_hist_) {
-        auto* entry = leg.AddEntry(static_cast<TObject*>(nullptr), "Data", "lep");
+        auto* entry = leg->AddEntry(static_cast<TObject*>(nullptr), "Data", "lep");
         if (entry) {
             entry->SetMarkerStyle(kFullCircle);
             entry->SetMarkerSize(0.9);
@@ -271,7 +271,7 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
         }
     }
 
-    leg.Draw();
+    leg->Draw();
 }
 
 void rarexsec::plot::StackedHist::draw_cuts(TPad* p, double max_y) {
