@@ -33,7 +33,7 @@ void make_plots() {
 
     rarexsec::plot::Hist1D h_len{
         .name   = "trk_len",
-        .title  = "Leading track length;L_{trk} [cm];Events",
+        .title  = "",
         .expr   = "ROOT::VecOps::Max(track_length)", // any RDataFrame expression or column
         .weight = "w_nominal",
         .nbins  = 50, .xmin = 0., .xmax = 200.,

@@ -29,7 +29,7 @@ struct H1Spec {
     selection::Preset sel = selection::Preset::Empty;
 
     ROOT::RDF::TH1DModel model(const std::string& suffix) const {
-        return ROOT::RDF::TH1DModel((id + suffix).c_str(), title.c_str(), nbins, xmin, xmax);
+        return ROOT::RDF::TH1DModel((id + suffix).c_str(), "", nbins, xmin, xmax);
     }
 };
 
