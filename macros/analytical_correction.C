@@ -83,13 +83,15 @@ namespace ana {
         const double cmin_p  = (Ethr_p/gamma  - Epst) / denom; // x ≥ cmin_p
         const double cmax_pi = (Epist - Ethr_pi/gamma) / denom; // x ≤ cmax_pi
 
-        double l = std::max(-1.0, cmin_p);
-        double u = std::min( 1.0, cmax_pi);
-        if (l >= u) return 0.0;
+        const double l = std::clamp(cmin_p, -1.0, 1.0);
+        const double u = std::clamp(cmax_pi, -1.0, 1.0);
+        constexpr double eps = 1e-12;
+        const double width = u - l;
+        if (width <= eps) return 0.0;
 
         // Unpolarised fraction plus polarisation correction (Eqs. 6.7–6.8)
-        const double Aiso = 0.5*(u - l);
-        const double Apol = 0.25*alpha*P*(u*u - l*l);
+        const double Aiso = 0.5 * width;
+        const double Apol = 0.25 * alpha * P * (u*u - l*l);
         return std::clamp(Aiso + Apol, 0.0, 1.0);
     }
 
