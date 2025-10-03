@@ -12,8 +12,6 @@
 #include "rarexsec/Selection.hh"
 #include "rarexsec/Hub.hh"
 
-class TCanvas;
-
 namespace rarexsec {
 namespace plot {
 

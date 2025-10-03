@@ -21,30 +21,6 @@ StackedHist::StackedHist(std::string plot_name,
 , mc_(std::move(mc)), data_(std::move(data)), chan_order_(std::move(channel_order))
 , plot_name_(Plotter::sanitise(std::move(plot_name))), output_directory_(std::move(out_dir)) {}
 
-void StackedHist::draw_and_save(const std::string& image_format) {
-    std::filesystem::create_directories(output_directory_);
-    TCanvas canvas(plot_name_.c_str(), plot_name_.c_str(), 800, 600);
-    draw(canvas);
-
-    auto formats_from = [](const std::string& fmt) {
-        std::vector<std::string> formats;
-        std::stringstream ss(fmt);
-        std::string token;
-        while (std::getline(ss, token, ',')) {
-            token.erase(token.begin(), std::find_if(token.begin(), token.end(), [](unsigned char ch){ return !std::isspace(ch); }));
-            token.erase(std::find_if(token.rbegin(), token.rend(), [](unsigned char ch){ return !std::isspace(ch); }).base(), token.end());
-            if (!token.empty()) formats.push_back(std::move(token));
-        }
-        if (formats.empty()) formats.push_back("png");
-        return formats;
-    };
-
-    for (const auto& fmt : formats_from(image_format)) {
-        canvas.SaveAs((output_directory_ + "/" + plot_name_ + "." + fmt).c_str());
-    }
-
-}
-
 void StackedHist::setup_pads_ratio(TCanvas& c, TPad*& p_main, TPad*& p_ratio) const {
     c.cd();
     p_main  = new TPad("pad_main","pad_main", 0.,0.30,1.,1.);
@@ -331,4 +307,28 @@ void StackedHist::draw(TCanvas& canvas) {
     if (opt_.show_ratio && data_hist_ && mc_total_) draw_ratio(p_second);
     p_main->RedrawAxis();
     canvas.Update();
+}
+
+void StackedHist::draw_and_save(const std::string& image_format) {
+    std::filesystem::create_directories(output_directory_);
+    TCanvas canvas(plot_name_.c_str(), plot_name_.c_str(), 800, 600);
+    draw(canvas);
+
+    auto formats_from = [](const std::string& fmt) {
+        std::vector<std::string> formats;
+        std::stringstream ss(fmt);
+        std::string token;
+        while (std::getline(ss, token, ',')) {
+            token.erase(token.begin(), std::find_if(token.begin(), token.end(), [](unsigned char ch){ return !std::isspace(ch); }));
+            token.erase(std::find_if(token.rbegin(), token.rend(), [](unsigned char ch){ return !std::isspace(ch); }).base(), token.end());
+            if (!token.empty()) formats.push_back(std::move(token));
+        }
+        if (formats.empty()) formats.push_back("png");
+        return formats;
+    };
+
+    for (const auto& fmt : formats_from(image_format)) {
+        canvas.SaveAs((output_directory_ + "/" + plot_name_ + "." + fmt).c_str());
+    }
+
 }
