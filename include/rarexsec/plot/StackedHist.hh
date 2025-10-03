@@ -29,7 +29,7 @@ public:
                          std::vector<int> channel_order);
     ~StackedHist() = default;
 
-    void drawAndSave(const std::string& image_format);
+    void draw_and_save(const std::string& image_format);
 
 protected:
     void draw(TCanvas& canvas);
