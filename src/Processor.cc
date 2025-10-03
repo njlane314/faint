@@ -13,11 +13,11 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node, const rarexsec:
 
     float scale_mc  = 1.0f;
     if (is_mc && rec.pot_nom > 0.0 && rec.pot_eqv > 0.0)
-        scale_mc = static_cast<float>(rec.pot_eqv / rec.pot_nom);
+        scale_mc = static_cast<float>(rec.pot_nom / rec.pot_eqv);
 
     float scale_ext = 1.0f;
     if (is_ext && rec.trig_nom > 0.0 && rec.trig_eqv > 0.0)
-        scale_ext = static_cast<float>(rec.trig_eqv / rec.trig_nom);
+        scale_ext = static_cast<float>(rec.trig_nom / rec.trig_eqv);
 
     node = node.Define("w_base", [is_mc, is_ext, scale_mc, scale_ext] {
         return is_mc ? scale_mc : (is_ext ? scale_ext : 1.0f);
