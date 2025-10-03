@@ -9,9 +9,12 @@ namespace {
 const char* const kHeadersToInclude[] = {
     "rarexsec/Hub.hh",
     "rarexsec/Processor.hh",
-    "rarexsec/Selection.hh",
-    "rarexsec/Snapshot.hh",
-    "rarexsec/Volume.hh"
+    "rarexsec/Plotter.hh",
+    "rarexsec/proc/Selection.hh",
+    "rarexsec/proc/Snapshot.hh",
+    "rarexsec/proc/Volume.hh",
+    "rarexsec/plot/StackedHist.hh",
+    "rarexsec/plot/Channels.hh"
 };
 
 void include_required_headers() {
