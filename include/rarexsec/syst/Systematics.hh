@@ -7,7 +7,7 @@
 #include <TMatrixDSym.h>
 #include <TH1D.h>
 
-#include "rarexsec/Plotter.hh"
+#include "rarexsec/plot/Plotter.hh"
 #include "rarexsec/Hub.hh"
 #include "rarexsec/proc/Selection.hh"
 

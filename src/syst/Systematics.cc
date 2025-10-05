@@ -1,5 +1,14 @@
-#include <map>
+#include "rarexsec/syst/Systematics.hh"
+
+#include <algorithm>
+#include <cmath>
 #include <limits>
+#include <map>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace rarexsec::syst {
 
