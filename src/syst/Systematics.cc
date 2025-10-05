@@ -142,6 +142,56 @@ TMatrixDSym cov_from_map_weight_vector(
     return sample_covariance(*H0, universes);
 }
 
+TMatrixDSym cov_from_detvar_pairs(
+    const H1Spec& spec,
+    const std::vector<const Entry*>& mc,
+    const std::vector<std::pair<std::string,std::string>>& tag_pairs) {
+
+    if (tag_pairs.empty()) return TMatrixDSym(0);
+    auto H0 = make_total_mc_hist(spec, mc, "_nom");
+    if (!H0)
+        throw std::runtime_error("cov_from_detvar_pairs: failed to build nominal histogram");
+
+    const int nb = H0->GetNbinsX();
+    TMatrixDSym C(nb);
+
+    for (const auto& pr : tag_pairs) {
+        const auto& up   = pr.first;
+        const auto& down = pr.second;
+        auto Hup   = make_total_mc_hist_detvar(spec, mc, up,   "_up");
+        auto Hdown = make_total_mc_hist_detvar(spec, mc, down, "_down");
+        if (!Hup || !Hdown) {
+            throw std::runtime_error(
+                "cov_from_detvar_pairs: missing detvar hist for tags '" + up + "', '" + down + "'");
+        }
+        C += hessian_covariance(*H0, *Hup, *Hdown);
+    }
+    return C;
+}
+
+TMatrixDSym cov_from_detvar_unisims(
+    const H1Spec& spec,
+    const std::vector<const Entry*>& mc,
+    const std::vector<std::string>& tags) {
+
+    if (tags.empty()) return TMatrixDSym(0);
+    auto H0 = make_total_mc_hist(spec, mc, "_nom");
+    if (!H0)
+        throw std::runtime_error("cov_from_detvar_unisims: failed to build nominal histogram");
+
+    std::vector<std::unique_ptr<TH1D>> universes;
+    universes.reserve(tags.size());
+    for (const auto& t : tags) {
+        auto Ht = make_total_mc_hist_detvar(spec, mc, t, "_var");
+        if (!Ht) {
+            throw std::runtime_error(
+                "cov_from_detvar_unisims: missing detvar hist for tag '" + t + "'");
+        }
+        universes.emplace_back(std::move(Ht));
+    }
+    return sample_covariance(*H0, universes);
+}
+
 TMatrixDSym block_cov_from_weight_vector_ushort_scaled(
     const H1Spec& specA, const std::vector<const Entry*>& A,
     const H1Spec& specB, const std::vector<const Entry*>& B,
@@ -284,6 +334,55 @@ TMatrixDSym block_cov_from_ud_ushort(
     };
     hess_cat(*H0A, *HupA, *HdnA, 0);
     hess_cat(*H0B, *HupB, *HdnB, nA);
+    return C;
+}
+
+TMatrixDSym block_cov_from_detvar_pairs(
+    const H1Spec& specA, const std::vector<const Entry*>& A,
+    const H1Spec& specB, const std::vector<const Entry*>& B,
+    const std::vector<std::pair<std::string,std::string>>& tag_pairs) {
+
+    if (tag_pairs.empty()) return TMatrixDSym(0);
+
+    auto H0A = make_total_mc_hist(specA, A, "_A_nom");
+    auto H0B = make_total_mc_hist(specB, B, "_B_nom");
+    if (!H0A || !H0B)
+        throw std::runtime_error("block_cov_from_detvar_pairs: failed to build nominal hist(s)");
+
+    const int nA = H0A->GetNbinsX();
+    const int nB = H0B->GetNbinsX();
+    TMatrixDSym C(nA + nB);
+
+    for (const auto& pr : tag_pairs) {
+        const auto& up   = pr.first;
+        const auto& down = pr.second;
+
+        auto HupA = make_total_mc_hist_detvar(specA, A, up,   "_A_up");
+        auto HdnA = make_total_mc_hist_detvar(specA, A, down, "_A_dn");
+        auto HupB = make_total_mc_hist_detvar(specB, B, up,   "_B_up");
+        auto HdnB = make_total_mc_hist_detvar(specB, B, down, "_B_dn");
+        if (!HupA || !HdnA || !HupB || !HdnB) {
+            throw std::runtime_error(
+                "block_cov_from_detvar_pairs: missing detvar hist(s) for tags '" + up + "', '" + down + "'");
+        }
+
+        std::vector<double> dplus(nA + nB), dminus(nA + nB);
+        for (int i = 0; i < nA; ++i) {
+            dplus[i]  = HupA->GetBinContent(i+1) - H0A->GetBinContent(i+1);
+            dminus[i] = HdnA->GetBinContent(i+1) - H0A->GetBinContent(i+1);
+        }
+        for (int j = 0; j < nB; ++j) {
+            dplus[nA + j]  = HupB->GetBinContent(j+1) - H0B->GetBinContent(j+1);
+            dminus[nA + j] = HdnB->GetBinContent(j+1) - H0B->GetBinContent(j+1);
+        }
+
+        for (int p = 0; p < nA + nB; ++p) {
+            for (int q = p; q < nA + nB; ++q) {
+                const double add = 0.5 * (dplus[p]*dplus[q] + dminus[p]*dminus[q]);
+                C(p,q) = C(q,p) = C(p,q) + add;
+            }
+        }
+    }
     return C;
 }
 

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <utility>
 #include <TMatrixDSym.h>
 #include <TH1D.h>
 
@@ -23,6 +24,18 @@ namespace rarexsec::syst {
 // std::unique_ptr<TH1D> make_total_mc_hist_detvar(...);
 // TMatrixDSym cov_from_weight_vector(...);
 // TMatrixDSym cov_from_detvar_pm(...);
+TMatrixDSym cov_from_detvar_pairs(
+    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const std::vector<std::pair<std::string,std::string>>& tag_pairs);
+
+TMatrixDSym cov_from_detvar_unisims(
+    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const std::vector<std::string>& tags);
+
+TMatrixDSym block_cov_from_detvar_pairs(
+    const plot::H1Spec& specA, const std::vector<const Entry*>& A,
+    const plot::H1Spec& specB, const std::vector<const Entry*>& B,
+    const std::vector<std::pair<std::string,std::string>>& tag_pairs);
 
 // ---- New: unsigned-short universe vectors (+ optional CV multiplier) ----
 std::unique_ptr<TH1D> make_total_mc_hist_weight_universe_ushort(
