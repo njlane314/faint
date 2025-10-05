@@ -1,6 +1,7 @@
 #include "rarexsec/Plotter.hh"
 #include "rarexsec/plot/StackedHist.hh"
 
+#include "TMatrixDSym.h"
 #include "TROOT.h"
 #include "TStyle.h"
 
@@ -10,6 +11,17 @@ void rarexsec::plot::Plotter::draw_stack_by_channel(const H1Spec& spec,
     set_global_style();
     StackedHist plot(spec, opt_, mc, data);
     plot.draw_and_save(opt_.image_format);
+}
+
+void rarexsec::plot::Plotter::draw_stack_by_channel_with_cov(const H1Spec& spec,
+                                                            const std::vector<const Entry*>& mc,
+                                                            const std::vector<const Entry*>& data,
+                                                            const TMatrixDSym& total_cov) const {
+    set_global_style();
+    auto opt2 = opt_;
+    opt2.total_cov = std::make_unique<TMatrixDSym>(total_cov); // StackedHist reads this
+    StackedHist plot(spec, opt2, mc, data);
+    plot.draw_and_save(opt2.image_format);
 }
 
 void rarexsec::plot::Plotter::set_global_style() const {
