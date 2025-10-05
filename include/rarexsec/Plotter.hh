@@ -78,6 +78,11 @@ public:
                                const std::vector<const Entry*>& mc,
                                const std::vector<const Entry*>& data = {}) const;
 
+    void draw_stack_by_channel_with_cov(const H1Spec& spec,
+                                        const std::vector<const Entry*>& mc,
+                                        const std::vector<const Entry*>& data,
+                                        const TMatrixDSym& total_cov) const;
+
     virtual void set_global_style() const;
 
     static std::string fmt_commas(double v, int prec = -1) {
