@@ -2,8 +2,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <utility>
-#include <ROOT/RDataFrame.hxx>
+#include <map>
 #include <TMatrixDSym.h>
 #include <TH1D.h>
 
@@ -13,42 +12,68 @@
 
 namespace rarexsec::syst {
 
-TMatrixDSym mc_stat_covariance(const TH1D& h);
+// ---- Already existing APIs (yours) ----
+// TMatrixDSym mc_stat_covariance(const TH1D&);
+// TMatrixDSym sample_covariance(const TH1D&, const std::vector<std::unique_ptr<TH1D>>&);
+// TMatrixDSym hessian_covariance(const TH1D&, const TH1D&, const TH1D&);
+// TMatrixDSym sum(const std::vector<const TMatrixDSym*>&);
+// TMatrixDSym shape_only(const TMatrixDSym&, const TH1D&);
+// std::unique_ptr<TH1D> make_total_mc_hist(...);
+// std::unique_ptr<TH1D> make_total_mc_hist_weight_universe(...);
+// std::unique_ptr<TH1D> make_total_mc_hist_detvar(...);
+// TMatrixDSym cov_from_weight_vector(...);
+// TMatrixDSym cov_from_detvar_pm(...);
 
-TMatrixDSym sample_covariance(const TH1D& nominal,
-                              const std::vector<std::unique_ptr<TH1D>>& universes);
+// ---- New: unsigned-short universe vectors (+ optional CV multiplier) ----
+std::unique_ptr<TH1D> make_total_mc_hist_weight_universe_ushort(
+    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const std::string& weights_branch, int k, const std::string& suffix,
+    const std::string& cv_branch = "", double us_scale = 1.0/1000.0);
 
-TMatrixDSym hessian_covariance(const TH1D& nominal,
-                               const TH1D& plus,
-                               const TH1D& minus);
+TMatrixDSym cov_from_weight_vector_ushort(
+    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const std::string& weights_branch, int nuniv,
+    const std::string& cv_branch = "", double us_scale = 1.0/1000.0);
 
-TMatrixDSym sum(const std::vector<const TMatrixDSym*>& terms);
+// ---- New: map<string, vector<double>> universes ----
+std::unique_ptr<TH1D> make_total_mc_hist_weight_universe_map(
+    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const std::string& map_branch, const std::string& key, int k,
+    const std::string& suffix, const std::string& cv_branch = "");
 
-TMatrixDSym shape_only(const TMatrixDSym& cov, const TH1D& nominal);
+TMatrixDSym cov_from_map_weight_vector(
+    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const std::string& map_branch, const std::string& key, int nuniv,
+    const std::string& cv_branch = "");
 
-std::unique_ptr<TH1D> make_total_mc_hist(const plot::H1Spec& spec,
-                                         const std::vector<const Entry*>& mc,
-                                         const std::string& suffix = "_nominal");
+// ---- New: block covariances for (A=beam ⊕ B=strangeness) ----
+TMatrixDSym block_cov_from_weight_vector_ushort_scaled(
+    const plot::H1Spec& specA, const std::vector<const Entry*>& A,
+    const plot::H1Spec& specB, const std::vector<const Entry*>& B,
+    const std::string& weights_branch, int nuniv,
+    const std::string& cv_branch = "", double us_scale = 1.0/1000.0);
 
-std::unique_ptr<TH1D> make_total_mc_hist_weight_universe(const plot::H1Spec& spec,
-                                                         const std::vector<const Entry*>& mc,
-                                                         const std::string& weights_branch,
-                                                         int k,
-                                                         const std::string& suffix);
+TMatrixDSym block_cov_from_map_weight_vector(
+    const plot::H1Spec& specA, const std::vector<const Entry*>& A,
+    const plot::H1Spec& specB, const std::vector<const Entry*>& B,
+    const std::string& map_branch, const std::string& key, int nuniv,
+    const std::string& cv_branch = "");
 
-std::unique_ptr<TH1D> make_total_mc_hist_detvar(const plot::H1Spec& spec,
-                                                const std::vector<const Entry*>& mc,
-                                                const std::string& detvar_tag,
-                                                const std::string& suffix);
+TMatrixDSym block_cov_from_ud_ushort(
+    const plot::H1Spec& specA, const std::vector<const Entry*>& A,
+    const plot::H1Spec& specB, const std::vector<const Entry*>& B,
+    const std::string& up_branch, const std::string& dn_branch, int knob_index,
+    double us_scale = 1.0/1000.0, const std::string& cv_branch = "");
 
-TMatrixDSym cov_from_weight_vector(const plot::H1Spec& spec,
-                                   const std::vector<const Entry*>& mc,
-                                   const std::string& weights_branch,
-                                   int nuniv);
+// ---- New: POT and block-diag stat helpers ----
+TMatrixDSym block_diag_stat(const TH1D& A, const TH1D& B);
+TMatrixDSym pot_cov_block(const TH1D& A, const TH1D& B, double frac_pot);
 
-TMatrixDSym cov_from_detvar_pm(const plot::H1Spec& spec,
-                               const std::vector<const Entry*>& mc,
-                               const std::string& tag_up,
-                               const std::string& tag_down);
+// ---- New: combine categories with same binning (sum A⊕B per bin) ----
+std::unique_ptr<TH1D> sum_same_binning(const TH1D& A, const TH1D& B, const std::string& name);
 
-}
+// Map block covariance C_{(A⊕B)} to the summed spectrum covariance.
+// nA = #bins of A; nB = #bins of B (must match A for this routine).
+TMatrixDSym sum_covariance_block_same_binning(const TMatrixDSym& C_block, int nA, int nB);
+
+} // namespace rarexsec::syst
