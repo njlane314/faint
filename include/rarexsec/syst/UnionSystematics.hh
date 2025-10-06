@@ -14,28 +14,29 @@
 
 namespace rarexsec::syst {
 
-// Beam ⊕ Strangeness inputs and optional data
 struct UnionSamples {
-    std::vector<const Entry*> A_beam;        // kind == beam (non-strange)
-    std::vector<const Entry*> B_strange;     // kind == strangeness
-    std::vector<const Entry*> data;          // kind == data
+    std::vector<const Entry*> A_beam;
+    std::vector<const Entry*> B_strange;
+    std::vector<const Entry*> dirt;
+    std::vector<const Entry*> ext;
+    std::vector<const Entry*> data;
 };
 
-// Physics/source configuration
 struct UnionConfig {
     bool use_stat   = true;
-    bool use_ppfx   = true;     // NuMI PPFX: weightsPPFX (+ ppfx_cv)
-    bool use_genie  = true;     // map key "All_UBGenie" (+ weightSplineTimesTune)
-    bool use_reint  = true;     // map key "reint_all"
-    bool use_pot    = true;     // global norm, fully correlated A & B
-    bool use_detvar = true;     // detector variations
+    bool use_ppfx   = true;
+    bool use_genie  = true;
+    bool use_reint  = true;
+    bool use_pot    = true;
+    bool use_detvar = true;
 
-    // Universe counts: -1 -> auto-detect from ntuples
-    int N_ppfx   = -1;          // typically 600 (NuMI)
-    int N_genie  = -1;          // you write 500
-    int N_reint  = -1;          // often 100
+    bool include_dirt = true;
+    bool include_ext  = true;
 
-    // Branch/key names (align with EventWeightAnalysis)
+    int N_ppfx  = -1;
+    int N_genie = -1;
+    int N_reint = -1;
+
     std::string ppfx_branch     = "weightsPPFX";
     std::string ppfx_cv_branch  = "ppfx_cv";
     std::string map_branch      = "weights";
@@ -43,23 +44,23 @@ struct UnionConfig {
     std::string genie_cv_branch = "weightSplineTimesTune";
     std::string reint_key       = "reint_all";
 
-    // Detector variations
-    std::vector<std::pair<std::string,std::string>> detvar_pairs; // ± tags
-    std::vector<std::string> detvar_unisims;                      // single-sided tags
+    std::vector<std::pair<std::string,std::string>> detvar_pairs;
+    std::vector<std::string> detvar_unisims;
 
-    // POT fractional uncertainty (fully correlated across A & B)
-    double pot_frac = 0.0;
+    double pot_frac       = 0.0;
+    double dirt_norm_frac = 0.0;
+    double ext_norm_frac  = 0.0;
 
-    // Also build the A+B summed spectrum/covariances
     bool make_sum = true;
 };
 
-// Outputs: nominal hists and covariances (block and sum)
 struct UnionProducts {
     std::unique_ptr<TH1D> H_A;
     std::unique_ptr<TH1D> H_B;
-    std::unique_ptr<TH1D> H_sum;    // if make_sum
-    std::unique_ptr<TH1D> H_data;   // optional
+    std::unique_ptr<TH1D> H_DIRT;
+    std::unique_ptr<TH1D> H_EXT;
+    std::unique_ptr<TH1D> H_sum;
+    std::unique_ptr<TH1D> H_data;
 
     TMatrixDSym C_block_total;
     std::map<std::string, TMatrixDSym> C_block_sources;
@@ -68,12 +69,10 @@ struct UnionProducts {
     std::map<std::string, TMatrixDSym> C_sum_sources;
 };
 
-// Collect A, B, data from Hub
 UnionSamples collect_union_samples(const Hub& hub,
                                    const std::string& beamline,
                                    const std::vector<std::string>& periods);
 
-// Auto-detect universe counts (returns >0 if found, else default_val)
 int detect_n_univ_ushort(const plot::H1Spec& spec,
                          const std::vector<const Entry*>& mc,
                          const std::string& branch,
@@ -85,19 +84,17 @@ int detect_n_univ_map(const plot::H1Spec& spec,
                       const std::string& key,
                       int default_val = 0);
 
-// Build covariances for a single spec used in both categories (same binning)
 UnionProducts build_union_systematics(const plot::H1Spec& spec,
                                       const UnionSamples& samp,
                                       const UnionConfig& cfg);
 
-// One-call runner that also collects samples from the Hub
 UnionProducts run_union_systematics(const Hub& hub,
                                     const std::string& beamline,
                                     const std::vector<std::string>& periods,
                                     const plot::H1Spec& spec,
                                     const UnionConfig& cfg);
 
-// Utility: union of A and B entries (for stacked plots)
-std::vector<const Entry*> union_mc(const UnionSamples& s);
+std::vector<const Entry*> mc_union_AB(const UnionSamples& s);
+std::vector<const Entry*> mc_union_all(const UnionSamples& s);
 
-} // namespace rarexsec::syst
+}
