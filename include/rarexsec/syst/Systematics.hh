@@ -14,16 +14,20 @@
 namespace rarexsec::syst {
 
 // ---- Already existing APIs (yours) ----
-// TMatrixDSym mc_stat_covariance(const TH1D&);
-// TMatrixDSym sample_covariance(const TH1D&, const std::vector<std::unique_ptr<TH1D>>&);
-// TMatrixDSym hessian_covariance(const TH1D&, const TH1D&, const TH1D&);
-// TMatrixDSym sum(const std::vector<const TMatrixDSym*>&);
-// TMatrixDSym shape_only(const TMatrixDSym&, const TH1D&);
-// std::unique_ptr<TH1D> make_total_mc_hist(...);
-// std::unique_ptr<TH1D> make_total_mc_hist_weight_universe(...);
-// std::unique_ptr<TH1D> make_total_mc_hist_detvar(...);
-// TMatrixDSym cov_from_weight_vector(...);
-// TMatrixDSym cov_from_detvar_pm(...);
+inline constexpr int RAREXSEC_MULTISIM_DDOF = 1;
+
+TMatrixDSym mc_stat_covariance(const TH1D&);
+TMatrixDSym sample_covariance(const TH1D&, const std::vector<std::unique_ptr<TH1D>>&);
+TMatrixDSym hessian_covariance(const TH1D&, const TH1D&, const TH1D&);
+TMatrixDSym sum(const std::vector<const TMatrixDSym*>&);
+std::unique_ptr<TH1D> make_total_mc_hist(const plot::H1Spec& spec,
+                                        const std::vector<const Entry*>& entries,
+                                        const std::string& suffix);
+std::unique_ptr<TH1D> make_total_mc_hist_detvar(const plot::H1Spec& spec,
+                                               const std::vector<const Entry*>& entries,
+                                               const std::string& tag,
+                                               const std::string& suffix);
+
 TMatrixDSym cov_from_detvar_pairs(
     const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
     const std::vector<std::pair<std::string,std::string>>& tag_pairs);

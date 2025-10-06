@@ -13,6 +13,173 @@
 namespace rarexsec::syst {
 
 using MapSD = std::map<std::string, std::vector<double>>;
+using plot::H1Spec;
+
+namespace {
+
+std::string expr_column_name(const plot::H1Spec& spec) {
+    const std::string base = !spec.id.empty()
+                                 ? spec.id
+                                 : (!spec.name.empty() ? spec.name : std::string{"expr"});
+    return "_rx_expr_" + rarexsec::plot::Plotter::sanitise(base);
+}
+
+ROOT::RDF::RNode with_expr(ROOT::RDF::RNode node, const plot::H1Spec& spec) {
+    if (spec.expr.empty()) return node;
+    const std::string col = expr_column_name(spec);
+    return node.Define(col, spec.expr);
+}
+
+std::string expr_var(const plot::H1Spec& spec) {
+    if (spec.expr.empty()) {
+        if (!spec.id.empty()) return spec.id;
+        if (!spec.name.empty()) return spec.name;
+        return std::string{"x"};
+    }
+    return expr_column_name(spec);
+}
+
+std::unique_ptr<TH1D> sum_hists(const std::vector<ROOT::RDF::RResultPtr<TH1D>>& parts,
+                                const std::string& name) {
+    std::unique_ptr<TH1D> total;
+    for (const auto& rr : parts) {
+        const TH1D& h = rr.GetValue();
+        if (!total) {
+            total.reset(static_cast<TH1D*>(h.Clone(name.c_str())));
+            if (total) total->SetDirectory(nullptr);
+        } else if (total) {
+            total->Add(&h);
+        }
+    }
+    return total;
+}
+
+} // namespace
+
+std::unique_ptr<TH1D> make_total_mc_hist(const plot::H1Spec& spec,
+                                        const std::vector<const Entry*>& entries,
+                                        const std::string& suffix) {
+    TH1::SetDefaultSumw2(true);
+    std::vector<ROOT::RDF::RResultPtr<TH1D>> parts;
+    parts.reserve(entries.size());
+    for (size_t ie = 0; ie < entries.size(); ++ie) {
+        const Entry* e = entries[ie];
+        if (!e) continue;
+        auto n0 = selection::apply(e->rnode(), spec.sel, *e);
+        auto n1 = with_expr(n0, spec);
+        auto var = expr_var(spec);
+        parts.push_back(n1.Histo1D(spec.model("_mc_src" + std::to_string(ie) + suffix), var, spec.weight));
+    }
+    auto hist = sum_hists(parts, spec.id + suffix);
+    if (!hist) {
+        const std::string name = rarexsec::plot::Plotter::sanitise(spec.id + suffix);
+        const std::string title = spec.title.empty() ? spec.id : spec.title;
+        auto empty = std::make_unique<TH1D>(name.c_str(), title.c_str(), spec.nbins, spec.xmin, spec.xmax);
+        empty->SetDirectory(nullptr);
+        return empty;
+    }
+    return hist;
+}
+
+std::unique_ptr<TH1D> make_total_mc_hist_detvar(const plot::H1Spec& spec,
+                                                const std::vector<const Entry*>& entries,
+                                                const std::string& tag,
+                                                const std::string& suffix) {
+    TH1::SetDefaultSumw2(true);
+    std::vector<ROOT::RDF::RResultPtr<TH1D>> parts;
+    parts.reserve(entries.size());
+    for (size_t ie = 0; ie < entries.size(); ++ie) {
+        const Entry* e = entries[ie];
+        if (!e) continue;
+        const Frame* dv = e->detvar(tag);
+        if (!dv) continue;
+        auto n0 = selection::apply(dv->rnode(), spec.sel, *e);
+        auto n1 = with_expr(n0, spec);
+        auto var = expr_var(spec);
+        parts.push_back(n1.Histo1D(spec.model("_mc_detvar_" + tag + "_src" + std::to_string(ie) + suffix),
+                                   var, spec.weight));
+    }
+    auto hist = sum_hists(parts, spec.id + suffix);
+    if (!hist) {
+        const std::string name = rarexsec::plot::Plotter::sanitise(spec.id + suffix);
+        const std::string title = spec.title.empty() ? spec.id : spec.title;
+        auto empty = std::make_unique<TH1D>(name.c_str(), title.c_str(), spec.nbins, spec.xmin, spec.xmax);
+        empty->SetDirectory(nullptr);
+        return empty;
+    }
+    return hist;
+}
+
+TMatrixDSym mc_stat_covariance(const TH1D& hist) {
+    const int nb = hist.GetNbinsX();
+    TMatrixDSym C(nb);
+    for (int i = 1; i <= nb; ++i) {
+        const double e = hist.GetBinError(i);
+        const double v = (std::isfinite(e) && e > 0.0) ? e * e : 0.0;
+        C(i - 1, i - 1) = v;
+    }
+    return C;
+}
+
+TMatrixDSym sample_covariance(const TH1D& nominal,
+                              const std::vector<std::unique_ptr<TH1D>>& universes) {
+    const int nb = nominal.GetNbinsX();
+    std::vector<std::vector<double>> deltas;
+    deltas.reserve(universes.size());
+    for (const auto& uptr : universes) {
+        if (!uptr) continue;
+        std::vector<double> diff(nb, 0.0);
+        for (int i = 0; i < nb; ++i) {
+            diff[i] = uptr->GetBinContent(i + 1) - nominal.GetBinContent(i + 1);
+        }
+        deltas.emplace_back(std::move(diff));
+    }
+    const int N = static_cast<int>(deltas.size());
+    TMatrixDSym C(nb);
+    if (N <= 1) return C;
+    for (int i = 0; i < nb; ++i) {
+        for (int j = i; j < nb; ++j) {
+            long double s = 0.0L;
+            for (const auto& diff : deltas) s += static_cast<long double>(diff[i]) * diff[j];
+            const double cij = static_cast<double>(s / (N - 1));
+            C(i, j) = C(j, i) = cij;
+        }
+    }
+    return C;
+}
+
+TMatrixDSym hessian_covariance(const TH1D& nominal,
+                               const TH1D& up,
+                               const TH1D& down) {
+    const int nb = nominal.GetNbinsX();
+    TMatrixDSym C(nb);
+    for (int i = 0; i < nb; ++i) {
+        const double dpi = up.GetBinContent(i + 1) - nominal.GetBinContent(i + 1);
+        const double dmi = down.GetBinContent(i + 1) - nominal.GetBinContent(i + 1);
+        for (int j = i; j < nb; ++j) {
+            const double dpj = up.GetBinContent(j + 1) - nominal.GetBinContent(j + 1);
+            const double dmj = down.GetBinContent(j + 1) - nominal.GetBinContent(j + 1);
+            const double cij = 0.5 * (dpi * dpj + dmi * dmj);
+            C(i, j) = C(j, i) = cij;
+        }
+    }
+    return C;
+}
+
+TMatrixDSym sum(const std::vector<const TMatrixDSym*>& pieces) {
+    if (pieces.empty()) return TMatrixDSym(0);
+    const TMatrixDSym* first = nullptr;
+    for (const auto* p : pieces) {
+        if (p) { first = p; break; }
+    }
+    if (!first) return TMatrixDSym(0);
+    TMatrixDSym C(first->GetNrows());
+    for (const auto* p : pieces) {
+        if (!p) continue;
+        C += *p;
+    }
+    return C;
+}
 
 std::unique_ptr<TH1D> make_total_mc_hist_weight_universe_ushort(
     const H1Spec& spec, const std::vector<const Entry*>& mc,
@@ -27,7 +194,7 @@ std::unique_ptr<TH1D> make_total_mc_hist_weight_universe_ushort(
         const Entry* e = mc[ie];
         if (!e) continue;
 
-        auto n0  = apply(e->rnode(), spec.sel, *e);
+        auto n0  = selection::apply(e->rnode(), spec.sel, *e);
         auto n1  = with_expr(n0, spec);
         auto var = expr_var(spec);
 
@@ -95,7 +262,7 @@ std::unique_ptr<TH1D> make_total_mc_hist_weight_universe_map(
         const Entry* e = mc[ie];
         if (!e) continue;
 
-        auto n0  = apply(e->rnode(), spec.sel, *e);
+        auto n0  = selection::apply(e->rnode(), spec.sel, *e);
         auto n1  = with_expr(n0, spec);
         auto var = expr_var(spec);
 
@@ -283,7 +450,7 @@ TMatrixDSym block_cov_from_ud_ushort(
         for (size_t ie = 0; ie < mc.size(); ++ie) {
             const Entry* e = mc[ie];
             if (!e) continue;
-            auto n0  = apply(e->rnode(), spec.sel, *e);
+            auto n0  = selection::apply(e->rnode(), spec.sel, *e);
             auto n1  = with_expr(n0, spec);
             auto var = expr_var(spec);
             const std::string col = std::string("_w_ud_") + tag + "_" + std::to_string(knob_index) + "_src" + std::to_string(ie);

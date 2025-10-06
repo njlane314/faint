@@ -12,13 +12,13 @@
 #include <string>
 #include <system_error>
 #include <utility>
+#include <iostream>
 
 #include <nlohmann/json.hpp>
 #include <ROOT/RConfig.h>
 #include <TStyle.h>
 
 #include "rarexsec/plot/Plotter.hh"   // for Plotter::sanitise
-#include "rarexsec/utils/Logger.h"    // log::info/warn/error
 
 namespace rarexsec {
 namespace plot {
@@ -338,7 +338,8 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
     std::error_code ec;
     std::filesystem::create_directories(opt.out_dir, ec);
     if (ec) {
-        log::error("EventDisplay", "Failed to create output directory:", opt.out_dir, ec.message());
+        std::cerr << "[EventDisplay] Failed to create output directory '"
+                  << opt.out_dir << "': " << ec.message() << '\n';
     }
 
     // Optional filter
@@ -357,7 +358,7 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
         // Count rows first to know total pages
         const auto n_rows = static_cast<std::size_t>(limited.Count().GetValue());
         if (n_rows == 0) {
-            log::warn("EventDisplay", "No rows matched selection; nothing to render.");
+            std::cerr << "[EventDisplay] No rows matched selection; nothing to render." << '\n';
             return;
         }
         total_pages = n_rows * opt.planes.size();
@@ -365,12 +366,12 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
 #if defined(R__HAS_IMPLICITMT)
         if (ROOT::IsImplicitMTEnabled()) {
             ROOT::DisableImplicitMT();
-            log::info("EventDisplay", "Implicit MT disabled for stable combined PDF output.");
+            std::clog << "[EventDisplay] Implicit MT disabled for stable combined PDF output." << '\n';
         }
 #else
         if (ROOT::IsImplicitMTEnabled()) {
             ROOT::DisableImplicitMT();
-            log::info("EventDisplay", "ROOT built without R__HAS_IMPLICITMT; disabling MT for combined PDF.");
+            std::clog << "[EventDisplay] ROOT built without R__HAS_IMPLICITMT; disabling MT for combined PDF." << '\n';
         }
 #endif
     }
@@ -501,7 +502,7 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
     if (!opt.manifest_path.empty()) {
         std::ofstream ofs(opt.manifest_path);
         ofs << manifest.dump(2);
-        log::info("EventDisplay", "Wrote event display manifest:", opt.manifest_path);
+        std::clog << "[EventDisplay] Wrote event display manifest: " << opt.manifest_path << '\n';
     }
 }
 
