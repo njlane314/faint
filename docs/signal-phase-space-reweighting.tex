@@ -1,0 +1,29 @@
+% Slimmed summary of Sec. 10 — see analysis note.
+\section{Signal Phase-Space Reweighting}
+
+To remove generator priors from the selection efficiency, we flatten the selected sample over a compact 4D space
+\[
+x=\bigl(p_\mu,\;\cos\theta_\mu,\;\log_{10}(p_\Lambda/m_\Lambda),\;\cos\theta_\Lambda\bigr),
+\quad m_\Lambda=1.115683~\text{GeV}.
+\]
+The space is uniformly binned; out-of-range entries are clamped to the nearest edge bin. Let $j$ index bins, with either unweighted counts $n_j$ or GENIE-weighted occupancies $N_j=\sum_{i\in j}w_{G,i}$. Using Laplace regularisation $\lambda>0$, each event receives
+\[
+w_{\text{PS}}(x_i)=\frac{1}{n_{b(x_i)}+\lambda}
+\quad\text{or}\quad
+w_{\text{PS}}(x_i)=\frac{1}{N_{b(x_i)}+\lambda}.
+\]
+If piggybacking on GENIE,
+\[
+w_i^{\text{tot}}=w_{G,i}\,w_{\text{PS}}(x_i)=\frac{w_{G,i}}{N_{b(x_i)}+\lambda},
+\]
+so that for $N_j\gg\lambda$ each bin contributes approximately the same total weight and the effective prior over $x$ is flat within the chosen bounds.
+
+With a clearly defined base selection (e.g.\ a signal tag with a reconstructed $\Lambda$), the incremental efficiency of any additional requirement $C'$ is then
+\[
+\widehat{\varepsilon}_{C'\,|\,\text{base}}
+=\frac{\sum_{i\in\text{base}}\mathbf{1}[C'(i)]\,w_i^{\text{tot}}}
+{\sum_{i\in\text{base}}w_i^{\text{tot}}}\;,
+\]
+minimising dependence on generator kinematics.
+
+Diagnostics: we verify flattening by testing reweighted projections against uniformity (1D Kolmogorov--Smirnov and 2D $\chi^2$ to a constant surface), quoting $\chi^2/\text{ndf}$ and $p$-values; high $p$ with $\chi^2/\text{ndf}\!\approx\!1$ indicates adequate flattening.
