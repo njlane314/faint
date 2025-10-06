@@ -15,6 +15,7 @@
 #include "TSystem.h"
 #include "TColor.h"
 #include "TROOT.h"
+#include "RVersion.h"
 #include <sqlite3.h>
 #include <ctime>
 #include <cstring>
@@ -61,7 +62,11 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
   TGaxis::SetMaxDigits(3);
 
   // *** CRITICAL: Make ROOT interpret x as UNIX time in UTC ***
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6,30,0)
   gStyle->SetTimeOffset(0, "gmt");
+#else
+  gStyle->SetTimeOffset(0);
+#endif
 
   // ---- DB paths ----
   const std::string run_db  = DBROOT() + "/run.db";
