@@ -35,6 +35,10 @@ static time_t sunday_after_or_on(time_t t) {
 
 void PlotPOT_Simple(const char* outstem = "pot_timeline")
 {
+  if (gSystem->Load("libsqlite3.so") < 0) {
+    std::cerr << "Failed to load libsqlite3.so\n";
+    return;
+  }
   const std::string run_db  = DBROOT() + "/run.db";
   const std::string bnb_db  = gSystem->AccessPathName((DBROOT()+"/bnb_v2.db").c_str()) ?
                               DBROOT()+"/bnb_v1.db" : DBROOT()+"/bnb_v2.db";
