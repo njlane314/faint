@@ -21,8 +21,23 @@ static std::string SLIP() {
   return "/exp/uboone/app/users/guzowski/slip_stacking";
 }
 
+static bool parse_time(const char* s, std::tm& out)
+{
+  if (!s || !*s) return false;
+  const char* formats[] = {
+    "%Y-%m-%dT%H:%M:%S",
+    "%Y-%m-%d %H:%M:%S"
+  };
+  for (const char* fmt : formats) {
+    std::tm tm{};
+    if (strptime(s, fmt, &tm)) { out = tm; return true; }
+  }
+  return false;
+}
+
 static time_t iso2utc(const char* s) {
-  std::tm tm{}; strptime(s, "%Y-%m-%dT%H:%M:%S", &tm);
+  std::tm tm{};
+  if (!parse_time(s, tm)) return 0;
   return timegm(&tm);
 }
 static time_t sunday_after_or_on(time_t t) {
@@ -64,8 +79,14 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
   if (sqlite3_step(st)==SQLITE_ROW) {
     const char* smin = (const char*)sqlite3_column_text(st,0);
     const char* smax = (const char*)sqlite3_column_text(st,1);
-    if (smin) tmin = iso2utc(smin);
-    if (smax) tmax = iso2utc(smax);
+    if (smin) {
+      if (time_t tmp = iso2utc(smin)) tmin = tmp;
+      else std::cerr << "Failed to parse minimum begin_time: '" << smin << "'\n";
+    }
+    if (smax) {
+      if (time_t tmp = iso2utc(smax)) tmax = tmp;
+      else std::cerr << "Failed to parse maximum begin_time: '" << smax << "'\n";
+    }
   }
   sqlite3_finalize(st);
   if (!tmin || !tmax) { std::cerr<<"No time range\n"; sqlite3_close(db); return; }
@@ -89,6 +110,7 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
       double pot = sqlite3_column_double(s,1);
       if (!bt || pot<=0) continue;
       double t = (double)iso2utc(bt);
+      if (t<=0) continue;
       h.Fill(t, pot/1e18);
     }
     sqlite3_finalize(s);
