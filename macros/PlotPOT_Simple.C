@@ -1,9 +1,8 @@
 //------------------------------------------------------------------------------
-// PlotPOT_Simple.C  — a compact ROOT macro for POT/week + cumulative
+// PlotPOT_Simple.C  — POT/week + cumulative, with correct dates & nicer style
 //
 // Usage: root -l -q 'PlotPOT_Simple.C()'
 // Output: pot_timeline.png, pot_timeline.pdf
-// Assumptions: numi_v4.db is present; run on a Linux/gpvm with libsqlite3.
 //------------------------------------------------------------------------------
 
 #include "TCanvas.h"
@@ -14,6 +13,8 @@
 #include "TGraph.h"
 #include "TStyle.h"
 #include "TSystem.h"
+#include "TColor.h"
+#include "TROOT.h"
 #include <sqlite3.h>
 #include <ctime>
 #include <cstring>
@@ -47,8 +48,20 @@ static time_t sunday_after_or_on(time_t t) {       // Sunday 00:00:00 at/after t
 
 void PlotPOT_Simple(const char* outstem = "pot_timeline")
 {
+  // Base style (yours) + small quality-of-life tweaks
   rarexsec::plot::Plotter{}.set_global_style();
-  gStyle->SetPadTickY(0);
+  gStyle->SetOptStat(0);
+  gStyle->SetLineWidth(2);
+  gStyle->SetFrameLineWidth(2);
+  gStyle->SetLabelFont(42, "XYZ");
+  gStyle->SetTitleFont(42, "XYZ");
+  gStyle->SetLabelSize(0.035, "XYZ");
+  gStyle->SetTitleSize(0.045, "YZ");
+  gStyle->SetPadTickY(0);                  // keep as in your original
+  TGaxis::SetMaxDigits(3);
+
+  // *** CRITICAL: Make ROOT interpret x as UNIX time in UTC ***
+  gStyle->SetTimeOffset(0, "gmt");
 
   // ---- DB paths ----
   const std::string run_db  = DBROOT() + "/run.db";
@@ -71,7 +84,7 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
   exec("ATTACH DATABASE '"+numi_db+"' AS numi;");
   exec("ATTACH DATABASE '"+n4_db  +"' AS n4;");
 
-  // ---- find time range from runinfo ----
+  // ---- fetch POT samples ----
   struct PotSamples {
     std::vector<double> times;
     std::vector<double> pots;
@@ -120,6 +133,7 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
 
   sqlite3_close(db);
 
+  // ---- determine time range ----
   double tmin = 0, tmax = 0;
   bool have_range = false;
   auto update_range = [&](const PotSamples& samples) {
@@ -144,16 +158,22 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
   // ---- histograms: POT/week in ×1e18 ----
   TH1D hBNB("hBNB","",nbins,xlo,xhi), hFHC("hFHC","",nbins,xlo,xhi), hRHC("hRHC","",nbins,xlo,xhi);
   hBNB.SetDirectory(nullptr); hFHC.SetDirectory(nullptr); hRHC.SetDirectory(nullptr);
-  hBNB.SetFillColorAlpha(kGreen+2,0.95); hBNB.SetLineColor(kBlack); hBNB.SetLineWidth(2);
-  hFHC.SetFillColorAlpha(kOrange+7,0.95); hFHC.SetLineColor(kBlack); hFHC.SetLineWidth(2);
-  hRHC.SetFillColorAlpha(kRed+1,0.95);   hRHC.SetLineColor(kBlack); hRHC.SetLineWidth(2);
+
+  // Nicer modern-ish colors (still green/orange/red)
+  const Int_t colBNB = TColor::GetColor("#2ca02c");
+  const Int_t colFHC = TColor::GetColor("#ff7f0e");
+  const Int_t colRHC = TColor::GetColor("#d62728");
+  const Int_t colCum = TColor::GetColor("#1f77b4");
+
+  hBNB.SetFillColorAlpha(colBNB,0.90); hBNB.SetLineColor(kBlack); hBNB.SetLineWidth(2);
+  hFHC.SetFillColorAlpha(colFHC,0.90); hFHC.SetLineColor(kBlack); hFHC.SetLineWidth(2);
+  hRHC.SetFillColorAlpha(colRHC,0.90); hRHC.SetLineColor(kBlack); hRHC.SetLineWidth(2);
 
   auto fill_hist = [](const PotSamples& samples, TH1D& h) {
     for (size_t i = 0; i < samples.times.size(); ++i) {
       h.Fill(samples.times[i], samples.pots[i] / 1e18);
     }
   };
-
   fill_hist(bnb_samples, hBNB);
   fill_hist(fhc_samples, hFHC);
   fill_hist(rhc_samples, hRHC);
@@ -169,44 +189,57 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
     cum[i-1]=c; maxCum=std::max(maxCum,c);
     x[i-1]=hBNB.GetXaxis()->GetBinCenter(i);
   }
-  double yMax = (maxStack>0)? maxStack*1.15 : 1.0;
+  double yMax = (maxStack>0)? maxStack*1.18 : 1.0;        // a touch more headroom
   double scale = (maxCum>0)? yMax/maxCum : 1.0;
   for (int i=0;i<nbins;++i) scaled[i]=cum[i]*scale;
 
   // ---- draw ----
   TCanvas c("c","POT timeline",1600,500);
-  c.SetMargin(0.13,0.08,0.13,0.08);
+  c.SetMargin(0.12,0.10,0.15,0.06);
+  c.SetGridy(true);                                       // subtle grid helps read-off per-week
 
   THStack hs("hs","");
   hs.Add(&hBNB); hs.Add(&hFHC); hs.Add(&hRHC);
   hs.Draw("hist");
+
+  // Correct, readable time axis
   hs.GetXaxis()->SetTimeDisplay(1);
-  hs.GetXaxis()->SetTimeFormat("%d/%m/%y");
+  hs.GetXaxis()->SetTimeOffset(0,"gmt");                  // <- key line to fix the year labels
+  hs.GetXaxis()->SetTimeFormat("%d/%b/%Y");               // e.g. 31/Dec/2021
+  hs.GetXaxis()->SetLabelSize(0.035);
+  hs.GetXaxis()->SetLabelOffset(0.02);
   hs.GetYaxis()->SetTitle("Protons per week  (#times 10^{18})");
   hs.GetYaxis()->SetTitleOffset(0.9);
+  hs.GetYaxis()->SetLabelSize(0.035);
   hs.SetMaximum(yMax);
   hs.SetMinimum(0);
 
   TGraph g(nbins, x.data(), scaled.data());
-  g.SetLineColor(kBlue+1); g.SetLineWidth(3);
+  g.SetLineColor(colCum);
+  g.SetLineWidth(3);
   g.Draw("L SAME");
 
-  TGaxis right(hs.GetXaxis()->GetXmax(), 0, hs.GetXaxis()->GetXmax(), yMax,
+  TGaxis right(hs.GetXaxis()->GetXmax(), 0,
+               hs.GetXaxis()->GetXmax(), yMax,
                0, maxCum, 510, "+L");
-  right.SetLineColor(kBlue+1);
-  right.SetLabelColor(kBlue+1);
-  right.SetTitleColor(kBlue+1);
+  right.SetLineColor(colCum);
+  right.SetLabelColor(colCum);
+  right.SetTitleColor(colCum);
+  right.SetLabelSize(0.035);
+  right.SetTitleSize(0.040);
+  right.SetTitleOffset(1.05);
   right.SetTitle("Total Protons  (#times 10^{20})");
   right.Draw();
 
-  TLegend leg(0.16,0.68,0.40,0.88);
-  leg.SetBorderSize(0); leg.SetFillStyle(0); leg.SetTextSize(0.035);
+  TLegend leg(0.16,0.70,0.42,0.90);
+  leg.SetBorderSize(0); leg.SetFillStyle(0); leg.SetTextSize(0.032);
   leg.AddEntry(&hBNB,"BNB (\\nu)","f");
   leg.AddEntry(&hFHC,"NuMI FHC (\\nu)","f");
   leg.AddEntry(&hRHC,"NuMI RHC (\\bar{\\nu})","f");
   leg.AddEntry(&g,   "Total POT (cumulative)","l");
   leg.Draw();
 
+  c.RedrawAxis();
   c.SaveAs(Form("%s.png", outstem));
   c.SaveAs(Form("%s.pdf", outstem));
 }
