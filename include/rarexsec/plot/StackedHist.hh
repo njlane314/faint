@@ -9,7 +9,8 @@
 #include "TCanvas.h"
 #include "TPad.h"
 
-#include "rarexsec/Plotter.hh"
+#include "rarexsec/Hub.hh"
+#include "rarexsec/plot/Types.hh"
 
 namespace rarexsec {
 namespace plot {
