@@ -68,23 +68,25 @@ ESC_LIB="$(escape_cpp_string "${LIBPATH}")"
 ESC_INC="$(escape_cpp_string "${INCDIR}")"
 TMP_MACRO="$(mktemp "${TMPDIR:-/tmp}/rarexsec-root-XXXX.C")"
 trap 'rm -f "${TMP_MACRO}"; unset RAREXSEC_CALL' EXIT
+BASE="$(basename "${TMP_MACRO}" .C)"
+# ROOT expects a function named after the macro filename with '-' replaced by '_'
+ENTRY="${BASE//-/_}"
 cat >"${TMP_MACRO}" <<EOF
-void setup_rarexsec(const char*, const char*);
-void rx_call(const char*);
-void rarexsec_root_entry() {
+#include "TROOT.h"
+#include "TSystem.h"
+#include "TInterpreter.h"
+#include <cstdio>
+#include <string>
+void ${ENTRY}() {
   gROOT->LoadMacro("${ESC_MACRO}");
-  setup_rarexsec("${ESC_LIB}","${ESC_INC}");
+  gInterpreter->ProcessLine("setup_rarexsec(\"${ESC_LIB}\",\"${ESC_INC}\");");
   const char* call = gSystem->Getenv("RAREXSEC_CALL");
   if (!call || !*call) {
-    ::Error("rarexsec_root_entry", "RAREXSEC_CALL is not set");
+    std::fprintf(stderr, "%s: RAREXSEC_CALL is not set\\n", "${ENTRY}");
     return;
   }
-  rx_call(call);
-}
-namespace {
-  struct RarexsecRootInvoker {
-    RarexsecRootInvoker() { rarexsec_root_entry(); }
-  } rarexsec_root_invoker;
+  std::string cmd = std::string("rx_call(\"") + call + "\");";
+  gInterpreter->ProcessLine(cmd.c_str());
 }
 EOF
 root -l -b -q "${TMP_MACRO}"
