@@ -3,6 +3,7 @@
 #include "TError.h"
 #include "TROOT.h"
 #include "TString.h"
+#include <cstring>
 #include <string>
 
 namespace {
@@ -31,10 +32,32 @@ static void auto_load_macros(const char* incdir) {
     }
 }
 }
+namespace {
+    static bool looks_like_macro(const std::string& s) {
+        auto ends_with = [](const std::string& str, const char* suffix) {
+            const std::size_t len = std::strlen(suffix);
+            return str.size() >= len && str.compare(str.size() - len, len, suffix) == 0;
+        };
+        return ends_with(s, ".C") || ends_with(s, ".C+") || ends_with(s, ".C++") ||
+               ends_with(s, ".cxx") || ends_with(s, ".cxx+") || ends_with(s, ".cxx++");
+    }
+}
+
 void rx_call(const char* fname) {
     if (!fname || !*fname) { ::Error("rx_call","no function name"); return; }
-    std::string call = std::string(fname) + "()";
-    gInterpreter->ProcessLine(call.c_str());
+
+    std::string code(fname);
+    if (code.find('(') != std::string::npos) {
+        gInterpreter->ProcessLine(code.c_str());
+        return;
+    }
+
+    if (looks_like_macro(code)) {
+        gROOT->Macro(code.c_str());
+        return;
+    }
+
+    gInterpreter->ProcessLine((code + "()").c_str());
 }
 void setup_rarexsec(const char* libpath, const char* incdir) {
     if (libpath && *libpath) {
