@@ -81,6 +81,10 @@ void rarexsec_root_entry() {
   }
   rx_call(call);
 }
-rarexsec_root_entry();
+namespace {
+  struct RarexsecRootInvoker {
+    RarexsecRootInvoker() { rarexsec_root_entry(); }
+  } rarexsec_root_invoker;
+}
 EOF
 root -l -b -q "${TMP_MACRO}"
