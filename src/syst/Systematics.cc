@@ -39,10 +39,10 @@ std::string expr_var(const plot::H1Spec& spec) {
     return expr_column_name(spec);
 }
 
-std::unique_ptr<TH1D> sum_hists(const std::vector<ROOT::RDF::RResultPtr<TH1D>>& parts,
+std::unique_ptr<TH1D> sum_hists(std::vector<ROOT::RDF::RResultPtr<TH1D>> parts,
                                 const std::string& name) {
     std::unique_ptr<TH1D> total;
-    for (const auto& rr : parts) {
+    for (auto& rr : parts) {
         const TH1D& h = rr.GetValue();
         if (!total) {
             total.reset(static_cast<TH1D*>(h.Clone(name.c_str())));
@@ -70,7 +70,7 @@ std::unique_ptr<TH1D> make_total_mc_hist(const plot::H1Spec& spec,
         auto var = expr_var(spec);
         parts.push_back(n1.Histo1D(spec.model("_mc_src" + std::to_string(ie) + suffix), var, spec.weight));
     }
-    auto hist = sum_hists(parts, spec.id + suffix);
+    auto hist = sum_hists(std::move(parts), spec.id + suffix);
     if (!hist) {
         const std::string name = rarexsec::plot::Plotter::sanitise(spec.id + suffix);
         const std::string title = spec.title.empty() ? spec.id : spec.title;
@@ -99,7 +99,7 @@ std::unique_ptr<TH1D> make_total_mc_hist_detvar(const plot::H1Spec& spec,
         parts.push_back(n1.Histo1D(spec.model("_mc_detvar_" + tag + "_src" + std::to_string(ie) + suffix),
                                    var, spec.weight));
     }
-    auto hist = sum_hists(parts, spec.id + suffix);
+    auto hist = sum_hists(std::move(parts), spec.id + suffix);
     if (!hist) {
         const std::string name = rarexsec::plot::Plotter::sanitise(spec.id + suffix);
         const std::string title = spec.title.empty() ? spec.id : spec.title;
@@ -227,7 +227,7 @@ std::unique_ptr<TH1D> make_total_mc_hist_weight_universe_ushort(
                                        var, col));
         }
     }
-    return sum_hists(parts, spec.id + suffix);
+    return sum_hists(std::move(parts), spec.id + suffix);
 }
 
 TMatrixDSym cov_from_weight_vector_ushort(
@@ -297,7 +297,7 @@ std::unique_ptr<TH1D> make_total_mc_hist_weight_universe_map(
                                        var, col));
         }
     }
-    return sum_hists(parts, spec.id + suffix);
+    return sum_hists(std::move(parts), spec.id + suffix);
 }
 
 TMatrixDSym cov_from_map_weight_vector(
@@ -483,7 +483,7 @@ TMatrixDSym block_cov_from_ud_ushort(
                 parts.push_back(n2.Histo1D(spec.model(std::string("_mc_ud_") + tag + "_src" + std::to_string(ie)), var, col));
             }
         }
-        return sum_hists(parts, spec.id + "_" + tag);
+        return sum_hists(std::move(parts), spec.id + "_" + tag);
     };
 
     auto HupA = apply_ud(specA, A, up_branch, "upA");
