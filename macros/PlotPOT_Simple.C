@@ -35,10 +35,11 @@ static bool parse_time(const char* s, std::tm& out)
   return false;
 }
 
-static time_t iso2utc(const char* s) {
+static bool iso2utc(const char* s, time_t& out) {
   std::tm tm{};
-  if (!parse_time(s, tm)) return 0;
-  return timegm(&tm);
+  if (!parse_time(s, tm)) return false;
+  out = timegm(&tm);
+  return true;
 }
 static time_t sunday_after_or_on(time_t t) {
   std::tm gm = *gmtime(&t);
@@ -73,23 +74,33 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
   exec("ATTACH DATABASE '"+numi_db+"' AS numi;");
   exec("ATTACH DATABASE '"+n4_db  +"' AS n4;");
 
-  const char* sql_minmax = "SELECT MIN(begin_time), MAX(begin_time) FROM runinfo;";
-  sqlite3_stmt* st=nullptr; sqlite3_prepare_v2(db, sql_minmax, -1, &st, nullptr);
-  time_t tmin=0, tmax=0;
-  if (sqlite3_step(st)==SQLITE_ROW) {
-    const char* smin = (const char*)sqlite3_column_text(st,0);
-    const char* smax = (const char*)sqlite3_column_text(st,1);
-    if (smin) {
-      if (time_t tmp = iso2utc(smin)) tmin = tmp;
-      else std::cerr << "Failed to parse minimum begin_time: '" << smin << "'\n";
+  auto fetch_bound = [&](const char* sql){
+    sqlite3_stmt* st=nullptr;
+    time_t result = 0;
+    if (sqlite3_prepare_v2(db, sql, -1, &st, nullptr)==SQLITE_OK) {
+      if (sqlite3_step(st)==SQLITE_ROW) {
+        const char* s = (const char*)sqlite3_column_text(st,0);
+        time_t tmp;
+        if (s && iso2utc(s, tmp) && tmp>0) result = tmp;
+      }
     }
-    if (smax) {
-      if (time_t tmp = iso2utc(smax)) tmax = tmp;
-      else std::cerr << "Failed to parse maximum begin_time: '" << smax << "'\n";
-    }
-  }
-  sqlite3_finalize(st);
-  if (!tmin || !tmax) { std::cerr<<"No time range\n"; sqlite3_close(db); return; }
+    sqlite3_finalize(st);
+    return result;
+  };
+
+  const char* sql_min =
+    "SELECT begin_time FROM runinfo "
+    "WHERE begin_time IS NOT NULL "
+    "  AND begin_time NOT IN ('1970-01-01T00:00:00','1970-01-01 00:00:00') "
+    "ORDER BY begin_time ASC LIMIT 1;";
+  const char* sql_max =
+    "SELECT begin_time FROM runinfo "
+    "WHERE begin_time IS NOT NULL "
+    "  AND begin_time NOT IN ('1970-01-01T00:00:00','1970-01-01 00:00:00') "
+    "ORDER BY begin_time DESC LIMIT 1;";
+  time_t tmin = fetch_bound(sql_min);
+  time_t tmax = fetch_bound(sql_max);
+  if (!tmin || !tmax || tmin>=tmax) { std::cerr<<"No time range\n"; sqlite3_close(db); return; }
 
   const double W = 7.0*86400.0;
   double xlo = (double)(sunday_after_or_on(tmin) - 7*86400);
@@ -109,7 +120,9 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
       const char* bt = (const char*)sqlite3_column_text(s,0);
       double pot = sqlite3_column_double(s,1);
       if (!bt || pot<=0) continue;
-      double t = (double)iso2utc(bt);
+      time_t tt;
+      if (!iso2utc(bt, tt)) continue;
+      double t = (double)tt;
       if (t<=0) continue;
       h.Fill(t, pot/1e18);
     }
