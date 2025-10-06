@@ -193,7 +193,6 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
 
   TGaxis right(hs.GetXaxis()->GetXmax(), 0, hs.GetXaxis()->GetXmax(), yMax,
                0, maxCum, 510, "+L");
-  right.SetAxisColor(kBlue+1);
   right.SetLineColor(kBlue+1);
   right.SetLabelColor(kBlue+1);
   right.SetTitleColor(kBlue+1);
