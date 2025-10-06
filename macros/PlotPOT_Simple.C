@@ -12,7 +12,7 @@
 #include "TLegend.h"
 #include "TGaxis.h"
 #include "TGraph.h"
-#include "TLatex.h"
+#include "TStyle.h"
 #include "TSystem.h"
 #include <sqlite3.h>
 #include <ctime>
@@ -48,6 +48,7 @@ static time_t sunday_after_or_on(time_t t) {       // Sunday 00:00:00 at/after t
 void PlotPOT_Simple(const char* outstem = "pot_timeline")
 {
   rarexsec::plot::Plotter{}.set_global_style();
+  gStyle->SetPadTickY(0);
 
   // ---- DB paths ----
   const std::string run_db  = DBROOT() + "/run.db";
@@ -160,9 +161,6 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
   // ---- cumulative (right axis) ----
   std::vector<double> x(nbins), cum(nbins), scaled(nbins);
   double maxStack = 0, sum=0, maxCum=0;
-  const double totalBNB = hBNB.Integral() * 1e18;
-  const double totalFHC = hFHC.Integral() * 1e18;
-  const double totalRHC = hRHC.Integral() * 1e18;
   for (int i=1;i<=nbins;++i) {
     double s = hBNB.GetBinContent(i)+hFHC.GetBinContent(i)+hRHC.GetBinContent(i); // ×1e18
     maxStack = std::max(maxStack, s);
@@ -183,9 +181,9 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
   hs.Add(&hBNB); hs.Add(&hFHC); hs.Add(&hRHC);
   hs.Draw("hist");
   hs.GetXaxis()->SetTimeDisplay(1);
-  hs.GetXaxis()->SetTimeFormat("%Y");
+  hs.GetXaxis()->SetTimeFormat("%d/%m/%y");
   hs.GetYaxis()->SetTitle("Protons per week  (#times 10^{18})");
-  hs.GetYaxis()->SetTitleOffset(1.2);
+  hs.GetYaxis()->SetTitleOffset(0.9);
   hs.SetMaximum(yMax);
   hs.SetMinimum(0);
 
@@ -195,6 +193,8 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
 
   TGaxis right(hs.GetXaxis()->GetXmax(), 0, hs.GetXaxis()->GetXmax(), yMax,
                0, maxCum, 510, "+L");
+  right.SetAxisColor(kBlue+1);
+  right.SetLineColor(kBlue+1);
   right.SetLabelColor(kBlue+1);
   right.SetTitleColor(kBlue+1);
   right.SetTitle("Total Protons  (#times 10^{20})");
@@ -207,21 +207,6 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
   leg.AddEntry(&hRHC,"NuMI RHC (\\bar{\\nu})","f");
   leg.AddEntry(&g,   "Total POT (cumulative)","l");
   leg.Draw();
-
-  const double totalPot = sum;
-  TLatex latex;
-  latex.SetTextFont(42);
-  latex.SetTextSize(0.032);
-  latex.SetTextAlign(13);
-  const double text_y_step = 0.045;
-  latex.DrawLatexNDC(0.62, 0.88, Form("Total POT: %s #times 10^{20}",
-                                      rarexsec::plot::Plotter::fmt_commas(totalPot/1e20, 2).c_str()));
-  latex.DrawLatexNDC(0.62, 0.88 - text_y_step, Form("BNB: %s #times 10^{20}",
-                                      rarexsec::plot::Plotter::fmt_commas(totalBNB/1e20, 2).c_str()));
-  latex.DrawLatexNDC(0.62, 0.88 - 2*text_y_step, Form("NuMI FHC: %s #times 10^{20}",
-                                      rarexsec::plot::Plotter::fmt_commas(totalFHC/1e20, 2).c_str()));
-  latex.DrawLatexNDC(0.62, 0.88 - 3*text_y_step, Form("NuMI RHC: %s #times 10^{20}",
-                                      rarexsec::plot::Plotter::fmt_commas(totalRHC/1e20, 2).c_str()));
 
   c.SaveAs(Form("%s.png", outstem));
   c.SaveAs(Form("%s.pdf", outstem));
