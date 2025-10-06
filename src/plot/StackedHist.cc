@@ -1,4 +1,5 @@
 #include "rarexsec/plot/StackedHist.hh"
+#include "rarexsec/Plotter.hh"
 #include "ROOT/RDFHelpers.hxx"
 #include "TArrow.h"
 #include "TCanvas.h"
