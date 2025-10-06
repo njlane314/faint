@@ -71,41 +71,24 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
   exec("ATTACH DATABASE '"+n4_db  +"' AS n4;");
 
   // ---- find time range from runinfo ----
-  const char* sql_minmax = "SELECT MIN(begin_time), MAX(begin_time) FROM runinfo;";
-  sqlite3_stmt* st=nullptr; sqlite3_prepare_v2(db, sql_minmax, -1, &st, nullptr);
-  time_t tmin=0, tmax=0;
-  if (sqlite3_step(st)==SQLITE_ROW) {
-    const char* smin = (const char*)sqlite3_column_text(st,0);
-    const char* smax = (const char*)sqlite3_column_text(st,1);
-    if (smin) tmin = iso2utc(smin);
-    if (smax) tmax = iso2utc(smax);
-  }
-  sqlite3_finalize(st);
-  if (!tmin || !tmax) { std::cerr<<"No time range\n"; sqlite3_close(db); return; }
+  struct PotSamples {
+    std::vector<double> times;
+    std::vector<double> pots;
+  };
 
-  const double W = 7.0*86400.0;                   // one week in seconds
-  double xlo = (double)(sunday_after_or_on(tmin) - 7*86400); // start one week earlier
-  double xhi = (double)(sunday_after_or_on(tmax) + 7*86400);
-  int nbins = std::max(1, int((xhi - xlo)/W + 0.5));
-
-  // ---- histograms: POT/week in ×1e18 ----
-  TH1D hBNB("hBNB","",nbins,xlo,xhi), hFHC("hFHC","",nbins,xlo,xhi), hRHC("hRHC","",nbins,xlo,xhi);
-  hBNB.SetDirectory(nullptr); hFHC.SetDirectory(nullptr); hRHC.SetDirectory(nullptr);
-  hBNB.SetFillColorAlpha(kGreen+2,0.95); hBNB.SetLineColor(kBlack); hBNB.SetLineWidth(2);
-  hFHC.SetFillColorAlpha(kOrange+7,0.95); hFHC.SetLineColor(kBlack); hFHC.SetLineWidth(2);
-  hRHC.SetFillColorAlpha(kRed+1,0.95);   hRHC.SetLineColor(kBlack); hRHC.SetLineWidth(2);
-
-  auto fill_from = [&](const char* sql, TH1D& h){
-    sqlite3_stmt* s=nullptr;
-    if (sqlite3_prepare_v2(db, sql, -1, &s, nullptr)!=SQLITE_OK) return;
-    while (sqlite3_step(s)==SQLITE_ROW) {
-      const char* bt = (const char*)sqlite3_column_text(s,0);
-      double pot = sqlite3_column_double(s,1);          // protons
-      if (!bt || pot<=0) continue;
-      double t = (double)iso2utc(bt);
-      h.Fill(t, pot/1e18);                               // store in ×1e18 per week bin
+  auto fetch = [&](const char* sql) {
+    PotSamples samples;
+    sqlite3_stmt* s = nullptr;
+    if (sqlite3_prepare_v2(db, sql, -1, &s, nullptr) != SQLITE_OK) return samples;
+    while (sqlite3_step(s) == SQLITE_ROW) {
+      const char* bt = (const char*)sqlite3_column_text(s, 0);
+      double pot = sqlite3_column_double(s, 1);          // protons
+      if (!bt || pot <= 0) continue;
+      samples.times.push_back(static_cast<double>(iso2utc(bt)));
+      samples.pots.push_back(pot);
     }
     sqlite3_finalize(s);
+    return samples;
   };
 
   // BNB (prefer tor875 then tor860), units ×1e12 → protons
@@ -130,11 +113,49 @@ void PlotPOT_Simple(const char* outstem = "pot_timeline")
     "FROM runinfo r JOIN n4.numi n ON r.run=n.run AND r.subrun=n.subrun "
     "WHERE IFNULL(n.EA9CNT_rhc,0)>0;";
 
-  fill_from(q_bnb, hBNB);
-  fill_from(q_fhc, hFHC);
-  fill_from(q_rhc, hRHC);
+  const PotSamples bnb_samples = fetch(q_bnb);
+  const PotSamples fhc_samples = fetch(q_fhc);
+  const PotSamples rhc_samples = fetch(q_rhc);
 
   sqlite3_close(db);
+
+  double tmin = 0, tmax = 0;
+  bool have_range = false;
+  auto update_range = [&](const PotSamples& samples) {
+    for (double t : samples.times) {
+      if (!have_range) { tmin = tmax = t; have_range = true; }
+      else { tmin = std::min(tmin, t); tmax = std::max(tmax, t); }
+    }
+  };
+  update_range(bnb_samples);
+  update_range(fhc_samples);
+  update_range(rhc_samples);
+
+  if (!have_range) { std::cerr << "No time range\n"; return; }
+
+  const double W = 7.0*86400.0;                   // one week in seconds
+  const time_t first_sunday = sunday_after_or_on(static_cast<time_t>(tmin));
+  const time_t last_sunday  = sunday_after_or_on(static_cast<time_t>(tmax));
+  double xlo = static_cast<double>(first_sunday - 7*86400); // start one week earlier
+  double xhi = static_cast<double>(last_sunday + 7*86400);
+  int nbins = std::max(1, int((xhi - xlo)/W + 0.5));
+
+  // ---- histograms: POT/week in ×1e18 ----
+  TH1D hBNB("hBNB","",nbins,xlo,xhi), hFHC("hFHC","",nbins,xlo,xhi), hRHC("hRHC","",nbins,xlo,xhi);
+  hBNB.SetDirectory(nullptr); hFHC.SetDirectory(nullptr); hRHC.SetDirectory(nullptr);
+  hBNB.SetFillColorAlpha(kGreen+2,0.95); hBNB.SetLineColor(kBlack); hBNB.SetLineWidth(2);
+  hFHC.SetFillColorAlpha(kOrange+7,0.95); hFHC.SetLineColor(kBlack); hFHC.SetLineWidth(2);
+  hRHC.SetFillColorAlpha(kRed+1,0.95);   hRHC.SetLineColor(kBlack); hRHC.SetLineWidth(2);
+
+  auto fill_hist = [](const PotSamples& samples, TH1D& h) {
+    for (size_t i = 0; i < samples.times.size(); ++i) {
+      h.Fill(samples.times[i], samples.pots[i] / 1e18);
+    }
+  };
+
+  fill_hist(bnb_samples, hBNB);
+  fill_hist(fhc_samples, hFHC);
+  fill_hist(rhc_samples, hRHC);
 
   // ---- cumulative (right axis) ----
   std::vector<double> x(nbins), cum(nbins), scaled(nbins);
