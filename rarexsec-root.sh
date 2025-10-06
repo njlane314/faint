@@ -56,6 +56,29 @@ if [[ -z "$CALL" ]]; then
   echo "Usage: $(basename "$0") -c|--call MacroName" >&2
   exit 2
 fi
-BOOT_CODE="gROOT->LoadMacro(\\\"${MACRO}\\\"); setup_rarexsec(\\\"${LIBPATH}\\\",\\\"${INCDIR}\\\");"
-EXEC_CODE="rx_call(\\\"${CALL}\\\");"
-root -l -b -q -e "${BOOT_CODE} ${EXEC_CODE}"
+escape_cpp_string() {
+  local str="${1//\\/\\\\}"
+  printf '%s' "${str//\"/\\\"}"
+}
+
+RAREXSEC_CALL="${CALL}"
+export RAREXSEC_CALL
+ESC_MACRO="$(escape_cpp_string "${MACRO}")"
+ESC_LIB="$(escape_cpp_string "${LIBPATH}")"
+ESC_INC="$(escape_cpp_string "${INCDIR}")"
+TMP_MACRO="$(mktemp "${TMPDIR:-/tmp}/rarexsec-root-XXXX.C")"
+trap 'rm -f "${TMP_MACRO}"; unset RAREXSEC_CALL' EXIT
+cat >"${TMP_MACRO}" <<EOF
+void rarexsec_root_entry() {
+  gROOT->LoadMacro("${ESC_MACRO}");
+  setup_rarexsec("${ESC_LIB}","${ESC_INC}");
+  const char* call = gSystem->Getenv("RAREXSEC_CALL");
+  if (!call || !*call) {
+    ::Error("rarexsec_root_entry", "RAREXSEC_CALL is not set");
+    return;
+  }
+  rx_call(call);
+}
+rarexsec_root_entry();
+EOF
+root -l -b -q "${TMP_MACRO}"
