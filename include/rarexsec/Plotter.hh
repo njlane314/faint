@@ -83,7 +83,6 @@ public:
         return with_commas + fraction;
     }
 
-private:
     void set_global_style() const {
         const int font_style = 42;
         TStyle* style = new TStyle("PlotterStyle", "Plotter Style");
@@ -124,6 +123,7 @@ private:
         gROOT->ForceStyle();
     }
 
+private:
     Options opt_;
 };
 
