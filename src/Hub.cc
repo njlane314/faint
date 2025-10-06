@@ -11,61 +11,12 @@
 #include <unordered_set>
 #include <utility>
 
-namespace {
-
-constexpr const char* ON_LIST   = "/data/beam-on-list-good-runs.txt";
-constexpr const char* OFF_LIST   = "/data/beam-off-list-good-runs.txt";
-constexpr const char* RUN_COL    = "run";
-constexpr const char* SUBRUN_COL = "subrun";
-
-using RunSubrunMap = std::unordered_map<int, std::unordered_set<int>>;
-
-static RunSubrunMap load_good(const char* path) {
-    RunSubrunMap m;
-    std::ifstream in(path);
-    if (!in) return m;
-
-    std::string line;
-    while (std::getline(in, line)) {
-        if (auto h = line.find('#'); h != std::string::npos) line.resize(h); 
-        std::istringstream ss(line);
-        int r, sr;
-        if (ss >> r >> sr) m[r].insert(sr);
-    }
-    return m;
-}
-
-static const RunSubrunMap& on_good() { static RunSubrunMap g = load_good(ON_LIST); return g; }
-static const RunSubrunMap& off_good() { static RunSubrunMap g = load_good(OFF_LIST); return g; }
-
-static bool is_rhc(std::string p) {
-    for (auto& c : p) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-    return p.find("rhc") != std::string::npos;
-}
-
-ROOT::RDF::RNode apply_goodrun_filter(ROOT::RDF::RNode node,
-                                      rarexsec::sample::origin kind) {
-    const RunSubrunMap& good good = (kind == rarexsec::sample::origin::ext) ? off_good() : on_good();
-    if (good.empty()) return node;
-
-    const RunSubrunMap* g = &good; 
-    return node.Filter(
-        [g](int run, int subrun) {
-            auto it = g->find(run);
-            return it != g->end() && it->second.find(subrun) != it->second.end();
-        },
-        {RUN_COL, SUBRUN_COL});
-}
-
-} 
-
 rarexsec::Frame rarexsec::Hub::sample(const Entry& rec) {
     constexpr const char* tree = "nuselection/EventSelectionFilter";
 
     auto df_ptr = std::make_shared<ROOT::RDataFrame>(tree, rec.file);
     ROOT::RDF::RNode node = *df_ptr;
 
-    node = apply_goodrun_filter(std::move(node), rec.kind);
     node = processor().run(node, rec);
 
     if (rec.kind == sample::origin::beam)
