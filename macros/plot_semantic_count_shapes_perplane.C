@@ -13,9 +13,6 @@
 #include <sstream>
 #include <iostream>
 
-#include <rarexsec/Hub.hh>
-#include <rarexsec/Selection.hh>
-
 // Load user libs
 static void load_libs(const char* extra_libs) {
   gSystem->Load("librarexsec");
