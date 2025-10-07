@@ -13,6 +13,9 @@
 #include <sstream>
 #include <iostream>
 
+#include "rarexsec/Hub.hh"
+#include "rarexsec/proc/Selection.hh"
+
 // Load user libs
 static void load_libs(const char* extra_libs) {
   gSystem->Load("librarexsec");
@@ -84,11 +87,11 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
       auto n0 = rarexsec::selection::apply(e->rnode(), rarexsec::selection::Preset::Empty, *e);
       for (int lab = 0; lab < nlabels; ++lab) {
         const std::string col = std::string("_rx_sc_") + p.tag + "_" + std::to_string(lab);
-        auto n1 = n0.Define(col, [lab](const std::vector<int>& v){ return sem_count(v, lab); }, {p.col});
-        auto rr = n1.Histo1D(TH1DModel(("h_"+std::string(p.tag)+"_lab"+std::to_string(lab)+"_src"+std::to_string(ie)).c_str(),
-                                       (";"+std::string(1,(char)toupper(*p.tag))+"-plane semantic COUNT;Events").c_str(),
-                                       nbins, xmin, xmax),
-                              col, "w_nominal");
+    auto n1 = n0.Define(col, [lab](const std::vector<int>& v){ return sem_count(v, lab); }, {p.col});
+    auto rr = n1.Histo1D(ROOT::RDF::TH1DModel(("h_"+std::string(p.tag)+"_lab"+std::to_string(lab)+"_src"+std::to_string(ie)).c_str(),
+                                             (";"+std::string(1,(char)toupper(*p.tag))+"-plane semantic COUNT;Events").c_str(),
+                                             nbins, xmin, xmax),
+                          col, "w_nominal");
         const TH1D& part = rr.GetValue();
         if (!H[lab]) {
           H[lab].reset(static_cast<TH1D*>(part.Clone(("h_"+std::string(p.tag)+"_lab"+std::to_string(lab)).c_str())));
