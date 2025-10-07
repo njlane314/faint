@@ -56,11 +56,13 @@ static const double kA_uniform = 0.95;
 static const bool  kMakePNGs      = true;
 static const char* kOutRoot       = "SimpleGeomAcceptance.root";
 static const int   kBaseCanvasH   = 900;
-static const double kLeftMargin   = 0.12, kRightMargin = 0.18, kTopMargin = 0.06, kBotMargin = 0.12;
+// Leave extra top margin so the legend can live *above* the frame
+static const double kLeftMargin   = 0.12, kRightMargin = 0.18, kTopMargin = 0.16, kBotMargin = 0.12;
 
 // Box styles
 static const int kColUA  = kRed+1,   kWUA  = 4;
-static const int kColSFV = kAzure+2, kWSFV = 3;
+// SFV color changed per request
+static const int kColSFV = kMagenta+2, kWSFV = 3;
 static const int kColIX  = kGreen+2, kWIX  = 5, kLSIX = 7; // dashed
 
 // Optional iso-contour at A = kA_uniform
@@ -127,6 +129,21 @@ static TBox* DrawBox(double x1,double y1,double x2,double y2,int color,int width
   return b;
 }
 
+// Helper: legend positioned in the *top margin* (above the plot frame),
+// auto-sized to avoid the right palette; forced to one column.
+static TLegend* MakeTopLegend(TCanvas* c){
+  const double x1 = c->GetLeftMargin() + 0.01;
+  const double x2 = 1.0 - c->GetRightMargin() - 0.01;
+  const double y1 = 1.0 - c->GetTopMargin() + 0.01;
+  const double y2 = 0.99;
+  auto* leg = new TLegend(x1, y1, x2, y2);
+  leg->SetBorderSize(0);
+  leg->SetFillStyle(0);
+  leg->SetTextSize(0.032);
+  leg->SetNColumns(1); // single column as requested
+  return leg;
+}
+
 // Solve per-face margin to guarantee per-axis plateau fraction Aaxis per face
 // (conservative: if each face meets Aaxis, then two-sided average ≥ Aaxis).
 static inline double MarginFromTarget(double Aaxis, double S, double L){
@@ -171,6 +188,9 @@ void SimpleGeomAcceptance() {
            kNZ, kZmin, kZmax, kNX, kXmin, kXmax);
   TH2D hZY("Acc_ZY","Predicted (geometry-only) acceptance;Z [cm];Y [cm]",
            kNZ, kZmin, kZmax, kNY, kYmin, kYmax);
+  // New: X×Y map (avg over Z)
+  TH2D hXY("Acc_XY","Predicted (geometry-only) acceptance;X [cm];Y [cm]",
+           kNX, kXmin, kXmax, kNY, kYmin, kYmax);
 
   // Fill Z×X (avg over Y)
   for (int iz=1; iz<=kNZ; ++iz) {
@@ -200,9 +220,23 @@ void SimpleGeomAcceptance() {
     }
   }
 
+  // Fill X×Y (avg over Z)
+  for (int ix=1; ix<=kNX; ++ix) {
+    const double x = hXY.GetXaxis()->GetBinCenter(ix);
+    for (int iy=1; iy<=kNY; ++iy) {
+      const double y = hXY.GetYaxis()->GetBinCenter(iy);
+      double sum = 0.0;
+      for (int iz=1; iz<=kNZ; ++iz) {
+        const double z = hZX.GetXaxis()->GetBinCenter(iz);
+        sum += A_event(x,y,z);
+      }
+      hXY.SetBinContent(ix, iy, sum / double(kNZ));
+    }
+  }
+
   // Save histos
   TFile fout(kOutRoot, "RECREATE");
-  hZX.Write(); hZY.Write();
+  hZX.Write(); hZY.Write(); hXY.Write();
   fout.Close();
 
   // ------------- Plot: Z×X (Z on x-axis; size-faithful) -------------
@@ -223,8 +257,7 @@ void SimpleGeomAcceptance() {
     TBox* bIX  = nullptr;
     if (kHasIX) bIX = DrawBox(IX_Z1, IX_X1, IX_Z2, IX_X2, kColIX, kWIX, kLSIX);
 
-    auto* leg = new TLegend(0.15, 0.90, 0.78, 0.99);
-    leg->SetBorderSize(0); leg->SetFillStyle(0); leg->SetTextSize(0.032);
+    auto* leg = MakeTopLegend(c);
     leg->AddEntry(bUA,  Form("Uniform A #geq %.0f%% box", 100*kA_uniform), "l");
     leg->AddEntry(bSFV, "Standard FV box", "l");
     if (bIX) leg->AddEntry(bIX, "Intersection (inner) box", "l");
@@ -251,14 +284,40 @@ void SimpleGeomAcceptance() {
     TBox* bIX  = nullptr;
     if (kHasIX) bIX = DrawBox(IX_Z1, IX_Y1, IX_Z2, IX_Y2, kColIX, kWIX, kLSIX);
 
-    auto* leg = new TLegend(0.15, 0.90, 0.78, 0.99);
-    leg->SetBorderSize(0); leg->SetFillStyle(0); leg->SetTextSize(0.032);
+    auto* leg = MakeTopLegend(c);
     leg->AddEntry(bUA,  Form("Uniform A #geq %.0f%% box", 100*kA_uniform), "l");
     leg->AddEntry(bSFV, "Standard FV box", "l");
     if (bIX) leg->AddEntry(bIX, "Intersection (inner) box", "l");
     leg->Draw();
 
     if (kMakePNGs) c->SaveAs("geom_acc_ZY.png");
+  }
+
+  // ------------- Plot: X×Y (size-faithful) -------------
+  {
+    TCanvas* c = MakeSizeFaithfulCanvas("c_XY", kXmax-kXmin, kYmax-kYmin);
+    hXY.SetMinimum(0); hXY.SetMaximum(1);
+    hXY.Draw("COLZ");
+    if (kDrawContour) {
+      TH2D* hC = (TH2D*)hXY.Clone("hC_XY");
+      Double_t lvl[1] = {kA_uniform};
+      hC->SetContour(1, lvl);
+      hC->SetLineColor(kContourColor); hC->SetLineWidth(2);
+      hC->Draw("CONT3 SAME");
+    }
+    // Boxes in (X, Y)
+    TBox* bUA  = DrawBox(UA_X1,  UA_Y1,  UA_X2,  UA_Y2,  kColUA,  kWUA);
+    TBox* bSFV = DrawBox(kSFV_Xmin,kSFV_Ymin,kSFV_Xmax,kSFV_Ymax,kColSFV,kWSFV);
+    TBox* bIX  = nullptr;
+    if (kHasIX) bIX = DrawBox(IX_X1, IX_Y1, IX_X2, IX_Y2, kColIX, kWIX, kLSIX);
+
+    auto* leg = MakeTopLegend(c);
+    leg->AddEntry(bUA,  Form("Uniform A #geq %.0f%% box", 100*kA_uniform), "l");
+    leg->AddEntry(bSFV, "Standard FV box", "l");
+    if (bIX) leg->AddEntry(bIX, "Intersection (inner) box", "l");
+    leg->Draw();
+
+    if (kMakePNGs) c->SaveAs("geom_acc_XY.png");
   }
 
   // Console summary
