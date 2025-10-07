@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "rarexsec/plot/Types.hh"
+
 class TCanvas;
 class TLegend;
 class TPad;
@@ -13,8 +15,6 @@ class TH1D;
 namespace rarexsec {
   struct Entry;
   namespace plot {
-    struct H1Spec;
-    struct Options;
 
     /// Draws unstacked (overlay) histograms by analysis channel.
     /// Reuses H1Spec/Options and Channels styling from rarexsec.
