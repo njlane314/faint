@@ -20,7 +20,7 @@
 
 #include "rarexsec/Plotter.hh"                // H1Spec, Options, Plotter::fmt_commas/sanitise
 #include "rarexsec/plot/Channels.hh"          // channel colors/labels/order
-#include "rarexsec/Selection.hh"              // selection::apply
+#include "rarexsec/proc/Selection.hh"              // selection::apply
 #include "rarexsec/Hub.hh"                    // Entry
 
 namespace {
