@@ -36,13 +36,15 @@ static double sem_count(const std::vector<int>& counts, int lab) {
 static void normalize_pdf(TH1D& h) { double A = h.Integral("width"); if (A>0.0) h.Scale(1.0/A); }
 static int discover_num_labels(const std::vector<const rarexsec::Entry*>& samples, const std::string& col) {
   using namespace rarexsec;
+  int nlabels = 0;
   for (const auto* e : samples) if (e) {
     auto n0 = selection::apply(e->rnode(), selection::Preset::Empty, *e);
     auto n  = n0.Define("_rx_nlab_", [](const std::vector<int>& v){ return (int)v.size(); }, {col});
     auto v  = n.Take<int>("_rx_nlab_").GetValue();
-    if (!v.empty()) return v.front();
+    for (int c : v) nlabels = std::max(nlabels, c);
+    if (nlabels > 0) break;
   }
-  return 0;
+  return nlabels;
 }
 // simple palette
 static int color_for_label(int i){ static const int P[]={kBlack,kRed+1,kAzure+2,kGreen+2,kOrange+7,kMagenta+1,kCyan+2,kViolet+1,kTeal+3,kPink+7,kGray+2}; return P[i% (sizeof(P)/sizeof(int))]; }
