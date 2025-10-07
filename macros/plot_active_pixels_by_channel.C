@@ -9,6 +9,7 @@
 #include <vector>
 #include <sstream>
 #include <iostream>
+#include <cmath>
 
 #include <rarexsec/Hub.hh>
 #include <rarexsec/proc/Selection.hh>
@@ -31,8 +32,9 @@ static void load_libs(const char* extra_libs) {
   }
 }
 
-// Return the ABSOLUTE COUNT of active pixels (> thr) in a single image (vector<float>)
-double active_pixels(const std::vector<float>& img, double thr) {
+// Return the ABSOLUTE COUNT of active pixels (> thr) in a single image container
+template <typename Image>
+double active_pixels(const Image& img, double thr) {
   if (img.empty()) return 0.0;
   std::size_t k = 0; for (float q : img) if (std::isfinite(q) && q > thr) ++k;
   return static_cast<double>(k);
