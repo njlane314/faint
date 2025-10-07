@@ -91,69 +91,107 @@ void plot_active_pixels_by_channel(const char* extra_libs   = "",
   plane_upper.reserve(plane_key.size());
   for (char c : plane_key) plane_upper.push_back(up(c));
 
-  const double NPIX_plane = 512.0 * 512.0;            // per plane
-  const double NPIX_sum   = 3.0 * NPIX_plane;         // U+V+W
-  if (xmax <= 0.0) {
-    xmax = (plane_upper == "SUM") ? NPIX_sum : NPIX_plane;
-  }
+  const bool has_xmax_override = xmax > 0.0;
+  const double xmax_override   = xmax;
+  const double NPIX_plane      = 512.0 * 512.0;            // per plane
 
-  // Build expression for the chosen plane/sum
-  std::string expr, x_title, id, title;
-
-  if (plane_upper == "U") {
-    expr   = std::string("active_pixels(") + Uimg + "," + std::to_string(adc_thr) + ")";
-    x_title= "Active pixels (U plane)";
-    id     = "active_pixels_u";
-    title  = ";Active pixels (U plane);Events";
-  } else if (plane_upper == "V") {
-    expr   = std::string("active_pixels(") + Vimg + "," + std::to_string(adc_thr) + ")";
-    x_title= "Active pixels (V plane)";
-    id     = "active_pixels_v";
-    title  = ";Active pixels (V plane);Events";
-  } else if (plane_upper == "W") {
-    expr   = std::string("active_pixels(") + Wimg + "," + std::to_string(adc_thr) + ")";
-    x_title= "Active pixels (W plane)";
-    id     = "active_pixels_w";
-    title  = ";Active pixels (W plane);Events";
-  } else {
-    // Sum across U+V+W
-    expr   = std::string("active_pixels(") + Uimg + "," + std::to_string(adc_thr) + ")"
-           + " + active_pixels(" + Vimg + "," + std::to_string(adc_thr) + ")"
-           + " + active_pixels(" + Wimg + "," + std::to_string(adc_thr) + ")";
-    x_title= "Active pixels (U+V+W sum)";
-    id     = "active_pixels_sum";
-    title  = ";Active pixels (U+V+W);Events";
-  }
-
-  // Plot spec and options
-  rarexsec::plot::H1Spec spec{
-    .id     = id,
-    .title  = title,
-    .expr   = expr,              // evaluated via RDF Define in UnstackedHist
-    .weight = "w_nominal",
-    .nbins  = nbins,
-    .xmin   = xmin,
-    .xmax   = xmax,
-    .sel    = rarexsec::selection::Preset::Empty
+  struct PlotConfig {
+    std::string id;
+    std::string title;
+    std::string expr;
+    std::string x_title;
+    double default_xmax;
   };
 
-  rarexsec::plot::Options opt;
-  opt.out_dir        = out_dir;
-  opt.image_format   = "pdf";
-  opt.show_ratio     = false;            // no ratio panel for raw counts here
-  opt.legend_on_top  = true;
-  opt.legend_split   = 0.85;
-  opt.use_log_y      = false;            // turn on if small tails are hard to see
-  opt.y_min          = 0.0;
-  opt.y_max          = -1.0;
-  opt.beamline       = beamline;
-  opt.periods        = periods;
-  opt.x_title        = x_title;
-  opt.y_title        = "Events";
+  std::vector<PlotConfig> plot_configs;
+  plot_configs.reserve(3);
 
-  // Draw overlay by analysis channel (NO normalization)
-  rarexsec::plot::UnstackedHist plot(spec, opt, mc, /*data*/{}, /*normalize_to_pdf*/ false, /*line_width*/3);
-  plot.draw_and_save("pdf");
+  const auto make_expr = [adc_thr](const char* column) {
+    return std::string("active_pixels(") + column + "," + std::to_string(adc_thr) + ")";
+  };
 
-  std::cout << "Saved: " << out_dir << "/" << id << ".pdf" << std::endl;
+  if (plane_upper == "U") {
+    plot_configs.push_back({
+      .id            = "active_pixels_u",
+      .title         = ";Active pixels (U plane);Events",
+      .expr          = make_expr(Uimg),
+      .x_title       = "Active pixels (U plane)",
+      .default_xmax  = NPIX_plane
+    });
+  } else if (plane_upper == "V") {
+    plot_configs.push_back({
+      .id            = "active_pixels_v",
+      .title         = ";Active pixels (V plane);Events",
+      .expr          = make_expr(Vimg),
+      .x_title       = "Active pixels (V plane)",
+      .default_xmax  = NPIX_plane
+    });
+  } else if (plane_upper == "W") {
+    plot_configs.push_back({
+      .id            = "active_pixels_w",
+      .title         = ";Active pixels (W plane);Events",
+      .expr          = make_expr(Wimg),
+      .x_title       = "Active pixels (W plane)",
+      .default_xmax  = NPIX_plane
+    });
+  } else if (plane_upper == "SUM" || plane_upper == "ALL" || plane_upper == "UVW" || plane_upper.empty()) {
+    plot_configs.push_back({
+      .id            = "active_pixels_u",
+      .title         = ";Active pixels (U plane);Events",
+      .expr          = make_expr(Uimg),
+      .x_title       = "Active pixels (U plane)",
+      .default_xmax  = NPIX_plane
+    });
+    plot_configs.push_back({
+      .id            = "active_pixels_v",
+      .title         = ";Active pixels (V plane);Events",
+      .expr          = make_expr(Vimg),
+      .x_title       = "Active pixels (V plane)",
+      .default_xmax  = NPIX_plane
+    });
+    plot_configs.push_back({
+      .id            = "active_pixels_w",
+      .title         = ";Active pixels (W plane);Events",
+      .expr          = make_expr(Wimg),
+      .x_title       = "Active pixels (W plane)",
+      .default_xmax  = NPIX_plane
+    });
+  } else {
+    throw std::runtime_error("Unknown plane: " + plane_key);
+  }
+
+  rarexsec::plot::Options base_opt;
+  base_opt.out_dir        = out_dir;
+  base_opt.image_format   = "pdf";
+  base_opt.show_ratio     = false;            // no ratio panel for raw counts here
+  base_opt.legend_on_top  = true;
+  base_opt.legend_split   = 0.85;
+  base_opt.use_log_y      = false;            // turn on if small tails are hard to see
+  base_opt.y_min          = 0.0;
+  base_opt.y_max          = -1.0;
+  base_opt.beamline       = beamline;
+  base_opt.periods        = periods;
+  base_opt.y_title        = "Events";
+
+  for (const auto& cfg : plot_configs) {
+    rarexsec::plot::H1Spec spec{
+      .id     = cfg.id,
+      .title  = cfg.title,
+      .expr   = cfg.expr,              // evaluated via RDF Define in UnstackedHist
+      .weight = "w_nominal",
+      .nbins  = nbins,
+      .xmin   = xmin,
+      .xmax   = has_xmax_override ? xmax_override : cfg.default_xmax,
+      .sel    = rarexsec::selection::Preset::Empty
+    };
+
+    auto opt = base_opt;
+    opt.x_title = cfg.x_title;
+
+    // Draw overlay by analysis channel (NO normalization)
+    rarexsec::plot::UnstackedHist plot(spec, opt, mc, /*data*/{}, /*normalize_to_pdf*/ false, /*line_width*/3);
+    plot.draw_and_save("pdf");
+
+    std::cout << "Saved: " << out_dir << "/" << cfg.id << ".pdf" << std::endl;
+  }
 }
