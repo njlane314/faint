@@ -17,6 +17,7 @@
 #include <sstream>
 #include <utility>
 #include <vector>
+#include <array>
 
 #include "rarexsec/Plotter.hh"                // H1Spec, Options, Plotter::fmt_commas/sanitise
 #include "rarexsec/plot/Channels.hh"          // channel colors/labels/order
@@ -27,6 +28,52 @@ namespace {
 inline void normalise_pdf(TH1D& h) {
   const double area = h.Integral("width");
   if (area > 0.0) h.Scale(1.0 / area);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Legend labels and palette (index = channel id). 15 classes.
+constexpr std::size_t kPaletteSize = 15;
+const std::array<const char*, kPaletteSize> kLegendLabels = {
+    "#emptyset",
+    "Cosmic",      "#mu",        "e^{-}",     "#gamma",
+    "#pi^{#pm}",   "#pi^{0}",    "n",         "p",
+    "K^{#pm}",     "K^{0}",      "#Lambda",   "#Sigma^{#pm}",
+    "#Sigma^{0}",  "Other"
+};
+// First entry ("background") in a dark gray so it remains visible.
+const std::array<int, kPaletteSize> kPalette = {
+    TColor::GetColor("#333333"),
+    TColor::GetColor("#666666"),
+    TColor::GetColor("#e41a1c"),
+    TColor::GetColor("#377eb8"),
+    TColor::GetColor("#4daf4a"),
+    TColor::GetColor("#ff7f00"),
+    TColor::GetColor("#984ea3"),
+    TColor::GetColor("#ffff33"),
+    TColor::GetColor("#1b9e77"),
+    TColor::GetColor("#f781bf"),
+    TColor::GetColor("#a65628"),
+    TColor::GetColor("#66a61e"),
+    TColor::GetColor("#e6ab02"),
+    TColor::GetColor("#a6cee3"),
+    TColor::GetColor("#b15928")
+};
+inline std::size_t safe_idx(int ch) {
+  if (ch < 0) return 0;
+  return static_cast<std::size_t>(ch) < kPaletteSize ? static_cast<std::size_t>(ch) : kPaletteSize - 1;
+}
+
+// Log-spaced bin edges helper
+inline std::vector<double> make_log_edges(double xmin, double xmax, int bins_per_decade = 40) {
+  const double lx = std::log10(xmin);
+  const double ux = std::log10(xmax);
+  const int ndec = static_cast<int>(std::round((ux - lx) * bins_per_decade));
+  std::vector<double> edges;
+  edges.reserve(ndec + 1);
+  for (int i = 0; i <= ndec; ++i) {
+    edges.push_back(std::pow(10.0, lx + (ux - lx) * (static_cast<double>(i) / ndec)));
+  }
+  return edges;
 }
 } // namespace
 
@@ -50,33 +97,32 @@ UnstackedHist::UnstackedHist(H1Spec spec,
 void UnstackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_legend) const {
   c.cd();
   p_main = nullptr; p_legend = nullptr;
-  const double split = std::clamp(opt_.legend_split, 0.60, 0.95);
+  // Always give the legend its own pad (no overlap with the plot)
+  const double split = std::clamp(opt_.legend_split > 0 ? opt_.legend_split : 0.78, 0.60, 0.95);
 
-  if (opt_.legend_on_top) {
-    p_main   = new TPad("pad_main",   "pad_main",   0., 0.00, 1., split);
-    p_legend = new TPad("pad_legend", "pad_legend", 0., split, 1., 1.00);
+  p_main   = new TPad("pad_main",   "pad_main",   0., 0.00, 1., split);
+  p_legend = new TPad("pad_legend", "pad_legend", 0., split, 1., 1.00);
 
-    p_main  ->SetTopMargin(0.01);  p_main  ->SetBottomMargin(0.12);
-    p_main  ->SetLeftMargin(0.14); p_main  ->SetRightMargin(0.05);  // better y-axis margin
-    p_legend->SetTopMargin(0.05);  p_legend->SetBottomMargin(0.01);
-    p_legend->SetLeftMargin(0.02); p_legend->SetRightMargin(0.02);
+  p_main  ->SetTopMargin(0.01);  p_main  ->SetBottomMargin(0.12);
+  p_main  ->SetLeftMargin(0.14); p_main  ->SetRightMargin(0.05);  // better y-axis margin
+  p_legend->SetTopMargin(0.05);  p_legend->SetBottomMargin(0.08);
+  p_legend->SetLeftMargin(0.02); p_legend->SetRightMargin(0.02);
 
-    if (opt_.use_log_y) p_main->SetLogy();
+  if (opt_.use_log_y) p_main->SetLogy();
+  // New: log-x for this plot family
+  p_main->SetLogx();
 
-    p_main->Draw(); p_legend->Draw();
-  } else {
-    p_main  = new TPad("pad_main","pad_main", 0.,0.,1.,1.);
-    p_main ->SetTopMargin(0.06);  p_main ->SetBottomMargin(0.12);
-    p_main ->SetLeftMargin(0.14); p_main ->SetRightMargin(0.05);   // better y-axis margin
-    if (opt_.use_log_y) p_main->SetLogy();
-    p_main->Draw();
-  }
+  p_main->Draw(); p_legend->Draw();
 }
 
 void UnstackedHist::build_histograms() {
   mc_ch_hists_.clear();
   data_hist_.reset();
   chan_order_.clear();
+
+  // Book variable, log-spaced binning for x in [1, 1e4]
+  constexpr int kBinsPerDecade = 40; // finer binning; adjust if needed
+  const std::vector<double> log_edges = make_log_edges(1.0, 1e4, kBinsPerDecade);
 
   // Book per-channel histograms across all MC entries
   std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked_mc;
@@ -92,7 +138,9 @@ void UnstackedHist::build_histograms() {
 
     for (int ch : channels) {
       auto nf = n.Filter([ch](int c){ return c == ch; }, {"analysis_channels"});
-      auto h  = nf.Histo1D(spec_.model("_mc_ch"+std::to_string(ch)+"_src"+std::to_string(ie)), var, spec_.weight);
+      ROOT::RDF::TH1DModel model((spec_.id+"_mc_ch"+std::to_string(ch)+"_src"+std::to_string(ie)).c_str(),
+                                 "", log_edges);
+      auto h  = nf.Histo1D(model, var, spec_.weight);
       booked_mc[ch].push_back(h);
     }
   }
@@ -136,7 +184,7 @@ void UnstackedHist::build_histograms() {
     if (normalize_to_pdf_) normalise_pdf(*h);
 
     h->SetFillStyle(0);
-    h->SetLineColor(rarexsec::plot::Channels::color(ch));
+    h->SetLineColor(kPalette[safe_idx(ch)]);
     h->SetLineWidth(line_width_);
 
     mc_ch_hists_.push_back(std::move(h));
@@ -152,7 +200,8 @@ void UnstackedHist::build_histograms() {
       auto n0 = selection::apply(e->rnode(), spec_.sel, *e);
       auto n  = (spec_.expr.empty() ? n0 : n0.Define("_rx_expr_", spec_.expr));
       const std::string var = spec_.expr.empty() ? spec_.id : "_rx_expr_";
-      parts.push_back(n.Histo1D(spec_.model("_data_src"+std::to_string(ie)), var));
+      ROOT::RDF::TH1DModel model((spec_.id+"_data_src"+std::to_string(ie)).c_str(), "", log_edges);
+      parts.push_back(n.Histo1D(model, var));
     }
     for (auto& rr : parts) {
       const TH1D& h = rr.GetValue();
@@ -193,12 +242,16 @@ void UnstackedHist::draw_curves(TPad* p_main, double& max_y) {
 
   // NEW: readable numeric scale (no ×10^n)
   frame->GetXaxis()->SetNoExponent(true);
+  frame->GetXaxis()->SetMoreLogLabels(true);
   frame->GetYaxis()->SetNoExponent(true);
   frame->GetXaxis()->SetMaxDigits(4);
   frame->GetYaxis()->SetMaxDigits(4);
 
   frame->SetMaximum(max_y * (opt_.use_log_y ? 10. : 1.3));
   frame->SetMinimum(opt_.use_log_y ? 0.1 : opt_.y_min);
+
+  // Force the visible x-range to [1, 1e4]
+  frame->GetXaxis()->SetRangeUser(1., 1e4);
 
   frame->Draw("HIST");
   for (size_t i = 1; i < mc_ch_hists_.size(); ++i) mc_ch_hists_[i]->Draw("HIST SAME");
@@ -210,21 +263,17 @@ void UnstackedHist::draw_legend(TPad* p) {
   p->cd();
   legend_ = std::make_unique<TLegend>(0.12, 0.0, 0.95, 0.75);
   auto* leg = legend_.get();
-  if (opt_.legend_on_top) {
-    // use (nearly) the whole top legend pad and multiple columns like StackedHist
-    leg->SetX1NDC(0.02); leg->SetY1NDC(0.05);
-    leg->SetX2NDC(0.98); leg->SetY2NDC(0.95);
-  } else {
-    leg->SetX1NDC(opt_.leg_x1); leg->SetY1NDC(opt_.leg_y1);
-    leg->SetX2NDC(opt_.leg_x2); leg->SetY2NDC(opt_.leg_y2);
-  }
+  // Use nearly the whole legend pad
+  leg->SetX1NDC(0.02); leg->SetY1NDC(0.05);
+  leg->SetX2NDC(0.98); leg->SetY2NDC(0.95);
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
   leg->SetTextFont(42);
 
   // multi-column layout when there are many entries
   int n_entries = static_cast<int>(mc_ch_hists_.size()) + (data_hist_ ? 1 : 0);
-  if (n_entries > 0) leg->SetNColumns(n_entries > 4 ? 3 : 2);
+  if (n_entries > 0)      leg->SetNColumns(n_entries > 10 ? 4 : (n_entries > 6 ? 3 : 2));
+  leg->SetTextSize(0.035);
 
   legend_proxies_.clear();
   for (size_t i = 0; i < mc_ch_hists_.size(); ++i) {
@@ -238,7 +287,8 @@ void UnstackedHist::draw_legend(TPad* p) {
     proxy->SetLineColor(mc_ch_hists_[i]->GetLineColor());
     proxy->SetLineWidth(line_width_);
 
-    std::string label = rarexsec::plot::Channels::label(ch);
+    // Use the requested physics labels
+    std::string label = kLegendLabels[safe_idx(ch)];
     if (opt_.annotate_numbers) {
       const double sum = mc_ch_hists_[i]->Integral();
       label += " : " + rarexsec::plot::Plotter::fmt_commas(sum, 2);
