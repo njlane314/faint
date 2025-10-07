@@ -57,7 +57,7 @@ void UnstackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_legend) const
     p_legend = new TPad("pad_legend", "pad_legend", 0., split, 1., 1.00);
 
     p_main  ->SetTopMargin(0.01);  p_main  ->SetBottomMargin(0.12);
-    p_main  ->SetLeftMargin(0.12); p_main  ->SetRightMargin(0.05);
+    p_main  ->SetLeftMargin(0.14); p_main  ->SetRightMargin(0.05);  // better y-axis margin
     p_legend->SetTopMargin(0.05);  p_legend->SetBottomMargin(0.01);
     p_legend->SetLeftMargin(0.02); p_legend->SetRightMargin(0.02);
 
@@ -67,7 +67,7 @@ void UnstackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_legend) const
   } else {
     p_main  = new TPad("pad_main","pad_main", 0.,0.,1.,1.);
     p_main ->SetTopMargin(0.06);  p_main ->SetBottomMargin(0.12);
-    p_main ->SetLeftMargin(0.12); p_main ->SetRightMargin(0.05);
+    p_main ->SetLeftMargin(0.14); p_main ->SetRightMargin(0.05);   // better y-axis margin
     if (opt_.use_log_y) p_main->SetLogy();
     p_main->Draw();
   }
@@ -210,13 +210,21 @@ void UnstackedHist::draw_legend(TPad* p) {
   p->cd();
   legend_ = std::make_unique<TLegend>(0.12, 0.0, 0.95, 0.75);
   auto* leg = legend_.get();
-  if (!opt_.legend_on_top) {
+  if (opt_.legend_on_top) {
+    // use (nearly) the whole top legend pad and multiple columns like StackedHist
+    leg->SetX1NDC(0.02); leg->SetY1NDC(0.05);
+    leg->SetX2NDC(0.98); leg->SetY2NDC(0.95);
+  } else {
     leg->SetX1NDC(opt_.leg_x1); leg->SetY1NDC(opt_.leg_y1);
     leg->SetX2NDC(opt_.leg_x2); leg->SetY2NDC(opt_.leg_y2);
   }
   leg->SetBorderSize(0);
   leg->SetFillStyle(0);
   leg->SetTextFont(42);
+
+  // multi-column layout when there are many entries
+  int n_entries = static_cast<int>(mc_ch_hists_.size()) + (data_hist_ ? 1 : 0);
+  if (n_entries > 0) leg->SetNColumns(n_entries > 4 ? 3 : 2);
 
   legend_proxies_.clear();
   for (size_t i = 0; i < mc_ch_hists_.size(); ++i) {
@@ -230,7 +238,12 @@ void UnstackedHist::draw_legend(TPad* p) {
     proxy->SetLineColor(mc_ch_hists_[i]->GetLineColor());
     proxy->SetLineWidth(line_width_);
 
-    leg->AddEntry(proxy.get(), rarexsec::plot::Channels::label(ch).c_str(), "l");
+    std::string label = rarexsec::plot::Channels::label(ch);
+    if (opt_.annotate_numbers) {
+      const double sum = mc_ch_hists_[i]->Integral();
+      label += " : " + rarexsec::plot::Plotter::fmt_commas(sum, 2);
+    }
+    leg->AddEntry(proxy.get(), label.c_str(), "l");
     legend_proxies_.push_back(std::move(proxy));
   }
   if (data_hist_) leg->AddEntry(data_hist_.get(), "Data", "lep");
