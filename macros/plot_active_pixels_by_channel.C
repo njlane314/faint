@@ -1,6 +1,7 @@
 // plot_active_pixels_by_channel.C
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
+#include <ROOT/RVec.hxx>
 #include <TSystem.h>
 #include <TH1D.h>
 
@@ -33,6 +34,13 @@ static void load_libs(const char* extra_libs) {
 
 // Return the ABSOLUTE COUNT of active pixels (> thr) in a single image (vector<float>)
 double active_pixels(const std::vector<float>& img, double thr) {
+  if (img.empty()) return 0.0;
+  std::size_t k = 0; for (float q : img) if (std::isfinite(q) && q > thr) ++k;
+  return static_cast<double>(k);
+}
+
+// Overload for RDF columns backed by RVec<float>
+double active_pixels(const ROOT::VecOps::RVec<float>& img, double thr) {
   if (img.empty()) return 0.0;
   std::size_t k = 0; for (float q : img) if (std::isfinite(q) && q > thr) ++k;
   return static_cast<double>(k);
