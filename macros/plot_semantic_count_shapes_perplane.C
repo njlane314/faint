@@ -50,9 +50,21 @@ static int discover_num_labels(const std::vector<const rarexsec::Entry*>& sample
     auto n  = n0.Define("_rx_nlab_", [](const std::vector<int>& v){ return (int)v.size(); }, {col});
     auto v  = n.Take<int>("_rx_nlab_").GetValue();
     for (int c : v) nlabels = std::max(nlabels, c);
-    if (nlabels > 0) break;
   }
   return nlabels;
+}
+
+static int discover_max_sem_count(const std::vector<const rarexsec::Entry*>& samples, const std::string& col) {
+  using namespace rarexsec;
+  int maxc = 0;
+  for (const auto* e : samples) if (e) {
+    auto n0 = selection::apply(e->rnode(), selection::Preset::Empty, *e);
+    auto n1 = n0.Define("_rx_maxc_", [](const std::vector<int>& v){
+      int m = 0; for (int x : v) if (x>m) m = x; return m; }, {col});
+    int m = n1.Max<int>("_rx_maxc_").GetValue();
+    if (m > maxc) maxc = m;
+  }
+  return maxc;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -66,21 +78,21 @@ const std::array<const char*, kPaletteSize> kLegendLabels = {
     "#Sigma^{0}",  "Other"
 };
 const std::array<int, kPaletteSize> kPalette = {
-    TColor::GetColor("#333333"),
-    TColor::GetColor("#666666"),
-    TColor::GetColor("#e41a1c"),
-    TColor::GetColor("#377eb8"),
-    TColor::GetColor("#4daf4a"),
-    TColor::GetColor("#ff7f00"),
-    TColor::GetColor("#984ea3"),
-    TColor::GetColor("#ffff33"),
-    TColor::GetColor("#1b9e77"),
-    TColor::GetColor("#f781bf"),
-    TColor::GetColor("#a65628"),
-    TColor::GetColor("#66a61e"),
-    TColor::GetColor("#e6ab02"),
-    TColor::GetColor("#a6cee3"),
-    TColor::GetColor("#b15928")
+    TColor::GetColor("#4C4C4C"),
+    TColor::GetColor("#7F7F7F"),
+    TColor::GetColor("#0072B2"),
+    TColor::GetColor("#D55E00"),
+    TColor::GetColor("#009E73"),
+    TColor::GetColor("#CC79A7"),
+    TColor::GetColor("#E69F00"),
+    TColor::GetColor("#56B4E9"),
+    TColor::GetColor("#B79F00"),
+    TColor::GetColor("#7F3C8D"),
+    TColor::GetColor("#11A579"),
+    TColor::GetColor("#3969AC"),
+    TColor::GetColor("#E73F74"),
+    TColor::GetColor("#80BA5A"),
+    TColor::GetColor("#A9A9A9")
 };
 inline std::size_t safe_idx(int lab) {
   if (lab < 0) return 0;
@@ -102,13 +114,17 @@ inline std::vector<double> make_log_edges(double xmin, double xmax, int bins_per
     edges.push_back(std::pow(10.0, lx + (ux - lx) * (double(i) / nbins)));
   return edges;
 }
+inline double next_pow10(double x) {
+  if (x <= 1.0) return 1.0;
+  return std::pow(10.0, std::ceil(std::log10(x)));
+}
 
 void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
                                          bool use_event_counts   = true,
                                          bool normalize_to_pdf   = true,
-                                         int nbins               = 60,     // (unused: kept for API compatibility)
-                                         double xmin             = 0.0,     // (unused)
-                                         double xmax             = 80000.0, // (unused)
+                                         int /*nbins_unused*/    = 60,
+                                         double /*xmin_unused*/  = 0.0,
+                                         double /*xmax_unused*/  = 80000.0,
                                          const char* beamline    = "numi-fhc",
                                          const char* period      = "run1",
                                          const char* config_path = "data/samples.json") {
@@ -140,12 +156,14 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
   if (nlabels <= 0) { std::cerr << "No labels found.\n"; return; }
 
   for (const auto& p : planes) {
-    std::vector<std::unique_ptr<TH1D>> H(nlabels);
-    // Finer, log-spaced binning in [1, 1e4]
+    const int max_seen = discover_max_sem_count(mc, p.col);
+    const double xmax_auto = std::max(1.0, next_pow10(static_cast<double>(max_seen)));
     constexpr int kBinsPerDecade = 40;
-    const std::vector<double> log_edges = make_log_edges(1.0, 1e4, kBinsPerDecade);
+    const std::vector<double> log_edges = make_log_edges(1.0, xmax_auto, kBinsPerDecade);
 
-    // pool all MC entries, no channel split
+    std::vector<std::unique_ptr<TH1D>> H(nlabels);
+
+    // Pool all MC entries, no channel split
     for (size_t ie = 0; ie < mc.size(); ++ie) {
       const rarexsec::Entry* e = mc[ie];
       if (!e) continue;
@@ -154,13 +172,14 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
       for (int lab = 0; lab < nlabels; ++lab) {
         const std::string col = std::string("_rx_sc_") + p.tag + "_" + std::to_string(lab);
         auto n1 = n0.Define(col, [lab](const std::vector<int>& v){ return sem_count(v, lab); }, {p.col});
+        auto n2 = n1.Filter([](double x){ return x > 0.0; }, {col});
 
         ROOT::RDF::TH1DModel model(
             ("h_"+std::string(p.tag)+"_lab"+std::to_string(lab)+"_src"+std::to_string(ie)).c_str(),
             (";"+std::string(p.pretty)+"-plane semantic COUNT;Events").c_str(),
             static_cast<int>(log_edges.size() - 1),
             log_edges.data());
-        auto rr = n1.Histo1D(model, col, "w_nominal");
+        auto rr = n2.Histo1D(model, col, "w_nominal");
 
         const TH1D& part = rr.GetValue();
         if (!H[lab]) {
@@ -217,18 +236,23 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
 
     frame->SetMaximum( (ymax>0 ? 1.35*ymax : 1.) );
     frame->SetMinimum(0.0);
-    // Show exactly [1, 1e4] on the x-axis
-    frame->GetXaxis()->SetRangeUser(1., 1e4);
+    frame->GetXaxis()->SetRangeUser(1., xmax_auto);
     frame->Draw("HIST");
 
     for (int lab = 0; lab < nlabels; ++lab)
       if (H[lab].get() != frame) H[lab]->Draw("HIST SAME");
 
-    // Legend in its own pad (top), using requested labels & colors
+    // Legend in its own pad (top), sized to pad boundaries
     pad_leg->cd();
-    TLegend leg(0.02, 0.05, 0.98, 0.95);
-    leg.SetBorderSize(0); leg.SetFillStyle(0); leg.SetTextFont(42); leg.SetTextSize(0.035);
-    leg.SetNColumns(nlabels > 10 ? 4 : (nlabels > 6 ? 3 : 2));
+    TLegend leg;
+    leg.SetX1NDC(0.02); leg.SetY1NDC(0.05);
+    leg.SetX2NDC(0.98); leg.SetY2NDC(0.95);
+    leg.SetBorderSize(0);
+    leg.SetFillStyle(0);
+    leg.SetTextFont(42);
+    const int n_entries = std::count_if(H.begin(), H.end(), [](const auto& p){ return (bool)p; });
+    leg.SetNColumns(n_entries > 12 ? 4 : (n_entries > 8 ? 3 : 2));
+    leg.SetTextSize(0.035);
     for (int lab = 0; lab < nlabels; ++lab) if (H[lab]) {
       // Ensure legend line style/color match the plot
       H[lab]->SetLineColor(color_for_label(lab));
