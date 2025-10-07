@@ -36,7 +36,7 @@ static const double kSFV_Ymin = -110.0, kSFV_Ymax = 110.0;
 static const double kSFV_Zmin =  20.0,  kSFV_Zmax = 986.0;
 
 // ------------------ Binning (for maps) ------------------
-static const int kNX = 26, kNY = 24, kNZ = 52;
+static const int kNX = 200, kNY = 180, kNZ = 400; 
 
 // ------------------ Analytic knobs (six-face, but symmetric defaults) ------------------
 // Acceptance per face uses a simple exponential approach to plateau.
