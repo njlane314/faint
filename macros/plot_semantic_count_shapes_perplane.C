@@ -8,6 +8,7 @@
 #include <TLatex.h>
 #include <TStyle.h>
 #include <TGaxis.h>
+#include <algorithm>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -72,10 +73,8 @@ static const std::vector<std::string> kDefaultSemanticNames = {
 };
 
 static std::string label_name_from_map(int i, int nlabels) {
-  if (i >= 0 && i < (int)kDefaultSemanticNames.size() && (int)kDefaultSemanticNames.size() == nlabels) {
-    return kDefaultSemanticNames[i];
-  }
-  // Fallback if the default list doesn't match exactly
+  // Use known names when available; gracefully fall back for extras.
+  if (i >= 0 && i < (int)kDefaultSemanticNames.size()) return kDefaultSemanticNames[i];
   std::ostringstream ss; ss << "label " << i; return ss.str();
 }
 
@@ -167,6 +166,11 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
 
     const std::string cname = std::string("c_cnt_") + p.tag;
     TCanvas c(cname.c_str(), cname.c_str(), 900, 700);
+    c.cd();
+    gPad->SetLeftMargin(0.14);   // better y-axis margin for long tick labels
+    gPad->SetRightMargin(0.04);
+    gPad->SetTopMargin(0.06);
+    gPad->SetBottomMargin(0.12);
 
     TH1D* frame = nullptr;
     for (int lab = 0; lab < nlabels; ++lab) if (H[lab]) { frame = H[lab].get(); break; }
@@ -179,16 +183,34 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
     frame->GetXaxis()->SetMaxDigits(4);
     frame->GetYaxis()->SetMaxDigits(4);
 
-    frame->SetMaximum( (ymax>0 ? 1.25*ymax : 1.) );
+    frame->SetMaximum( (ymax>0 ? 1.35*ymax : 1.) );
     frame->SetMinimum(0.0);
     frame->Draw("HIST");
 
     for (int lab = 0; lab < nlabels; ++lab)
       if (H[lab].get() != frame) H[lab]->Draw("HIST SAME");
 
-    // Legend with proper semantic names
-    TLegend leg(0.55, 0.65, 0.88, 0.88);
+    // Auto-trim the x-axis to the 99.5% quantile of the summed distribution (with 5% headroom)
+    {
+      std::unique_ptr<TH1D> sum;
+      for (int lab = 0; lab < nlabels; ++lab) if (H[lab]) {
+        if (!sum) { sum.reset(static_cast<TH1D*>(H[lab]->Clone("h_sum"))); sum->SetDirectory(nullptr); }
+        else      { sum->Add(H[lab].get()); }
+      }
+      if (sum && sum->Integral() > 0.0) {
+        double qx = xmax;
+        double prob = 0.995;                  // keep 99.5% of events
+        sum->GetQuantiles(1, &qx, &prob);
+        qx = std::min(qx * 1.05, xmax);       // 5% headroom, never exceed original xmax
+        qx = std::max(qx, xmin + 1.0);        // avoid a degenerate range
+        frame->GetXaxis()->SetRangeUser(xmin, qx);
+      }
+    }
+
+    // Legend with proper semantic names at the top; multi-column if many labels
+    TLegend leg(0.12, 0.82, 0.98, 0.98);
     leg.SetBorderSize(0); leg.SetFillStyle(0); leg.SetTextFont(42);
+    leg.SetNColumns(nlabels > 6 ? 3 : 2);
     for (int lab = 0; lab < nlabels; ++lab) if (H[lab]) {
       leg.AddEntry(H[lab].get(), label_name_from_map(lab, nlabels).c_str(), "l");
     }
