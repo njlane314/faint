@@ -12,6 +12,7 @@
 
 #include "rarexsec/Hub.hh"
 #include "rarexsec/plot/StackedHist.hh"
+#include "rarexsec/plot/UnstackedHist.hh"
 #include "rarexsec/plot/Types.hh"
 
 namespace rarexsec::plot {
@@ -37,6 +38,24 @@ public:
                                const std::vector<const Entry*>& data) const {
         set_global_style();
         StackedHist plot(spec, opt_, mc, data);
+        plot.draw_and_save(opt_.image_format);
+    }
+
+    void draw_unstacked_by_channel(const H1Spec& spec,
+                                   const std::vector<const Entry*>& mc,
+                                   bool normalize_to_pdf = true,
+                                   int line_width = 3) const {
+        static const std::vector<const Entry*> empty_data{};
+        draw_unstacked_by_channel(spec, mc, empty_data, normalize_to_pdf, line_width);
+    }
+
+    void draw_unstacked_by_channel(const H1Spec& spec,
+                                   const std::vector<const Entry*>& mc,
+                                   const std::vector<const Entry*>& data,
+                                   bool normalize_to_pdf,
+                                   int line_width) const {
+        set_global_style();
+        UnstackedHist plot(spec, opt_, mc, data, normalize_to_pdf, line_width);
         plot.draw_and_save(opt_.image_format);
     }
 
