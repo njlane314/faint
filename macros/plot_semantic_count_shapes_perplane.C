@@ -8,6 +8,9 @@
 #include <TLatex.h>
 #include <TStyle.h>
 #include <TGaxis.h>
+#include <TPad.h>
+#include <TColor.h>
+#include <array>
 #include <algorithm>
 #include <stdexcept>
 #include <string>
@@ -15,6 +18,7 @@
 #include <memory>
 #include <sstream>
 #include <iostream>
+#include <cmath>
 
 #include "rarexsec/Hub.hh"
 #include "rarexsec/proc/Selection.hh"
@@ -51,48 +55,60 @@ static int discover_num_labels(const std::vector<const rarexsec::Entry*>& sample
   return nlabels;
 }
 
-// --------- semantic label naming ---------
-// Provide a sensible default mapping; if nlabels is different, we’ll fall back to "label i" for extras.
-// You can edit the names below to match your training/semantic scheme.
-static const std::vector<std::string> kDefaultSemanticNames = {
-  "Other/Background",     // 0
-  "Track-like (MIP)",     // 1
-  "Shower-like (EM)",     // 2
-  "Michel e^{-}",         // 3
-  "δ-ray e^{-}",          // 4
-  "Low-E deposit",        // 5
-  "HIP (Bragg)",          // 6
-  "Neutron-like",         // 7
-  "Proton-like",          // 8
-  "Pion-like",            // 9
-  "Kaon-like",            // 10
-  "γ/π^{0}",              // 11
-  "Cosmic μ",             // 12
-  "Cosmic shower",        // 13
-  "Noise/Dead"            // 14
+// ─────────────────────────────────────────────────────────────────────────────
+// Requested legend labels and palette (15 classes). Index = semantic label id.
+constexpr std::size_t kPaletteSize = 15;
+const std::array<const char*, kPaletteSize> kLegendLabels = {
+    "#emptyset",
+    "Cosmic",      "#mu",        "e^{-}",     "#gamma",
+    "#pi^{#pm}",   "#pi^{0}",    "n",         "p",
+    "K^{#pm}",     "K^{0}",      "#Lambda",   "#Sigma^{#pm}",
+    "#Sigma^{0}",  "Other"
 };
-
-static std::string label_name_from_map(int i, int nlabels) {
-  // Use known names when available; gracefully fall back for extras.
-  if (i >= 0 && i < (int)kDefaultSemanticNames.size()) return kDefaultSemanticNames[i];
-  std::ostringstream ss; ss << "label " << i; return ss.str();
+const std::array<int, kPaletteSize> kPalette = {
+    TColor::GetColor("#333333"),
+    TColor::GetColor("#666666"),
+    TColor::GetColor("#e41a1c"),
+    TColor::GetColor("#377eb8"),
+    TColor::GetColor("#4daf4a"),
+    TColor::GetColor("#ff7f00"),
+    TColor::GetColor("#984ea3"),
+    TColor::GetColor("#ffff33"),
+    TColor::GetColor("#1b9e77"),
+    TColor::GetColor("#f781bf"),
+    TColor::GetColor("#a65628"),
+    TColor::GetColor("#66a61e"),
+    TColor::GetColor("#e6ab02"),
+    TColor::GetColor("#a6cee3"),
+    TColor::GetColor("#b15928")
+};
+inline std::size_t safe_idx(int lab) {
+  if (lab < 0) return 0;
+  return static_cast<std::size_t>(lab) < kPaletteSize ? static_cast<std::size_t>(lab) : kPaletteSize - 1;
+}
+inline std::string label_text(int lab) {
+  return kLegendLabels[safe_idx(lab)];
+}
+inline int color_for_label(int lab) {
+  return kPalette[safe_idx(lab)];
 }
 
-// simple (colorblind-friendly-ish) palette
-static int color_for_label(int i){
-  static const int P[] = {
-    kBlack, kRed+1, kAzure+2, kGreen+2, kOrange+7, kMagenta+1,
-    kCyan+2, kViolet+1, kTeal+3, kPink+7, kGray+2
-  };
-  return P[i % (int)(sizeof(P)/sizeof(int))];
+// Log-spaced bin edges helper (for x in [xmin, xmax])
+inline std::vector<double> make_log_edges(double xmin, double xmax, int bins_per_decade = 40) {
+  const double lx = std::log10(xmin), ux = std::log10(xmax);
+  const int nbins = std::max(1, static_cast<int>(std::round((ux - lx) * bins_per_decade)));
+  std::vector<double> edges; edges.reserve(nbins + 1);
+  for (int i = 0; i <= nbins; ++i)
+    edges.push_back(std::pow(10.0, lx + (ux - lx) * (double(i) / nbins)));
+  return edges;
 }
 
 void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
                                          bool use_event_counts   = true,
                                          bool normalize_to_pdf   = true,
-                                         int nbins               = 60,
-                                         double xmin             = 0.0,
-                                         double xmax             = 80000.0,
+                                         int nbins               = 60,     // (unused: kept for API compatibility)
+                                         double xmin             = 0.0,     // (unused)
+                                         double xmax             = 80000.0, // (unused)
                                          const char* beamline    = "numi-fhc",
                                          const char* period      = "run1",
                                          const char* config_path = "data/samples.json") {
@@ -125,6 +141,9 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
 
   for (const auto& p : planes) {
     std::vector<std::unique_ptr<TH1D>> H(nlabels);
+    // Finer, log-spaced binning in [1, 1e4]
+    constexpr int kBinsPerDecade = 40;
+    const std::vector<double> log_edges = make_log_edges(1.0, 1e4, kBinsPerDecade);
 
     // pool all MC entries, no channel split
     for (size_t ie = 0; ie < mc.size(); ++ie) {
@@ -136,11 +155,11 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
         const std::string col = std::string("_rx_sc_") + p.tag + "_" + std::to_string(lab);
         auto n1 = n0.Define(col, [lab](const std::vector<int>& v){ return sem_count(v, lab); }, {p.col});
 
-        auto rr = n1.Histo1D(
-            ROOT::RDF::TH1DModel(("h_"+std::string(p.tag)+"_lab"+std::to_string(lab)+"_src"+std::to_string(ie)).c_str(),
-                                 (";"+std::string(p.pretty)+"-plane semantic COUNT;Events").c_str(),
-                                 nbins, xmin, xmax),
-            col, "w_nominal");
+        ROOT::RDF::TH1DModel model(
+            ("h_"+std::string(p.tag)+"_lab"+std::to_string(lab)+"_src"+std::to_string(ie)).c_str(),
+            (";"+std::string(p.pretty)+"-plane semantic COUNT;Events").c_str(),
+            log_edges);
+        auto rr = n1.Histo1D(model, col, "w_nominal");
 
         const TH1D& part = rr.GetValue();
         if (!H[lab]) {
@@ -166,11 +185,22 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
 
     const std::string cname = std::string("c_cnt_") + p.tag;
     TCanvas c(cname.c_str(), cname.c_str(), 900, 700);
-    c.cd();
-    gPad->SetLeftMargin(0.14);   // better y-axis margin for long tick labels
-    gPad->SetRightMargin(0.04);
-    gPad->SetTopMargin(0.06);
-    gPad->SetBottomMargin(0.12);
+    // Split canvas: legend on top, plot below.
+    TPad* pad_main = new TPad(("pad_main_"+std::string(p.tag)).c_str(),
+                              "pad_main", 0., 0.00, 1., 0.78);
+    TPad* pad_leg  = new TPad(("pad_leg_"+std::string(p.tag)).c_str(),
+                              "pad_leg",  0., 0.78, 1., 1.00);
+    pad_main->SetLeftMargin(0.14);
+    pad_main->SetRightMargin(0.05);
+    pad_main->SetTopMargin(0.02);
+    pad_main->SetBottomMargin(0.12);
+    pad_main->SetLogx();               // requested log-x
+    pad_leg->SetTopMargin(0.06);
+    pad_leg->SetBottomMargin(0.10);
+    pad_leg->SetLeftMargin(0.02);
+    pad_leg->SetRightMargin(0.02);
+    pad_main->Draw(); pad_leg->Draw();
+    pad_main->cd();
 
     TH1D* frame = nullptr;
     for (int lab = 0; lab < nlabels; ++lab) if (H[lab]) { frame = H[lab].get(); break; }
@@ -179,42 +209,32 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
     // No plot title — only axis titles. Also: no exponents on axes.
     frame->SetTitle((";"+std::string(p.pretty)+"-plane semantic COUNT;"+std::string(normalize_to_pdf ? "Probability density" : "Events")).c_str());
     frame->GetXaxis()->SetNoExponent(true);
+    frame->GetXaxis()->SetMoreLogLabels(true);
     frame->GetYaxis()->SetNoExponent(true);
     frame->GetXaxis()->SetMaxDigits(4);
     frame->GetYaxis()->SetMaxDigits(4);
 
     frame->SetMaximum( (ymax>0 ? 1.35*ymax : 1.) );
     frame->SetMinimum(0.0);
+    // Show exactly [1, 1e4] on the x-axis
+    frame->GetXaxis()->SetRangeUser(1., 1e4);
     frame->Draw("HIST");
 
     for (int lab = 0; lab < nlabels; ++lab)
       if (H[lab].get() != frame) H[lab]->Draw("HIST SAME");
 
-    // Auto-trim the x-axis to the 99.5% quantile of the summed distribution (with 5% headroom)
-    {
-      std::unique_ptr<TH1D> sum;
-      for (int lab = 0; lab < nlabels; ++lab) if (H[lab]) {
-        if (!sum) { sum.reset(static_cast<TH1D*>(H[lab]->Clone("h_sum"))); sum->SetDirectory(nullptr); }
-        else      { sum->Add(H[lab].get()); }
-      }
-      if (sum && sum->Integral() > 0.0) {
-        double qx = xmax;
-        double prob = 0.995;                  // keep 99.5% of events
-        sum->GetQuantiles(1, &qx, &prob);
-        qx = std::min(qx * 1.05, xmax);       // 5% headroom, never exceed original xmax
-        qx = std::max(qx, xmin + 1.0);        // avoid a degenerate range
-        frame->GetXaxis()->SetRangeUser(xmin, qx);
-      }
-    }
-
-    // Legend with proper semantic names at the top; multi-column if many labels
-    TLegend leg(0.12, 0.82, 0.98, 0.98);
-    leg.SetBorderSize(0); leg.SetFillStyle(0); leg.SetTextFont(42);
-    leg.SetNColumns(nlabels > 6 ? 3 : 2);
+    // Legend in its own pad (top), using requested labels & colors
+    pad_leg->cd();
+    TLegend leg(0.02, 0.05, 0.98, 0.95);
+    leg.SetBorderSize(0); leg.SetFillStyle(0); leg.SetTextFont(42); leg.SetTextSize(0.035);
+    leg.SetNColumns(nlabels > 10 ? 4 : (nlabels > 6 ? 3 : 2));
     for (int lab = 0; lab < nlabels; ++lab) if (H[lab]) {
-      leg.AddEntry(H[lab].get(), label_name_from_map(lab, nlabels).c_str(), "l");
+      // Ensure legend line style/color match the plot
+      H[lab]->SetLineColor(color_for_label(lab));
+      leg.AddEntry(H[lab].get(), label_text(lab).c_str(), "l");
     }
     leg.Draw();
+    pad_main->cd();
 
     // No TLatex banner/title here.
 
