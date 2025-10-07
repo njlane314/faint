@@ -69,27 +69,32 @@ void plot_active_pixels_by_channel(const char* extra_libs   = "",
   const char* Wimg = use_event_images ? "event_detector_image_w" : "detector_image_w";
 
   // Axis range (absolute counts)
+  auto up = [](char c){ return static_cast<char>(std::toupper(static_cast<unsigned char>(c))); };
+  const std::string plane_key = plane ? plane : "sum";
+  std::string plane_upper;
+  plane_upper.reserve(plane_key.size());
+  for (char c : plane_key) plane_upper.push_back(up(c));
+
   const double NPIX_plane = 512.0 * 512.0;            // per plane
   const double NPIX_sum   = 3.0 * NPIX_plane;         // U+V+W
   if (xmax <= 0.0) {
-    xmax = (std::string(plane) == "sum") ? NPIX_sum : NPIX_plane;
+    xmax = (plane_upper == "SUM") ? NPIX_sum : NPIX_plane;
   }
 
   // Build expression for the chosen plane/sum
   std::string expr, x_title, id, title;
-  auto up = [](char c){ return static_cast<char>(std::toupper(static_cast<unsigned char>(c))); };
 
-  if (std::string(plane) == "u") {
+  if (plane_upper == "U") {
     expr   = std::string("active_pixels(") + Uimg + "," + std::to_string(adc_thr) + ")";
     x_title= "Active pixels (U plane)";
     id     = "active_pixels_u";
     title  = ";Active pixels (U plane);Events";
-  } else if (std::string(plane) == "v") {
+  } else if (plane_upper == "V") {
     expr   = std::string("active_pixels(") + Vimg + "," + std::to_string(adc_thr) + ")";
     x_title= "Active pixels (V plane)";
     id     = "active_pixels_v";
     title  = ";Active pixels (V plane);Events";
-  } else if (std::string(plane) == "w") {
+  } else if (plane_upper == "W") {
     expr   = std::string("active_pixels(") + Wimg + "," + std::to_string(adc_thr) + ")";
     x_title= "Active pixels (W plane)";
     id     = "active_pixels_w";
