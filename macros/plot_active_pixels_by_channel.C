@@ -34,18 +34,24 @@ static void load_libs(const char* extra_libs) {
 }
 
 // Return the ABSOLUTE COUNT of active pixels (> thr) in a single image container
+namespace {
+
 template <typename Image>
-double active_pixels(const Image& img, double thr) {
+double active_pixels_impl(const Image& img, double thr) {
   if (img.empty()) return 0.0;
   std::size_t k = 0; for (float q : img) if (std::isfinite(q) && q > thr) ++k;
   return static_cast<double>(k);
 }
 
+}  // namespace
+
+double active_pixels(const std::vector<float>& img, double thr) {
+  return active_pixels_impl(img, thr);
+}
+
 // Overload for RDF columns backed by RVec<float>
 double active_pixels(const ROOT::VecOps::RVec<float>& img, double thr) {
-  if (img.empty()) return 0.0;
-  std::size_t k = 0; for (float q : img) if (std::isfinite(q) && q > thr) ++k;
-  return static_cast<double>(k);
+  return active_pixels_impl(img, thr);
 }
 
 // ---------------- Main entry ----------------
