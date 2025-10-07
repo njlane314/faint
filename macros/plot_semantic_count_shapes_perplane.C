@@ -105,6 +105,21 @@ inline int color_for_label(int lab) {
   return kPalette[safe_idx(lab)];
 }
 
+static double occupied_xmax(const std::vector<std::unique_ptr<TH1D>>& histos) {
+  double xmax = 1.0;
+  for (const auto& h : histos) {
+    if (!h) continue;
+    const int nb = h->GetNbinsX();
+    for (int ib = nb; ib >= 1; --ib) {
+      if (h->GetBinContent(ib) > 0.0) {
+        xmax = std::max(xmax, h->GetXaxis()->GetBinUpEdge(ib));
+        break;
+      }
+    }
+  }
+  return xmax;
+}
+
 // Log-spaced bin edges helper (for x in [xmin, xmax])
 inline std::vector<double> make_log_edges(double xmin, double xmax, int bins_per_decade = 40) {
   const double lx = std::log10(xmin), ux = std::log10(xmax);
@@ -236,7 +251,8 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
 
     frame->SetMaximum( (ymax>0 ? 1.35*ymax : 1.) );
     frame->SetMinimum(0.0);
-    frame->GetXaxis()->SetRangeUser(1., xmax_auto);
+    const double xmax_used = std::max(1.0, std::min(xmax_auto, occupied_xmax(H) * 1.05));
+    frame->GetXaxis()->SetRangeUser(1., xmax_used);
     frame->Draw("HIST");
 
     for (int lab = 0; lab < nlabels; ++lab)
