@@ -11,7 +11,7 @@
 #include <iostream>
 
 #include <rarexsec/Hub.hh>
-#include <rarexsec/Selection.hh>
+#include <rarexsec/proc/Selection.hh>
 #include <rarexsec/Plotter.hh>               // H1Spec, Options
 #include <rarexsec/plot/UnstackedHist.hh>    // overlay-by-channel plotter
 
