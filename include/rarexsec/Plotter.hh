@@ -9,6 +9,7 @@
 
 #include <TROOT.h>
 #include <TStyle.h>
+#include <TGaxis.h>
 
 #include "rarexsec/Hub.hh"
 #include "rarexsec/plot/StackedHist.hh"
@@ -120,8 +121,12 @@ public:
         style->SetTitleOffset(0.93, "X");
         style->SetTitleOffset(1.06, "Y");
         style->SetOptStat(0);
+        style->SetOptTitle(0);            // NEW: kill the ROOT title box
         style->SetPadTickX(1);
         style->SetPadTickY(1);
+
+        // Keep numbers readable (no ×10^n on axes, and limit digits)
+        TGaxis::SetMaxDigits(4);          // NEW: fewer digits before exponent kicks in
         style->SetPadLeftMargin(0.15);
         style->SetPadRightMargin(0.05);
         style->SetPadTopMargin(0.07);

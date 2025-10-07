@@ -187,18 +187,21 @@ void UnstackedHist::draw_curves(TPad* p_main, double& max_y) {
   TH1D* frame = mc_ch_hists_.front().get();
 
   if (spec_.xmin < spec_.xmax) frame->GetXaxis()->SetLimits(spec_.xmin, spec_.xmax);
-  frame->SetTitle((spec_.title.empty() ? (";"+opt_.x_title+";"+opt_.y_title) : spec_.title).c_str());
-  if (!opt_.x_title.empty()) frame->GetXaxis()->SetTitle(opt_.x_title.c_str());
-  if (!opt_.y_title.empty()) frame->GetYaxis()->SetTitle(opt_.y_title.c_str());
-  if (normalize_to_pdf_)      frame->GetYaxis()->SetTitle("Probability density");
+
+  // Title: only axis titles, no main title.
+  frame->SetTitle((std::string(";") + opt_.x_title + ";" + (normalize_to_pdf_ ? "Probability density" : opt_.y_title)).c_str());
+
+  // NEW: readable numeric scale (no ×10^n)
+  frame->GetXaxis()->SetNoExponent(true);
+  frame->GetYaxis()->SetNoExponent(true);
+  frame->GetXaxis()->SetMaxDigits(4);
+  frame->GetYaxis()->SetMaxDigits(4);
 
   frame->SetMaximum(max_y * (opt_.use_log_y ? 10. : 1.3));
   frame->SetMinimum(opt_.use_log_y ? 0.1 : opt_.y_min);
 
   frame->Draw("HIST");
-  for (size_t i = 1; i < mc_ch_hists_.size(); ++i) {
-    mc_ch_hists_[i]->Draw("HIST SAME");
-  }
+  for (size_t i = 1; i < mc_ch_hists_.size(); ++i) mc_ch_hists_[i]->Draw("HIST SAME");
   if (data_hist_) data_hist_->Draw("E1 SAME");
 }
 
