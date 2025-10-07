@@ -158,7 +158,8 @@ void plot_semantic_count_shapes_perplane(const char* extra_libs = "",
         ROOT::RDF::TH1DModel model(
             ("h_"+std::string(p.tag)+"_lab"+std::to_string(lab)+"_src"+std::to_string(ie)).c_str(),
             (";"+std::string(p.pretty)+"-plane semantic COUNT;Events").c_str(),
-            log_edges);
+            static_cast<int>(log_edges.size() - 1),
+            log_edges.data());
         auto rr = n1.Histo1D(model, col, "w_nominal");
 
         const TH1D& part = rr.GetValue();
