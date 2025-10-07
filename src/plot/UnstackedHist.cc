@@ -15,6 +15,7 @@
 #include <memory>
 #include <numeric>
 #include <sstream>
+#include <stdexcept>
 #include <utility>
 #include <vector>
 #include <array>
@@ -123,6 +124,10 @@ void UnstackedHist::build_histograms() {
   // Book variable, log-spaced binning for x in [1, 1e4]
   constexpr int kBinsPerDecade = 40; // finer binning; adjust if needed
   const std::vector<double> log_edges = make_log_edges(1.0, 1e4, kBinsPerDecade);
+  const int nbins = static_cast<int>(log_edges.size()) - 1;
+  if (nbins <= 0) {
+    throw std::runtime_error("log-spaced histogram requires at least two bin edges");
+  }
 
   // Book per-channel histograms across all MC entries
   std::map<int, std::vector<ROOT::RDF::RResultPtr<TH1D>>> booked_mc;
@@ -138,8 +143,11 @@ void UnstackedHist::build_histograms() {
 
     for (int ch : channels) {
       auto nf = n.Filter([ch](int c){ return c == ch; }, {"analysis_channels"});
-      ROOT::RDF::TH1DModel model((spec_.id+"_mc_ch"+std::to_string(ch)+"_src"+std::to_string(ie)).c_str(),
-                                 "", log_edges);
+      ROOT::RDF::TH1DModel model(
+          (spec_.id+"_mc_ch"+std::to_string(ch)+"_src"+std::to_string(ie)).c_str(),
+          "",
+          nbins,
+          log_edges.data());
       auto h  = nf.Histo1D(model, var, spec_.weight);
       booked_mc[ch].push_back(h);
     }
@@ -200,7 +208,10 @@ void UnstackedHist::build_histograms() {
       auto n0 = selection::apply(e->rnode(), spec_.sel, *e);
       auto n  = (spec_.expr.empty() ? n0 : n0.Define("_rx_expr_", spec_.expr));
       const std::string var = spec_.expr.empty() ? spec_.id : "_rx_expr_";
-      ROOT::RDF::TH1DModel model((spec_.id+"_data_src"+std::to_string(ie)).c_str(), "", log_edges);
+      ROOT::RDF::TH1DModel model((spec_.id+"_data_src"+std::to_string(ie)).c_str(),
+                                 "",
+                                 nbins,
+                                 log_edges.data());
       parts.push_back(n.Histo1D(model, var));
     }
     for (auto& rr : parts) {
