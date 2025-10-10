@@ -16,7 +16,7 @@
 #include "TLegend.h"
 #include "TStyle.h"
 
-#include <ROOT/RDataFrame.hxx> // for RDF::RNode (only declaration usage here)
+#include <ROOT/RDataFrame.hxx>
 
 namespace rarexsec {
 namespace plot {
@@ -30,7 +30,6 @@ public:
         return Mode::Detector;
     }
 
-    // ---- Per-image spec & options (same pattern as StackedHist) ----
     struct Spec {
         std::string id;          ///< Unique identifier (used in file names)
         std::string title;       ///< Canvas / histogram title
