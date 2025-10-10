@@ -1,154 +1,55 @@
 #pragma once
 
-#include <iomanip>
-#include <memory>
-#include <sstream>
 #include <string>
-#include <utility>
 #include <vector>
 
-#include <TROOT.h>
-#include <TStyle.h>
-#include <TGaxis.h>
-
 #include "rarexsec/Hub.hh"
-#include "rarexsec/plot/StackedHist.hh"
-#include "rarexsec/plot/UnstackedHist.hh"
 #include "rarexsec/plot/Types.hh"
+
+class TMatrixDSym;
 
 namespace rarexsec::plot {
 
 class Plotter {
 public:
-    Plotter() = default;
-    explicit Plotter(Options opt) : opt_(std::move(opt)) {}
+    Plotter();
+    explicit Plotter(Options opt);
 
-    const Options& options() const noexcept { return opt_; }
-    Options& options() noexcept { return opt_; }
+    const Options& options() const noexcept;
+    Options& options() noexcept;
 
-    void set_options(Options opt) { opt_ = std::move(opt); }
+    void set_options(Options opt);
 
     void draw_stack_by_channel(const H1Spec& spec,
-                               const std::vector<const Entry*>& mc) const {
-        static const std::vector<const Entry*> empty_data{};
-        draw_stack_by_channel(spec, mc, empty_data);
-    }
+                               const std::vector<const Entry*>& mc) const;
 
     void draw_stack_by_channel(const H1Spec& spec,
                                const std::vector<const Entry*>& mc,
-                               const std::vector<const Entry*>& data) const {
-        set_global_style();
-        StackedHist plot(spec, opt_, mc, data);
-        plot.draw_and_save(opt_.image_format);
-    }
+                               const std::vector<const Entry*>& data) const;
 
     void draw_unstacked_by_channel(const H1Spec& spec,
                                    const std::vector<const Entry*>& mc,
                                    bool normalize_to_pdf = true,
-                                   int line_width = 3) const {
-        static const std::vector<const Entry*> empty_data{};
-        draw_unstacked_by_channel(spec, mc, empty_data, normalize_to_pdf, line_width);
-    }
+                                   int line_width = 3) const;
 
     void draw_unstacked_by_channel(const H1Spec& spec,
                                    const std::vector<const Entry*>& mc,
                                    const std::vector<const Entry*>& data,
                                    bool normalize_to_pdf,
-                                   int line_width) const {
-        set_global_style();
-        UnstackedHist plot(spec, opt_, mc, data, normalize_to_pdf, line_width);
-        plot.draw_and_save(opt_.image_format);
-    }
+                                   int line_width) const;
 
     void draw_stack_by_channel_with_cov(const H1Spec& spec,
                                         const std::vector<const Entry*>& mc,
                                         const std::vector<const Entry*>& data,
-                                        const TMatrixDSym& total_cov) const {
-        set_global_style();
-        auto opt2 = opt_;
-        opt2.total_cov = std::make_shared<TMatrixDSym>(total_cov);
-        StackedHist plot(spec, std::move(opt2), mc, data);
-        plot.draw_and_save(opt2.image_format);
-    }
+                                        const TMatrixDSym& total_cov) const;
 
-    static std::string sanitise(const std::string& name) {
-        return detail::sanitise_id(name);
-    }
+    static std::string sanitise(const std::string& name);
+    static std::string fmt_commas(double value, int precision);
 
-    static std::string fmt_commas(double value, int precision) {
-        std::ostringstream ss;
-        if (precision >= 0) {
-            ss << std::fixed << std::setprecision(precision);
-        }
-        ss << value;
-        std::string text = ss.str();
-        const auto pos = text.find('.');
-        std::string integer = pos == std::string::npos ? text : text.substr(0, pos);
-        std::string fraction = pos == std::string::npos ? std::string{} : text.substr(pos);
-        bool negative = false;
-        if (!integer.empty() && integer.front() == '-') {
-            negative = true;
-            integer.erase(integer.begin());
-        }
-        std::string with_commas;
-        for (std::size_t i = 0; i < integer.size(); ++i) {
-            if (i != 0 && (integer.size() - i) % 3 == 0) {
-                with_commas.push_back(',');
-            }
-            with_commas.push_back(integer[i]);
-        }
-        if (negative) {
-            with_commas.insert(with_commas.begin(), '-');
-        }
-        return with_commas + fraction;
-    }
-
-    void set_global_style() const {
-        const int font_style = 42;
-        TStyle* style = new TStyle("PlotterStyle", "Plotter Style");
-        style->SetTitleFont(font_style, "X");
-        style->SetTitleFont(font_style, "Y");
-        style->SetTitleFont(font_style, "Z");
-        style->SetTitleSize(0.05, "X");
-        style->SetTitleSize(0.05, "Y");
-        style->SetTitleSize(0.04, "Z");
-        style->SetLabelFont(font_style, "X");
-        style->SetLabelFont(font_style, "Y");
-        style->SetLabelFont(font_style, "Z");
-        style->SetLabelSize(0.045, "X");
-        style->SetLabelSize(0.045, "Y");
-        style->SetLabelSize(0.045, "Z");
-        style->SetTitleOffset(0.93, "X");
-        style->SetTitleOffset(1.06, "Y");
-        style->SetOptStat(0);
-        style->SetOptTitle(0);            // NEW: kill the ROOT title box
-        style->SetPadTickX(1);
-        style->SetPadTickY(1);
-
-        // Keep numbers readable (no ×10^n on axes, and limit digits)
-        TGaxis::SetMaxDigits(4);          // NEW: fewer digits before exponent kicks in
-        style->SetPadLeftMargin(0.15);
-        style->SetPadRightMargin(0.05);
-        style->SetPadTopMargin(0.07);
-        style->SetPadBottomMargin(0.12);
-        style->SetMarkerSize(1.0);
-        style->SetCanvasColor(0);
-        style->SetPadColor(0);
-        style->SetFrameFillColor(0);
-        style->SetCanvasBorderMode(0);
-        style->SetPadBorderMode(0);
-        style->SetStatColor(0);
-        style->SetFrameBorderMode(0);
-        style->SetLineWidth(2);
-        style->SetFrameLineWidth(2);
-        style->SetTitleFillColor(0);
-        style->SetTitleBorderSize(0);
-        gROOT->SetStyle("PlotterStyle");
-        gROOT->ForceStyle();
-    }
+    void set_global_style() const;
 
 private:
     Options opt_;
 };
 
-}  // namespace rarexsec::plot
+}
