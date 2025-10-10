@@ -11,7 +11,8 @@
 
 #include "rarexsec/proc/Selection.hh"
 
-namespace rarexsec::plot {
+namespace rarexsec {
+namespace plot {
 
 enum class CutDir { LessThan, GreaterThan };
 
@@ -63,7 +64,7 @@ struct TH1DModel {
 
     ROOT::RDF::TH1DModel model(const std::string& suffix = "") const {
         const std::string base = !id.empty() ? id : name;
-        const std::string hist_name = sanitise_id(base + suffix);
+        const std::string hist_name = sanitise(base + suffix);
         const std::string hist_title = title.empty() ? base : title;
         return ROOT::RDF::TH1DModel(hist_name.c_str(), hist_title.c_str(), nbins, xmin, xmax);
     }
@@ -80,7 +81,7 @@ struct TH1DModel {
     }
 
 private:
-    static std::string sanitise_id(const std::string& raw) {
+    static std::string sanitise(const std::string& raw) {
         std::string out;
         out.reserve(raw.size());
         for (unsigned char c : raw) {
@@ -101,4 +102,5 @@ private:
 
 using Histogram1DSpec = TH1DModel;
 
+}
 }
