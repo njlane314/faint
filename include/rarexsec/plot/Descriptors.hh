@@ -50,26 +50,6 @@ struct Options {
     std::string analysis_region_label;
 };
 
-namespace detail {
-inline std::string sanitise_id(const std::string& raw) {
-    std::string out;
-    out.reserve(raw.size());
-    for (unsigned char c : raw) {
-        if (std::isalnum(c) || c == '_' || c == '-') {
-            out.push_back(static_cast<char>(c));
-        } else if (c == '.' || c == ' ') {
-            out.push_back('_');
-        } else {
-            out.push_back('_');
-        }
-    }
-    if (out.empty()) {
-        return "plot";
-    }
-    return out;
-}
-}  // namespace detail
-
 struct TH1DModel {
     std::string id;
     std::string name;
@@ -83,7 +63,7 @@ struct TH1DModel {
 
     ROOT::RDF::TH1DModel model(const std::string& suffix = "") const {
         const std::string base = !id.empty() ? id : name;
-        const std::string hist_name = detail::sanitise_id(base + suffix);
+        const std::string hist_name = sanitise_id(base + suffix);
         const std::string hist_title = title.empty() ? base : title;
         return ROOT::RDF::TH1DModel(hist_name.c_str(), hist_title.c_str(), nbins, xmin, xmax);
     }
@@ -98,6 +78,27 @@ struct TH1DModel {
         }
         return ";" + base + ";Events";
     }
+
+private:
+    static std::string sanitise_id(const std::string& raw) {
+        std::string out;
+        out.reserve(raw.size());
+        for (unsigned char c : raw) {
+            if (std::isalnum(c) || c == '_' || c == '-') {
+                out.push_back(static_cast<char>(c));
+            } else if (c == '.' || c == ' ') {
+                out.push_back('_');
+            } else {
+                out.push_back('_');
+            }
+        }
+        if (out.empty()) {
+            return "plot";
+        }
+        return out;
+    }
 };
 
-}  // namespace rarexsec::plot
+using Histogram1DSpec = TH1DModel;
+
+}
