@@ -70,7 +70,7 @@ inline std::string sanitise_id(const std::string& raw) {
 }
 }  // namespace detail
 
-struct H1Spec {
+struct TH1DModel {
     std::string id;
     std::string name;
     std::string title;
@@ -99,7 +99,5 @@ struct H1Spec {
         return ";" + base + ";Events";
     }
 };
-
-using Hist1D = H1Spec;
 
 }  // namespace rarexsec::plot
