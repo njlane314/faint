@@ -392,7 +392,7 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     if (data_hist_)
         ++n_entries;
     if (n_entries > 0)
-        leg->SetNColumns(n_entries > 4 ? 3 : 2);
+        leg->SetNColumns(4);
 
     legend_proxies_.clear();
 
