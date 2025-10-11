@@ -37,7 +37,7 @@ void plot_topology_variables() {
         rarexsec::plot::Histogram1DSpec contained;
         contained.id = "contained_fraction";
         contained.title = ";Contained Fraction;Events";
-        contained.nbins = 50;
+        contained.nbins = 100;
         contained.xmin = 0.0;
         contained.xmax = 1.0;
         contained.sel = rarexsec::selection::Preset::Empty;
