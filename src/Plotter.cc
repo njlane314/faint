@@ -8,6 +8,7 @@
 #include <TStyle.h>
 #include <TGaxis.h>
 #include <TMatrixDSym.h>
+#include "rarexsec/plot/EventDisplay.hh"
 #include "rarexsec/plot/StackedHist.hh"
 #include "rarexsec/plot/UnstackedHist.hh"
 
@@ -64,6 +65,20 @@ void Plotter::draw_stack_by_channel_with_cov(const H1Spec& spec,
     opt2.total_cov = std::make_shared<TMatrixDSym>(total_cov);
     StackedHist plot(spec, std::move(opt2), mc, data);
     plot.draw_and_save(opt2.image_format);
+}
+
+void Plotter::draw_event_display(EventDisplay::Spec spec,
+                                 EventDisplay::Options opt,
+                                 EventDisplay::DetectorData data) const {
+    EventDisplay display(std::move(spec), std::move(opt), std::move(data));
+    display.draw_and_save(opt_.image_format);
+}
+
+void Plotter::draw_event_display(EventDisplay::Spec spec,
+                                 EventDisplay::Options opt,
+                                 EventDisplay::SemanticData data) const {
+    EventDisplay display(std::move(spec), std::move(opt), std::move(data));
+    display.draw_and_save(opt_.image_format);
 }
 
 std::string Plotter::sanitise(const std::string& name) {

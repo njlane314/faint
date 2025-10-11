@@ -20,7 +20,11 @@
 namespace rarexsec {
 namespace plot {
 
+class Plotter;
+
 class EventDisplay {
+    friend class Plotter;
+
 public:
     enum class Mode { Detector, Semantic };
 
@@ -53,9 +57,6 @@ public:
 
     using DetectorData = std::vector<float>;
     using SemanticData = std::vector<int>;
-
-    EventDisplay(Spec spec, Options opt, DetectorData data);
-    EventDisplay(Spec spec, Options opt, SemanticData data);
 
     void draw(TCanvas& canvas);
 
@@ -94,6 +95,9 @@ public:
     static void render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt);
 
 private:
+    EventDisplay(Spec spec, Options opt, DetectorData data);
+    EventDisplay(Spec spec, Options opt, SemanticData data);
+
     void setup_canvas(TCanvas& c) const;
     void build_histogram();
 
