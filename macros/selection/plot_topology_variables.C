@@ -8,17 +8,7 @@
 #include <rarexsec/plot/Descriptors.hh>
 #include <rarexsec/plot/Plotter.hh>
 
-namespace {
-struct ImplicitMTGuard {
-    ~ImplicitMTGuard() { ROOT::DisableImplicitMT(); }
-};
-} // namespace
-
 void plot_topology_variables() {
-    ROOT::EnableThreadSafety();
-    ROOT::EnableImplicitMT();
-    ImplicitMTGuard guard;
-
     try {
         const auto env = rarexsec::Env::from_env();
         auto hub = env.make_hub();
