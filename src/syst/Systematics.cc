@@ -11,6 +11,7 @@
 #include <vector>
 
 using MapSD = std::map<std::string, std::vector<double>>;
+using Histogram1DSpec = rarexsec::plot::Histogram1DSpec;
 
 static std::string expr_column_name(const rarexsec::plot::Histogram1DSpec& spec) {
     const std::string base = !spec.id.empty()
@@ -417,7 +418,7 @@ TMatrixDSym rarexsec::syst::block_cov_from_weight_vector_ushort_scaled(
     return C;
 }
 
-TMatrixDSym block_rarexsec::syst::cov_from_map_weight_vector(
+TMatrixDSym rarexsec::syst::block_cov_from_map_weight_vector(
     const Histogram1DSpec& specA, const std::vector<const Entry*>& A,
     const Histogram1DSpec& specB, const std::vector<const Entry*>& B,
     const std::string& map_branch, const std::string& key, int nuniv,
@@ -532,7 +533,7 @@ TMatrixDSym rarexsec::syst::block_cov_from_ud_ushort(
     return C;
 }
 
-TMatrixDSym block_rarexsec::syst::cov_from_detvar_pairs(
+TMatrixDSym rarexsec::syst::block_cov_from_detvar_pairs(
     const Histogram1DSpec& specA, const std::vector<const Entry*>& A,
     const Histogram1DSpec& specB, const std::vector<const Entry*>& B,
     const std::vector<std::pair<std::string, std::string>>& tag_pairs) {
@@ -638,7 +639,7 @@ TMatrixDSym rarexsec::syst::sum_covariance_block_same_binning(const TMatrixDSym&
     if (nB != nA)
         throw std::runtime_error("sum_covariance_block_same_binning: A and B must have the same binning");
 
-    TMatrixDSym Crarexsec::syst::sum(n);
+    TMatrixDSym Csum(n);
     for (int i = 0; i < n; ++i) {
         for (int j = i; j < n; ++j) {
             double cij =
@@ -646,7 +647,7 @@ TMatrixDSym rarexsec::syst::sum_covariance_block_same_binning(const TMatrixDSym&
                 C_block(i, nA + j) +
                 C_block(nA + i, j) +
                 C_block(nA + i, nA + j);
-            Crarexsec::syst::sum(i, j) = Crarexsec::syst::sum(j, i) = cij;
+            Csum(i, j) = Csum(j, i) = cij;
         }
     }
     return Csum;

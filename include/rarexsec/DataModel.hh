@@ -3,6 +3,7 @@
 #include <ROOT/RDataFrame.hxx>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -143,9 +144,23 @@ struct ProcessorOptions {
 
 struct Frame {
     std::shared_ptr<ROOT::RDataFrame> df;
-    ROOT::RDF::RNode node;
-    auto report() const { return node.Report(); }
-    ROOT::RDF::RNode rnode() const { return node; }
+    mutable std::optional<ROOT::RDF::RNode> node;
+
+    Frame() = default;
+    Frame(std::shared_ptr<ROOT::RDataFrame> df_in, ROOT::RDF::RNode node_in)
+        : df(std::move(df_in)), node(std::move(node_in)) {}
+
+    auto report() const {
+        if (!node)
+            throw std::runtime_error("Frame::report: node is not initialised");
+        return node->Report();
+    }
+
+    ROOT::RDF::RNode rnode() const {
+        if (!node)
+            throw std::runtime_error("Frame::rnode: node is not initialised");
+        return *node;
+    }
 };
 
 struct Entry {
