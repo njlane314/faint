@@ -1,5 +1,4 @@
 #include "rarexsec/Processor.hh"
-#include "rarexsec/DataModel.hh"
 #include "rarexsec/proc/Selection.hh"
 #include "rarexsec/proc/Volume.hh"
 
