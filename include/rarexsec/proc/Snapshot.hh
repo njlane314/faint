@@ -23,21 +23,39 @@ struct Options {
     std::vector<std::string> columns;
 };
 
-inline std::string origin_to_string(sample::origin k) {
-    switch (k) {
-        case sample::origin::data:
+inline std::string source_to_string(Source s) {
+    switch (s) {
+        case Source::Data:
             return "data";
-        case sample::origin::beam:
-            return "beam";
-        case sample::origin::strangeness:
-            return "strangeness";
-        case sample::origin::ext:
+        case Source::Ext:
             return "ext";
-        case sample::origin::dirt:
-            return "dirt";
-        default:
-            return "unknown";
+        case Source::MC:
+            return "mc";
     }
+    return "unknown";
+}
+
+inline std::string slice_to_string(Slice s) {
+    switch (s) {
+        case Slice::None:
+            return "none";
+        case Slice::BeamInclusive:
+            return "beam";
+        case Slice::StrangenessInclusive:
+            return "strangeness";
+    }
+    return "unknown";
+}
+
+inline std::string sample_label(const Entry& e) {
+    if (e.kind == sample::origin::dirt)
+        return "dirt";
+    if (e.source == Source::MC) {
+        const auto slice = slice_to_string(e.slice);
+        if (slice == "none") return "mc";
+        return slice;
+    }
+    return source_to_string(e.source);
 }
 
 inline std::string sanitise(std::string s) {
@@ -71,12 +89,13 @@ inline std::vector<std::string> intersect_cols(ROOT::RDF::RNode node, const std:
     return out;
 }
 
-inline std::string make_tree_name(const Options& opt, const Entry& e, const std::string& detvar) {
-    std::string name = sanitise(opt.tree) + "__" +
-                       sanitise(e.beamline) + "_" +
+inline std::string make_out_path(const Options& opt, const Entry& e, const std::string& detvar) {
+    const auto base = e.files.empty() ? std::string{}
+                                      : std::filesystem::path(e.files.front()).filename().string();
+    std::string name = sanitise(e.beamline) + "_" +
                        sanitise(e.period) + "_" +
-                       sanitise(origin_to_string(e.kind));
-    if (!detvar.empty())
+                       sanitise(sample_label(e));
+    if (!detvar.empty()) {
         name += "__" + sanitise(detvar);
     return name;
 }
@@ -117,9 +136,6 @@ inline std::vector<std::string> write(const std::vector<const Entry*>& samples,
         for (const auto& kv : e->detvars) {
             const auto& tag = kv.first;
             const auto& dv = kv.second;
-            if (!dv.node)
-                continue;
-
             const auto cols = intersect_cols(dv.rnode(), opt.columns);
             const auto treeName = make_tree_name(opt, *e, tag);
             snapshot_once(dv.rnode(), treeName, cols);

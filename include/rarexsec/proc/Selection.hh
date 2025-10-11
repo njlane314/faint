@@ -43,11 +43,8 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
         case Preset::Empty:
             return node;
         case Preset::Trigger:
-            return node.Filter([k = rec.kind](float pe_beam, float pe_veto, int sw){
-                                   const bool requires_dataset_gate =
-                                       (k == sample::origin::beam ||
-                                        k == sample::origin::strangeness ||
-                                        k == sample::origin::dirt);
+            return node.Filter([src = rec.source](float pe_beam, float pe_veto, int sw){
+                                   const bool requires_dataset_gate = (src == Source::MC);
                                    const bool dataset_gate = requires_dataset_gate
                                                                 ? (pe_beam > trigger_min_beam_pe &&
                                                                    pe_veto < trigger_max_veto_pe &&
