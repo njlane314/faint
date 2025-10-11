@@ -19,7 +19,7 @@ inline constexpr float trigger_max_veto_pe = 20.f;
 inline constexpr int slice_required_count = 1;
 inline constexpr float slice_min_topology_score = 0.06f;
 
-inline constexpr float topology_min_contained_fraction = 0.7f;
+inline constexpr float topology_min_contained_fraction = 0.0f;
 inline constexpr float topology_min_cluster_fraction = 0.5f;
 
 inline constexpr float muon_min_track_score = 0.5f;
