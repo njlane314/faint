@@ -1,66 +1,56 @@
 #include <ROOT/RDataFrame.hxx>
-#include <TCanvas.h>
-#include <TH1D.h>
 #include <exception>
 #include <iostream>
+#include <vector>
 
 #include <rarexsec/Hub.hh>
 #include <rarexsec/proc/Env.hh>
+#include <rarexsec/plot/Descriptors.hh>
+#include <rarexsec/plot/Plotter.hh>
+
+namespace {
+struct ImplicitMTGuard {
+    ~ImplicitMTGuard() { ROOT::DisableImplicitMT(); }
+};
+} // namespace
 
 void plot_topology_variables() {
-    try {
-        ROOT::EnableThreadSafety();
-        ROOT::EnableImplicitMT();
+    ROOT::EnableThreadSafety();
+    ROOT::EnableImplicitMT();
+    ImplicitMTGuard guard;
 
+    try {
         const auto env = rarexsec::Env::from_env();
         auto hub = env.make_hub();
-        const auto samples = hub.simulation_entries(env.beamline, env.periods);
+        const auto mc_samples = hub.simulation_entries(env.beamline, env.periods);
 
-        TH1D h_contained("h_contained_fraction",
-                         "Contained Fraction;Contained Fraction;Weighted Events",
-                         50, 0.0, 1.0);
-        h_contained.Sumw2();
-        h_contained.SetDirectory(nullptr);
+        rarexsec::plot::Options opt;
+        opt.out_dir = "plots/selection";
+        opt.image_format = "png";
+        opt.legend_on_top = true;
+        opt.beamline = env.beamline;
+        opt.periods = env.periods;
+        opt.analysis_region_label = "Topology Selection";
 
-        TH1D h_cluster("h_slice_cluster_fraction",
-                       "Slice Cluster Fraction;Slice Cluster Fraction;Weighted Events",
-                       50, 0.0, 1.0);
-        h_cluster.Sumw2();
-        h_cluster.SetDirectory(nullptr);
+        rarexsec::plot::Plotter plotter(opt);
 
-        for (const auto* entry : samples) {
-            if (!entry) {
-                continue;
-            }
+        rarexsec::plot::Histogram1DSpec contained;
+        contained.id = "contained_fraction";
+        contained.title = ";Contained Fraction;Events";
+        contained.nbins = 50;
+        contained.xmin = 0.0;
+        contained.xmax = 1.0;
+        contained.sel = rarexsec::selection::Preset::Topology;
 
-            auto node = entry->nominal.rnode();
-            auto contained = node.Histo1D({"tmp_contained", "", 50, 0.0, 1.0},
-                                          "contained_fraction",
-                                          "w_nominal");
-            auto cluster = node.Histo1D({"tmp_cluster", "", 50, 0.0, 1.0},
-                                        "slice_cluster_fraction",
-                                        "w_nominal");
+        rarexsec::plot::Histogram1DSpec cluster = contained;
+        cluster.id = "slice_cluster_fraction";
+        cluster.title = ";Slice Cluster Fraction;Events";
 
-            h_contained.Add(contained.GetPtr());
-            h_cluster.Add(cluster.GetPtr());
+        const std::vector<rarexsec::plot::Histogram1DSpec> specs = {contained, cluster};
+        for (const auto& spec : specs) {
+            plotter.draw_stack_by_channel(spec, mc_samples);
         }
-
-        TCanvas* canvas = new TCanvas("c_selection_variables",
-                                      "Topology Selection Variables",
-                                      800, 600);
-        canvas->Divide(1, 2);
-
-        canvas->cd(1);
-        h_contained.Draw();
-
-        canvas->cd(2);
-        h_cluster.Draw();
-
-        canvas->Update();
-
-        ROOT::DisableImplicitMT();
     } catch (const std::exception& ex) {
-        ROOT::DisableImplicitMT();
         std::cerr << "Error: " << ex.what() << std::endl;
     }
 }
