@@ -30,7 +30,7 @@ void plot_topology_variables() {
         opt.legend_on_top = true;
         opt.beamline = env.beamline;
         opt.periods = env.periods;
-        opt.analysis_region_label = "Topology Selection";
+        opt.analysis_region_label = "Empty Selection";
 
         rarexsec::plot::Plotter plotter(opt);
 
@@ -40,7 +40,7 @@ void plot_topology_variables() {
         contained.nbins = 50;
         contained.xmin = 0.0;
         contained.xmax = 1.0;
-        contained.sel = rarexsec::selection::Preset::Topology;
+        contained.sel = rarexsec::selection::Preset::Empty;
 
         rarexsec::plot::Histogram1DSpec cluster = contained;
         cluster.id = "slice_cluster_fraction";
