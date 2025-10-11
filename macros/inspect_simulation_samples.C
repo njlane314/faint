@@ -11,6 +11,7 @@
 
 void inspect_simulation_samples() {
     try {
+        ROOT::EnableThreadSafety();
         ROOT::EnableImplicitMT();
 
         if (gSystem->Load("librarexsec") < 0) {
@@ -79,6 +80,8 @@ void inspect_simulation_samples() {
         std::cout << "Total POT (equivalent): " << total_pot_eqv << std::endl;
         std::cout << "Total triggers (nominal): " << total_trig_nom << std::endl;
         std::cout << "Total triggers (equivalent): " << total_trig_eqv << std::endl;
+
+        ROOT::DisableImplicitMT();
     } catch (const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
