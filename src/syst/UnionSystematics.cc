@@ -1,13 +1,19 @@
 #include "rarexsec/syst/UnionSystematics.hh"
 
 #include <ROOT/RDataFrame.hxx>
+#include <map>
 #include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
+namespace rarexsec::syst {
 
 using MapSD = std::map<std::string, std::vector<double>>;
 
-UnionSamples rarexsec::syst::collect_union_samples(const Hub& hub,
-                                                   const std::string& beamline,
-                                                   const std::vector<std::string>& periods) {
+UnionSamples collect_union_samples(const Hub& hub,
+                                   const std::string& beamline,
+                                   const std::vector<std::string>& periods) {
     UnionSamples s;
     const auto sim = hub.simulation_entries(beamline, periods);
     const auto data = hub.data_entries(beamline, periods);
@@ -36,10 +42,10 @@ UnionSamples rarexsec::syst::collect_union_samples(const Hub& hub,
     return s;
 }
 
-int rarexsec::syst::detect_n_univ_ushort(const plot::Histogram1DSpec& spec,
-                                         const std::vector<const Entry*>& mc,
-                                         const std::string& branch,
-                                         int default_val) {
+int detect_n_univ_ushort(const plot::Histogram1DSpec& spec,
+                         const std::vector<const Entry*>& mc,
+                         const std::string& branch,
+                         int default_val) {
     for (auto* e : mc) {
         if (!e)
             continue;
@@ -54,11 +60,11 @@ int rarexsec::syst::detect_n_univ_ushort(const plot::Histogram1DSpec& spec,
     return default_val;
 }
 
-int rarexsec::syst::detect_n_univ_map(const plot::Histogram1DSpec& spec,
-                                      const std::vector<const Entry*>& mc,
-                                      const std::string& map_branch,
-                                      const std::string& key,
-                                      int default_val) {
+int detect_n_univ_map(const plot::Histogram1DSpec& spec,
+                      const std::vector<const Entry*>& mc,
+                      const std::string& map_branch,
+                      const std::string& key,
+                      int default_val) {
     for (auto* e : mc) {
         if (!e)
             continue;
@@ -76,7 +82,7 @@ int rarexsec::syst::detect_n_univ_map(const plot::Histogram1DSpec& spec,
     return default_val;
 }
 
-static std::vector<const Entry*> mc_union_AB(const UnionSamples& s) {
+std::vector<const Entry*> mc_union_AB(const UnionSamples& s) {
     std::vector<const Entry*> out;
     out.reserve(s.A_beam.size() + s.B_strange.size());
     out.insert(out.end(), s.A_beam.begin(), s.A_beam.end());
@@ -84,7 +90,7 @@ static std::vector<const Entry*> mc_union_AB(const UnionSamples& s) {
     return out;
 }
 
-static std::vector<const Entry*> mc_union_all(const UnionSamples& s) {
+std::vector<const Entry*> mc_union_all(const UnionSamples& s) {
     std::vector<const Entry*> out;
     out.reserve(s.A_beam.size() + s.B_strange.size() + s.dirt.size() + s.ext.size());
     out.insert(out.end(), s.A_beam.begin(), s.A_beam.end());
@@ -149,9 +155,9 @@ static TMatrixDSym block_cov_from_detvar_unisims_AB(const plot::Histogram1DSpec&
     return C;
 }
 
-UnionProducts rarexsec::syst::build_union_systematics(const plot::Histogram1DSpec& spec,
-                                                      const UnionSamples& samp,
-                                                      const UnionConfig& cfg) {
+UnionProducts build_union_systematics(const plot::Histogram1DSpec& spec,
+                                      const UnionSamples& samp,
+                                      const UnionConfig& cfg) {
     UnionProducts out;
 
     out.H_A = make_total_mc_hist(spec, samp.A_beam, "_A");
@@ -297,12 +303,13 @@ UnionProducts rarexsec::syst::build_union_systematics(const plot::Histogram1DSpe
     return out;
 }
 
-UnionProducts rarexsec::syst::run_union_systematics(const Hub& hub,
-                                                    const std::string& beamline,
-                                                    const std::vector<std::string>& periods,
-                                                    const plot::Histogram1DSpec& spec,
-                                                    const UnionConfig& cfg) {
-    auto samples = rarexsec::syst::collect_union_samples(hub, beamline, periods);
-    return rarexsec::syst::build_union_systematics(spec, samples, cfg);
+UnionProducts run_union_systematics(const Hub& hub,
+                                    const std::string& beamline,
+                                    const std::vector<std::string>& periods,
+                                    const plot::Histogram1DSpec& spec,
+                                    const UnionConfig& cfg) {
+    auto samples = collect_union_samples(hub, beamline, periods);
+    return build_union_systematics(spec, samples, cfg);
 }
-}
+
+} // namespace rarexsec::syst
