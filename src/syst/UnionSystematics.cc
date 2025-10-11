@@ -100,15 +100,6 @@ std::vector<const Entry*> mc_union_all(const UnionSamples& s) {
     return out;
 }
 
-static std::unique_ptr<TH1D> sum2(const TH1D& A, const TH1D& B, const std::string& name) {
-    auto H = std::unique_ptr<TH1D>(static_cast<TH1D*>(A.Clone(name.c_str())));
-    H->SetDirectory(nullptr);
-    H->Add(&B);
-    for (int i = 1; i <= H->GetNbinsX(); ++i)
-        H->SetBinError(i, 0.0);
-    return H;
-}
-
 static TMatrixDSym block_cov_from_detvar_unisims_AB(const plot::Histogram1DSpec& specA, const std::vector<const Entry*>& A,
                                                     const plot::Histogram1DSpec& specB, const std::vector<const Entry*>& B,
                                                     const std::vector<std::string>& tags) {
