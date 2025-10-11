@@ -633,11 +633,18 @@ void rarexsec::plot::StackedHist::draw_and_save(const std::string& image_format)
     const std::string out = output_directory_ + "/" + plot_name_ + "." + fmt;
     if (fmt == "pdf") {
         canvas.SaveAs(out.c_str());
-    } else {
-        std::unique_ptr<TImage> image(TImage::Create());
-        if (image) {
-            image->FromPad(&canvas);
-            image->WriteImage(out.c_str());
-        }
+        return;
     }
+
+    std::unique_ptr<TImage> image(TImage::Create());
+    if (image) {
+        image->FromPad(&canvas);
+        image->WriteImage(out.c_str());
+        return;
+    }
+
+    // Fallback to ROOT's SaveAs when TImage is unavailable (e.g. ASImage not
+    // built). This ensures we still produce an output file instead of failing
+    // silently.
+    canvas.SaveAs(out.c_str());
 }
