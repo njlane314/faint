@@ -27,6 +27,12 @@ void write_simulation_snapshots() {
         rarexsec::snapshot::Options opt;
         opt.outdir = "snapshots";
         opt.tree = "analysis";
+        std::string outfile = beamline;
+        for (const auto& period : periods) {
+            outfile += "_" + period;
+        }
+        outfile += ".root";
+        opt.outfile = outfile;
 
         auto outputs = rarexsec::snapshot::write(samples, opt);
 
