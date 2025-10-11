@@ -1,0 +1,56 @@
+#include <ROOT/RDataFrame.hxx>
+#include <exception>
+#include <iostream>
+#include <vector>
+
+#include <rarexsec/Hub.hh>
+#include <rarexsec/proc/Env.hh>
+#include <rarexsec/plot/Descriptors.hh>
+#include <rarexsec/plot/Plotter.hh>
+
+namespace {
+struct ImplicitMTGuard {
+    ~ImplicitMTGuard() { ROOT::DisableImplicitMT(); }
+};
+} // namespace
+
+void plot_topology_variables() {
+    ROOT::EnableThreadSafety();
+    ROOT::EnableImplicitMT();
+    ImplicitMTGuard guard;
+
+    try {
+        const auto env = rarexsec::Env::from_env();
+        auto hub = env.make_hub();
+        const auto mc_samples = hub.simulation_entries(env.beamline, env.periods);
+
+        rarexsec::plot::Options opt;
+        opt.out_dir = "plots/selection";
+        opt.image_format = "png";
+        opt.legend_on_top = true;
+        opt.beamline = env.beamline;
+        opt.periods = env.periods;
+        opt.analysis_region_label = "Topology Selection";
+
+        rarexsec::plot::Plotter plotter(opt);
+
+        rarexsec::plot::Histogram1DSpec contained;
+        contained.id = "contained_fraction";
+        contained.title = ";Contained Fraction;Events";
+        contained.nbins = 50;
+        contained.xmin = 0.0;
+        contained.xmax = 1.0;
+        contained.sel = rarexsec::selection::Preset::Topology;
+
+        rarexsec::plot::Histogram1DSpec cluster = contained;
+        cluster.id = "slice_cluster_fraction";
+        cluster.title = ";Slice Cluster Fraction;Events";
+
+        const std::vector<rarexsec::plot::Histogram1DSpec> specs = {contained, cluster};
+        for (const auto& spec : specs) {
+            plotter.draw_stack_by_channel(spec, mc_samples);
+        }
+    } catch (const std::exception& ex) {
+        std::cerr << "Error: " << ex.what() << std::endl;
+    }
+}
