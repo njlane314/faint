@@ -20,7 +20,7 @@ void evaluate_inclusive_mucc_cutflow_plot() {
         return;
     }
 
-    gROOT->SetBatch(kTRUE);
+    //gROOT->SetBatch(kTRUE);
     gStyle->SetOptStat(0);
 
     const auto env = rarexsec::Env::from_env();
