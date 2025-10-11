@@ -249,7 +249,7 @@ void draw_plot(const histogram_bundle& histograms, const cumulative_data& data, 
 }
 }
 
-void plot_pot_simple(const char* outstem) {
+void plot_pot_simple(const char* outstem = "pot_timeline") {
     configure_style();
     const std::string run_db = db_root() + "/run.db";
     const std::string bnb_db = gSystem->AccessPathName((db_root() + "/bnb_v2.db").c_str()) ? db_root() + "/bnb_v1.db" : db_root() + "/bnb_v2.db";
@@ -298,10 +298,4 @@ void plot_pot_simple(const char* outstem) {
     fill_histogram(rhc_samples, histograms.rhc);
     cumulative_data data = compute_cumulative_data(histograms, nbins);
     draw_plot(histograms, data, outstem);
-}
-
-int main(int argc, char** argv) {
-    const char* outstem = argc > 1 ? argv[1] : "pot_timeline";
-    plot_pot_simple(outstem);
-    return 0;
 }
