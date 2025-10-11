@@ -299,3 +299,9 @@ void plot_pot_simple(const char* outstem) {
     cumulative_data data = compute_cumulative_data(histograms, nbins);
     draw_plot(histograms, data, outstem);
 }
+
+int main(int argc, char** argv) {
+    const char* outstem = argc > 1 ? argv[1] : "pot_timeline";
+    plot_pot_simple(outstem);
+    return 0;
+}
