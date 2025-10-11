@@ -4,6 +4,7 @@
 #include "THStack.h"
 #include "TLegend.h"
 #include "TLegendEntry.h"
+#include "TImage.h"
 #include "TPad.h"
 #include <memory>
 #include <string>
