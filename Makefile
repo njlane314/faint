@@ -6,9 +6,8 @@ OBJ := $(BUILD)/obj
 LIB := $(BUILD)/lib
 NAME := rarexsec
 
-UNAME := $(shell uname -s)
-SOEXT := $(if $(filter Darwin,$(UNAME)),dylib,so)
-SHAREDFLAGS := $(if $(filter Darwin,$(UNAME)),-dynamiclib,-shared)
+SOEXT := so
+SHAREDFLAGS := -shared
 
 CXX ?= $(shell root-config --cxx)
 CPPFLAGS += -I$(INC) $(shell root-config --cflags) $(NLOHMANN_JSON_CFLAGS)
@@ -27,6 +26,7 @@ all: $(SHARED)
 $(OBJ)/%.o: $(SRC)/%.cc
 	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
+
 $(OBJ)/%.o: $(SRC)/%.cpp
 	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
