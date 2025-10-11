@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rarexsec/DataModel.hh"
+#include "rarexsec/proc/DataModel.hh"
 #include "rarexsec/Processor.hh"
 #include <string>
 #include <unordered_map>
