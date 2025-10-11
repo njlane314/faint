@@ -12,80 +12,79 @@
 #include "rarexsec/plot/StackedHist.hh"
 #include "rarexsec/plot/UnstackedHist.hh"
 
-namespace rarexsec::plot {
+rarexsec::plot::Plotter::Plotter() = default;
 
-Plotter::Plotter() = default;
+rarexsec::plot::Plotter::Plotter(rarexsec::plot::Options opt)
+    : opt_(std::move(opt)) {}
 
-Plotter::Plotter(Options opt) : opt_(std::move(opt)) {}
+const rarexsec::plot::Options& rarexsec::plot::Plotter::options() const noexcept { return opt_; }
 
-const Options& Plotter::options() const noexcept { return opt_; }
+rarexsec::plot::Options& rarexsec::plot::Plotter::options() noexcept { return opt_; }
 
-Options& Plotter::options() noexcept { return opt_; }
+void rarexsec::plot::Plotter::set_options(rarexsec::plot::Options opt) { opt_ = std::move(opt); }
 
-void Plotter::set_options(Options opt) { opt_ = std::move(opt); }
-
-void Plotter::draw_stack_by_channel(const H1Spec& spec,
-                                    const std::vector<const Entry*>& mc) const {
-    static const std::vector<const Entry*> empty_data{};
+void rarexsec::plot::Plotter::draw_stack_by_channel(const rarexsec::plot::H1Spec& spec,
+                                                    const std::vector<const rarexsec::Entry*>& mc) const {
+    static const std::vector<const rarexsec::Entry*> empty_data{};
     draw_stack_by_channel(spec, mc, empty_data);
 }
 
-void Plotter::draw_stack_by_channel(const H1Spec& spec,
-                                    const std::vector<const Entry*>& mc,
-                                    const std::vector<const Entry*>& data) const {
+void rarexsec::plot::Plotter::draw_stack_by_channel(const rarexsec::plot::H1Spec& spec,
+                                                    const std::vector<const rarexsec::Entry*>& mc,
+                                                    const std::vector<const rarexsec::Entry*>& data) const {
     set_global_style();
-    StackedHist plot(spec, opt_, mc, data);
+    rarexsec::plot::StackedHist plot(spec, opt_, mc, data);
     plot.draw_and_save(opt_.image_format);
 }
 
-void Plotter::draw_unstacked_by_channel(const H1Spec& spec,
-                                        const std::vector<const Entry*>& mc,
-                                        bool normalize_to_pdf,
-                                        int line_width) const {
-    static const std::vector<const Entry*> empty_data{};
+void rarexsec::plot::Plotter::draw_unstacked_by_channel(const rarexsec::plot::H1Spec& spec,
+                                                        const std::vector<const rarexsec::Entry*>& mc,
+                                                        bool normalize_to_pdf,
+                                                        int line_width) const {
+    static const std::vector<const rarexsec::Entry*> empty_data{};
     draw_unstacked_by_channel(spec, mc, empty_data, normalize_to_pdf, line_width);
 }
 
-void Plotter::draw_unstacked_by_channel(const H1Spec& spec,
-                                        const std::vector<const Entry*>& mc,
-                                        const std::vector<const Entry*>& data,
-                                        bool normalize_to_pdf,
-                                        int line_width) const {
+void rarexsec::plot::Plotter::draw_unstacked_by_channel(const rarexsec::plot::H1Spec& spec,
+                                                        const std::vector<const rarexsec::Entry*>& mc,
+                                                        const std::vector<const rarexsec::Entry*>& data,
+                                                        bool normalize_to_pdf,
+                                                        int line_width) const {
     set_global_style();
-    UnstackedHist plot(spec, opt_, mc, data, normalize_to_pdf, line_width);
+    rarexsec::plot::UnstackedHist plot(spec, opt_, mc, data, normalize_to_pdf, line_width);
     plot.draw_and_save(opt_.image_format);
 }
 
-void Plotter::draw_stack_by_channel_with_cov(const H1Spec& spec,
-                                             const std::vector<const Entry*>& mc,
-                                             const std::vector<const Entry*>& data,
-                                             const TMatrixDSym& total_cov) const {
+void rarexsec::plot::Plotter::draw_stack_by_channel_with_cov(const rarexsec::plot::H1Spec& spec,
+                                                             const std::vector<const rarexsec::Entry*>& mc,
+                                                             const std::vector<const rarexsec::Entry*>& data,
+                                                             const TMatrixDSym& total_cov) const {
     set_global_style();
     auto opt2 = opt_;
     opt2.total_cov = std::make_shared<TMatrixDSym>(total_cov);
-    StackedHist plot(spec, std::move(opt2), mc, data);
+    rarexsec::plot::StackedHist plot(spec, std::move(opt2), mc, data);
     plot.draw_and_save(opt2.image_format);
 }
 
-void Plotter::draw_event_display(EventDisplay::Spec spec,
-                                 EventDisplay::Options opt,
-                                 EventDisplay::DetectorData data) const {
-    EventDisplay display(std::move(spec), std::move(opt), std::move(data));
+void rarexsec::plot::Plotter::draw_event_display(rarexsec::plot::EventDisplay::Spec spec,
+                                                 rarexsec::plot::EventDisplay::Options opt,
+                                                 rarexsec::plot::EventDisplay::DetectorData data) const {
+    rarexsec::plot::EventDisplay display(std::move(spec), std::move(opt), std::move(data));
     display.draw_and_save(opt_.image_format);
 }
 
-void Plotter::draw_event_display(EventDisplay::Spec spec,
-                                 EventDisplay::Options opt,
-                                 EventDisplay::SemanticData data) const {
-    EventDisplay display(std::move(spec), std::move(opt), std::move(data));
+void rarexsec::plot::Plotter::draw_event_display(rarexsec::plot::EventDisplay::Spec spec,
+                                                 rarexsec::plot::EventDisplay::Options opt,
+                                                 rarexsec::plot::EventDisplay::SemanticData data) const {
+    rarexsec::plot::EventDisplay display(std::move(spec), std::move(opt), std::move(data));
     display.draw_and_save(opt_.image_format);
 }
 
-std::string Plotter::sanitise(const std::string& name) {
-    return detail::sanitise_id(name);
+std::string rarexsec::plot::Plotter::sanitise(const std::string& name) {
+    return rarexsec::plot::detail::sanitise_id(name);
 }
 
-std::string Plotter::fmt_commas(double value, int precision) {
+std::string rarexsec::plot::Plotter::fmt_commas(double value, int precision) {
     std::ostringstream ss;
     if (precision >= 0) {
         ss << std::fixed << std::setprecision(precision);
@@ -113,7 +112,7 @@ std::string Plotter::fmt_commas(double value, int precision) {
     return with_commas + fraction;
 }
 
-void Plotter::set_global_style() const {
+void rarexsec::plot::Plotter::set_global_style() const {
     const int font_style = 42;
     TStyle* style = new TStyle("PlotterStyle", "Plotter Style");
     style->SetTitleFont(font_style, "X");
@@ -153,6 +152,4 @@ void Plotter::set_global_style() const {
     style->SetTitleBorderSize(0);
     gROOT->SetStyle("PlotterStyle");
     gROOT->ForceStyle();
-}
-
 }
