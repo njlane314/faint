@@ -1,73 +1,24 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-print_usage() {
-  cat <<'USAGE'
-Usage: rarexsec-config [OPTIONS]
-
-Options:
-  --prefix         Print the base installation prefix
-  --libdir         Print the library directory
-  --includedir     Print the include directory
-  --cflags         Print the compiler include flags
-  --libs           Print the linker flags for linking against rarexsec
-  --version        Print the rarexsec version string
-  --git-revision   Print the source control revision hash
-  --cxx-std        Print the C++ standard used to build the library
-  --use-root       Print whether ROOT support is enabled
-  -h, --help       Show this help message
-USAGE
-}
-
-script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-prefix_default=$(cd "$script_dir/.." && pwd)
-prefix=${RAREXSEC_PREFIX:-$prefix_default}
-libdir="$prefix/lib"
-includedir="$prefix/include"
-
+p="${RAREXSEC_PREFIX:-$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)}"
+l="$p/lib"
+i="$p/include"
 if [[ $# -eq 0 ]]; then
-  print_usage
+  echo "usage: rarexsec-config [--prefix|--libdir|--includedir|--cflags|--libs|--version|--git-revision|--cxx-std|--use-root]"
   exit 0
 fi
-
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --prefix)
-      echo "$prefix"
-      ;;
-    --libdir)
-      echo "$libdir"
-      ;;
-    --includedir)
-      echo "$includedir"
-      ;;
-    --cflags)
-      echo "-I$includedir"
-      ;;
-    --libs)
-      echo "-L$libdir -lrarexsec"
-      ;;
-    --version)
-      echo "@@VERSION@@"
-      ;;
-    --git-revision)
-      echo "@@GIT_REVISION@@"
-      ;;
-    --cxx-std)
-      echo "@@CXX_STD@@"
-      ;;
-    --use-root)
-      echo "@@USE_ROOT@@"
-      ;;
-    -h|--help)
-      print_usage
-      exit 0
-      ;;
-    *)
-      echo "rarexsec-config: unknown option '$1'" >&2
-      print_usage >&2
-      exit 1
-      ;;
+for a in "$@"; do
+  case "$a" in
+    --prefix)       echo "$p" ;;
+    --libdir)       echo "$l" ;;
+    --includedir)   echo "$i" ;;
+    --cflags)       echo "-I$i" ;;
+    --libs)         echo "-L$l -lrarexsec" ;;
+    --version)      echo "@@VERSION@@" ;;
+    --git-revision) echo "@@GIT_REVISION@@" ;;
+    --cxx-std)      echo "@@CXX_STD@@" ;;
+    --use-root)     echo "@@USE_ROOT@@" ;;
+    -h|--help)      echo "usage: rarexsec-config [options]"; exit 0 ;;
+    *)              echo "rarexsec-config: unknown option '$a'" >&2; exit 1 ;;
   esac
-  shift
 done
