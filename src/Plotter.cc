@@ -24,44 +24,42 @@ rarexsec::plot::Options& rarexsec::plot::Plotter::options() noexcept { return op
 
 void rarexsec::plot::Plotter::set_options(rarexsec::plot::Options opt) { opt_ = std::move(opt); }
 
-void Plotter::set_options(Options opt) { opt_ = std::move(opt); }
-
-void Plotter::draw_stack_by_channel(const Histogram1DSpec& spec,
-                                    const std::vector<const Entry*>& mc) const {
+void rarexsec::plot::Plotter::draw_stack_by_channel(const Histogram1DSpec& spec,
+                                                    const std::vector<const Entry*>& mc) const {
     static const std::vector<const Entry*> empty_data{};
     draw_stack_by_channel(spec, mc, empty_data);
 }
 
-void Plotter::draw_stack_by_channel(const Histogram1DSpec& spec,
-                                    const std::vector<const Entry*>& mc,
-                                    const std::vector<const Entry*>& data) const {
+void rarexsec::plot::Plotter::draw_stack_by_channel(const Histogram1DSpec& spec,
+                                                    const std::vector<const Entry*>& mc,
+                                                    const std::vector<const Entry*>& data) const {
     set_global_style();
     rarexsec::plot::StackedHist plot(spec, opt_, mc, data);
     plot.draw_and_save(opt_.image_format);
 }
 
-void Plotter::draw_unstacked_by_channel(const Histogram1DSpec& spec,
-                                        const std::vector<const Entry*>& mc,
-                                        bool normalize_to_pdf,
-                                        int line_width) const {
+void rarexsec::plot::Plotter::draw_unstacked_by_channel(const Histogram1DSpec& spec,
+                                                        const std::vector<const Entry*>& mc,
+                                                        bool normalize_to_pdf,
+                                                        int line_width) const {
     static const std::vector<const Entry*> empty_data{};
     draw_unstacked_by_channel(spec, mc, empty_data, normalize_to_pdf, line_width);
 }
 
-void Plotter::draw_unstacked_by_channel(const Histogram1DSpec& spec,
-                                        const std::vector<const Entry*>& mc,
-                                        const std::vector<const Entry*>& data,
-                                        bool normalize_to_pdf,
-                                        int line_width) const {
+void rarexsec::plot::Plotter::draw_unstacked_by_channel(const Histogram1DSpec& spec,
+                                                        const std::vector<const Entry*>& mc,
+                                                        const std::vector<const Entry*>& data,
+                                                        bool normalize_to_pdf,
+                                                        int line_width) const {
     set_global_style();
     rarexsec::plot::UnstackedHist plot(spec, opt_, mc, data, normalize_to_pdf, line_width);
     plot.draw_and_save(opt_.image_format);
 }
 
-void Plotter::draw_stack_by_channel_with_cov(const Histogram1DSpec& spec,
-                                             const std::vector<const Entry*>& mc,
-                                             const std::vector<const Entry*>& data,
-                                             const TMatrixDSym& total_cov) const {
+void rarexsec::plot::Plotter::draw_stack_by_channel_with_cov(const Histogram1DSpec& spec,
+                                                             const std::vector<const Entry*>& mc,
+                                                             const std::vector<const Entry*>& data,
+                                                             const TMatrixDSym& total_cov) const {
     set_global_style();
     auto opt2 = opt_;
     opt2.total_cov = std::make_shared<TMatrixDSym>(total_cov);
@@ -83,7 +81,7 @@ void rarexsec::plot::Plotter::draw_event_display(rarexsec::plot::EventDisplay::S
     display.draw_and_save(opt_.image_format);
 }
 
-std::string Plotter::sanitise(const std::string& name) {
+std::string rarexsec::plot::Plotter::sanitise(const std::string& name) {
     std::string out;
     out.reserve(name.size());
     for (unsigned char c : name) {

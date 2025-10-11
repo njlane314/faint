@@ -3,9 +3,11 @@
 #include <ROOT/RDataFrame.hxx>
 #include <cstdint>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace rarexsec {

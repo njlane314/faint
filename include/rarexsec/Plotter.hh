@@ -3,11 +3,10 @@
 #include <string>
 #include <vector>
 
+#include "TMatrixDSym.h"
 #include "rarexsec/Hub.hh"
 #include "rarexsec/plot/Descriptors.hh"
 #include "rarexsec/plot/EventDisplay.hh"
-
-class TMatrixDSym;
 
 namespace rarexsec::plot {
 
