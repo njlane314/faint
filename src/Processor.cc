@@ -21,23 +21,24 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node,
     const double scale_ext = (is_ext && rec.trig_nom > 0.0 && rec.trig_eqv > 0.0) ? (rec.trig_nom / rec.trig_eqv) : 1.0;
 
     node = node.Define("w_base", [is_mc, is_ext, scale_mc, scale_ext] {
-        return is_mc ? scale_mc : (is_ext ? scale_ext : 1.0);
+        const double scale = is_mc ? scale_mc : (is_ext ? scale_ext : 1.0);
+        return static_cast<float>(scale);
     });
 
     if (is_mc) {
         node = node.Define(
             "w_nominal",
-            [](double w, double w_spline, double w_tune) {
-                double out = w * w_spline * w_tune;
+            [](float w, float w_spline, float w_tune) {
+                const float out = w * w_spline * w_tune;
                 if (!std::isfinite(out))
-                    return 0.0;
-                if (out < 0.0)
-                    return 0.0;
+                    return 0.0f;
+                if (out < 0.0f)
+                    return 0.0f;
                 return out;
             },
             {"w_base", "weightSpline", "weightTune"});
     } else {
-        node = node.Define("w_nominal", [](double w) { return w; }, {"w_base"});
+        node = node.Define("w_nominal", [](float w) { return w; }, {"w_base"});
     }
 
     if (is_mc) {
