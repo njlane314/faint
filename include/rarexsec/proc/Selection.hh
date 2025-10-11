@@ -130,15 +130,5 @@ inline EvalResult evaluate(const std::vector<const rarexsec::Entry*>& mc,
     return out;
 }
 
-inline std::vector<std::string> split_csv(const char* s) {
-    std::vector<std::string> out; if (!s) return out;
-    std::string cur; for (const char* p=s; *p; ++p) {
-        if (*p==',') { if (!cur.empty()) { out.push_back(cur); cur.clear(); } }
-        else { cur.push_back(*p); }
-    }
-    if (!cur.empty()) out.push_back(cur);
-    return out;
-}
-
 }
 }
