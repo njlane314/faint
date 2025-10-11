@@ -1,9 +1,10 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <TSystem.h>
+#include <rarexsec/DataModel.hh>
 #include <rarexsec/Env.hh>
 #include <rarexsec/Hub.hh>
-#include <rarexsec/Selection.hh>
+#include <rarexsec/proc/Selection.hh>
 
 #include <iostream>
 #include <stdexcept>
@@ -55,6 +56,30 @@ void apply_inclusive_mucc_preset() {
             const auto selected = node.Count().GetValue();
             std::cout << "Sample '" << entry->file << "' selected entries: " << selected << std::endl;
         }
+
+        const auto eval = rarexsec::selection::evaluate(
+            samples,
+            [](int ch) {
+                const auto channel = static_cast<rarexsec::Channel>(ch);
+                switch (channel) {
+                case rarexsec::Channel::MuCC0pi_ge1p:
+                case rarexsec::Channel::MuCC1pi:
+                case rarexsec::Channel::MuCCPi0OrGamma:
+                case rarexsec::Channel::MuCCNpi:
+                case rarexsec::Channel::MuCCOther:
+                    return true;
+                default:
+                    return false;
+                }
+            },
+            preset);
+
+        std::cout << "Selection evaluation:\n"
+                  << "  Denominator (signal truth): " << eval.denom << '\n'
+                  << "  Selected (all): " << eval.selected << '\n'
+                  << "  Selected signal: " << eval.numer << '\n'
+                  << "  Efficiency: " << eval.efficiency() << '\n'
+                  << "  Purity: " << eval.purity() << std::endl;
     } catch (const std::exception& ex) {
         std::cerr << "Error: " << ex.what() << std::endl;
     }
