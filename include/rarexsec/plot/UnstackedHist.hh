@@ -1,5 +1,4 @@
-#ifndef RAREXSEC_PLOT_UNSTACKEDHIST_HH
-#define RAREXSEC_PLOT_UNSTACKEDHIST_HH
+#pragma once
 
 #include <memory>
 #include <string>
@@ -13,51 +12,49 @@ class TPad;
 class TH1D;
 
 namespace rarexsec {
-  struct Entry;
-  namespace plot {
+struct Entry;
+namespace plot {
 
-    /// Draws unstacked (overlay) histograms by analysis channel.
-    /// Reuses H1Spec/Options and Channels styling from rarexsec.
-    class UnstackedHist {
-    public:
-      UnstackedHist(H1Spec spec,
-                    Options opt,
-                    std::vector<const Entry*> mc,
-                    std::vector<const Entry*> data = {},
-                    bool normalize_to_pdf = true,
-                    int  line_width = 3);
+class Plotter;
 
-      void draw(TCanvas& canvas);
-      void draw_and_save(const std::string& image_format = "");
+class UnstackedHist {
+public:
+    void draw(TCanvas& canvas);
+    void draw_and_save(const std::string& image_format = "");
 
-    private:
-      void build_histograms();
-      void setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_legend) const;
-      void draw_curves(TPad* p_main, double& max_y);
-      void draw_legend(TPad* p_legend);
-      void draw_watermark(TPad* p_main) const;
+private:
+    friend class Plotter;
 
-      // inputs
-      H1Spec spec_;
-      Options opt_;
-      std::vector<const Entry*> mc_;
-      std::vector<const Entry*> data_;
-      bool normalize_to_pdf_;
-      int  line_width_;
+    UnstackedHist(H1Spec spec,
+                  Options opt,
+                  std::vector<const Entry*> mc,
+                  std::vector<const Entry*> data = {},
+                  bool normalize_to_pdf = true,
+                  int line_width = 3);
 
-      // runtime
-      std::string plot_name_;
-      std::string output_directory_;
+    void build_histograms();
+    void setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_legend) const;
+    void draw_curves(TPad* p_main, double& max_y);
+    void draw_legend(TPad* p_legend);
+    void draw_watermark(TPad* p_main) const;
 
-      std::vector<int> chan_order_;
-      std::vector<std::unique_ptr<TH1D>> mc_ch_hists_; // one per channel
-      std::unique_ptr<TH1D> data_hist_;                // optional
+    H1Spec spec_;
+    Options opt_;
+    std::vector<const Entry*> mc_;
+    std::vector<const Entry*> data_;
+    bool normalize_to_pdf_;
+    int line_width_;
 
-      std::unique_ptr<TLegend> legend_;
-      std::vector<std::unique_ptr<TH1D>> legend_proxies_;
-    };
+    std::string plot_name_;
+    std::string output_directory_;
 
-  } // namespace plot
-} // namespace rarexsec
+    std::vector<int> chan_order_;
+    std::vector<std::unique_ptr<TH1D>> mc_ch_hists_;
+    std::unique_ptr<TH1D> data_hist_;
 
-#endif
+    std::unique_ptr<TLegend> legend_;
+    std::vector<std::unique_ptr<TH1D>> legend_proxies_;
+};
+
+}
+}

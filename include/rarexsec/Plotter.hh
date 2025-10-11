@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "rarexsec/Hub.hh"
+#include "rarexsec/plot/EventDisplay.hh"
 #include "rarexsec/plot/Types.hh"
 
 class TMatrixDSym;
@@ -42,6 +43,14 @@ public:
                                         const std::vector<const Entry*>& mc,
                                         const std::vector<const Entry*>& data,
                                         const TMatrixDSym& total_cov) const;
+
+    void draw_event_display(const EventDisplay::Spec& spec,
+                            EventDisplay::DetectorData data,
+                            const EventDisplay::Options& display_options = EventDisplay::Options{}) const;
+
+    void draw_event_display(const EventDisplay::Spec& spec,
+                            EventDisplay::SemanticData data,
+                            const EventDisplay::Options& display_options = EventDisplay::Options{}) const;
 
     static std::string sanitise(const std::string& name);
     static std::string fmt_commas(double value, int precision);

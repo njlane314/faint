@@ -10,6 +10,7 @@
 #include <TMatrixDSym.h>
 #include "rarexsec/plot/StackedHist.hh"
 #include "rarexsec/plot/UnstackedHist.hh"
+#include "rarexsec/plot/EventDisplay.hh"
 
 namespace rarexsec::plot {
 
@@ -64,6 +65,22 @@ void Plotter::draw_stack_by_channel_with_cov(const H1Spec& spec,
     opt2.total_cov = std::make_shared<TMatrixDSym>(total_cov);
     StackedHist plot(spec, std::move(opt2), mc, data);
     plot.draw_and_save(opt2.image_format);
+}
+
+void Plotter::draw_event_display(const EventDisplay::Spec& spec,
+                                 EventDisplay::DetectorData data,
+                                 const EventDisplay::Options& display_options) const {
+    set_global_style();
+    EventDisplay plot(spec, display_options, std::move(data));
+    plot.draw_and_save(opt_.image_format);
+}
+
+void Plotter::draw_event_display(const EventDisplay::Spec& spec,
+                                 EventDisplay::SemanticData data,
+                                 const EventDisplay::Options& display_options) const {
+    set_global_style();
+    EventDisplay plot(spec, display_options, std::move(data));
+    plot.draw_and_save(opt_.image_format);
 }
 
 std::string Plotter::sanitise(const std::string& name) {

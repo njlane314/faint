@@ -14,8 +14,7 @@
 
 #include <rarexsec/Hub.hh>
 #include <rarexsec/proc/Selection.hh>
-#include <rarexsec/Plotter.hh>               // H1Spec, Options
-#include <rarexsec/plot/UnstackedHist.hh>    // overlay-by-channel plotter
+#include <rarexsec/Plotter.hh>               // H1Spec, Options, Plotter
 
 // ---------------- Helpers ----------------
 
@@ -189,8 +188,8 @@ void plot_active_pixels_by_channel(const char* extra_libs   = "",
     opt.x_title = cfg.x_title;
 
     // Draw overlay by analysis channel (NO normalization)
-    rarexsec::plot::UnstackedHist plot(spec, opt, mc, /*data*/{}, /*normalize_to_pdf*/ false, /*line_width*/3);
-    plot.draw_and_save("pdf");
+    rarexsec::plot::Plotter plotter(opt);
+    plotter.draw_unstacked_by_channel(spec, mc, /*normalize_to_pdf*/ false, /*line_width*/3);
 
     std::cout << "Saved: " << out_dir << "/" << cfg.id << ".pdf" << std::endl;
   }

@@ -13,8 +13,7 @@
 
 #include <rarexsec/Hub.hh>
 #include <rarexsec/Selection.hh>
-#include <rarexsec/Plotter.hh>               // H1Spec, Options
-#include <rarexsec/plot/UnstackedHist.hh>    // overlay plotter
+#include <rarexsec/Plotter.hh>               // H1Spec, Options, Plotter
 
 // ---------- helpers ----------
 static void load_libs(const char* extra_libs) {
@@ -100,8 +99,8 @@ void plot_unstacked_perplane_occupancy_by_channel(const char* extra_libs = "",
     opt.x_title = std::string(1, (char)toupper(*p.tag)) + "-plane image occupancy";
     opt.y_title = "Events";
 
-    rarexsec::plot::UnstackedHist plot(spec, opt, mc, /*data*/{}, normalize_to_pdf, /*line_width*/3);
-    plot.draw_and_save("pdf");
+    rarexsec::plot::Plotter plotter(opt);
+    plotter.draw_unstacked_by_channel(spec, mc, normalize_to_pdf, /*line_width*/3);
   }
 
   std::cout << "Saved per-plane unstacked occupancy PDFs to: " << out_dir << std::endl;

@@ -15,12 +15,10 @@
 namespace rarexsec {
 namespace plot {
 
+class Plotter;
+
 class StackedHist {
 public:
-    StackedHist(H1Spec spec,
-                Options opt,
-                std::vector<const Entry*> mc,
-                std::vector<const Entry*> data);
     ~StackedHist() = default;
 
     void draw_and_save(const std::string& image_format);
@@ -29,6 +27,13 @@ protected:
     void draw(TCanvas& canvas);
 
 private:
+    friend class Plotter;
+
+    StackedHist(H1Spec spec,
+                Options opt,
+                std::vector<const Entry*> mc,
+                std::vector<const Entry*> data);
+
     bool want_ratio() const { return opt_.show_ratio && data_hist_ && mc_total_; }
     void build_histograms();
     void setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_ratio, TPad*& p_legend) const;
