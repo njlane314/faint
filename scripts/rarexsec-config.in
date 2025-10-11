@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
+
 set -euo pipefail
+
 p="${RAREXSEC_PREFIX:-$(cd "$(dirname "${BASH_SOURCE[0]}")"/.. && pwd)}"
 l="$p/lib"
 i="$p/include"
+
 if [[ $# -eq 0 ]]; then
   echo "usage: rarexsec-config [--prefix|--libdir|--includedir|--cflags|--libs|--version|--git-revision|--cxx-std|--use-root]"
   exit 0
 fi
+
 for a in "$@"; do
   case "$a" in
     --prefix)       echo "$p" ;;
