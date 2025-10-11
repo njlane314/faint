@@ -1,5 +1,6 @@
 #include <ROOT/RDataFrame.hxx>
 #include <TSystem.h>
+#include <iomanip>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -50,7 +51,15 @@ void evaluate_cutflow() {
     std::string label;
     std::cout.setf(std::ios::fixed);
     std::cout.precision(6);
-    std::cout << "Stage, Denom(signal), Selected(all), Selected(signal), Efficiency, Purity\n";
+    constexpr auto stage_width = 36;
+    constexpr auto value_width = 16;
+
+    std::cout << std::left << std::setw(stage_width) << "Stage"
+              << std::right << std::setw(value_width) << "Denom(signal)"
+              << std::setw(value_width) << "Selected(all)"
+              << std::setw(value_width) << "Selected(signal)"
+              << std::setw(value_width) << "Efficiency"
+              << std::setw(value_width) << "Purity" << '\n';
 
     for (std::size_t i = 0; i < atoms.size(); ++i) {
         if (!label.empty()) label += "+";
@@ -71,11 +80,11 @@ void evaluate_cutflow() {
         const double eff = denom > 0.0 ? sel_sig / denom : 0.0;
         const double pur = sel_all > 0.0 ? sel_sig / sel_all : 0.0;
 
-        std::cout << label << ", "
-                  << denom << ", "
-                  << sel_all << ", "
-                  << sel_sig << ", "
-                  << eff << ", "
-                  << pur << "\n";
+        std::cout << std::left << std::setw(stage_width) << label
+                  << std::right << std::setw(value_width) << denom
+                  << std::setw(value_width) << sel_all
+                  << std::setw(value_width) << sel_sig
+                  << std::setw(value_width) << eff
+                  << std::setw(value_width) << pur << '\n';
     }
 }
