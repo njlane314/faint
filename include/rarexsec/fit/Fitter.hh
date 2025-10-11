@@ -40,6 +40,10 @@ public:
   };
 
   explicit Fitter(const std::string &signal_process_label = "signal");
+  Fitter(const Fitter &);
+  Fitter &operator=(const Fitter &);
+  Fitter(Fitter &&) noexcept = default;
+  Fitter &operator=(Fitter &&) noexcept = default;
   ~Fitter();
 
   void set_sigma_ref(double sigma_ref_pb);
@@ -75,6 +79,9 @@ private:
     std::string name;
     bool is_signal = false;
     std::unique_ptr<TH1D> nominal;
+    Process() = default;
+    Process(const Process &);
+    Process &operator=(const Process &);
   };
 
   struct Channel {
@@ -82,6 +89,9 @@ private:
     std::unique_ptr<TH1D> data;
     std::map<std::string, Process> processes;
     int nbins = 0;
+    Channel() = default;
+    Channel(const Channel &);
+    Channel &operator=(const Channel &);
   };
 
   struct NormNuisance {
@@ -95,6 +105,9 @@ private:
     std::string name;
     std::map<CPKey, std::pair<std::unique_ptr<TH1D>, std::unique_ptr<TH1D>>> updown;
     int index = -1;
+    ShapeNuisance() = default;
+    ShapeNuisance(const ShapeNuisance &);
+    ShapeNuisance &operator=(const ShapeNuisance &);
   };
 
   static TH1D *clone_as_th1d_(const TH1 *h, const std::string &new_name);
