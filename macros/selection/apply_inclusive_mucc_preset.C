@@ -1,9 +1,10 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <TSystem.h>
-#include <rarexsec/DataModel.hh>
-#include <rarexsec/Env.hh>
+
 #include <rarexsec/Hub.hh>
+#include <rarexsec/proc/DataModel.hh>
+#include <rarexsec/proc/Env.hh>
 #include <rarexsec/proc/Selection.hh>
 
 #include <iostream>
