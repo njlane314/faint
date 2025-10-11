@@ -1,6 +1,7 @@
 #include <ROOT/RDataFrame.hxx>
 #include <TSystem.h>
 
+#include <rarexsec/Env.hh>
 #include <rarexsec/Hub.hh>
 #include <rarexsec/Snapshot.hh>
 
@@ -17,18 +18,15 @@ void write_simulation_snapshots() {
             throw std::runtime_error("Failed to load librexsec");
         }
 
-        const std::string config_path = "data/samples.json";
-        const std::string beamline = "numi-fhc";
-        const std::vector<std::string> periods = {"run1"};
-
-        rarexsec::Hub hub(config_path);
-        const auto samples = hub.simulation_entries(beamline, periods);
+        const auto env = rarexsec::Env::from_env();
+        auto hub = env.make_hub();
+        const auto samples = hub.simulation_entries(env.beamline, env.periods);
 
         rarexsec::snapshot::Options opt;
         opt.outdir = "snapshots";
-        opt.tree = "analysis";
-        std::string outfile = beamline;
-        for (const auto& period : periods) {
+        opt.tree = env.tree;
+        std::string outfile = env.beamline;
+        for (const auto& period : env.periods) {
             outfile += "_" + period;
         }
         outfile += ".root";

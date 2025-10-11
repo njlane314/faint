@@ -1,6 +1,7 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <TSystem.h>
+#include <rarexsec/Env.hh>
 #include <rarexsec/Hub.hh>
 #include <rarexsec/Selection.hh>
 
@@ -16,11 +17,8 @@ void apply_inclusive_mucc_preset() {
             throw std::runtime_error("Failed to load librarexsec library");
         }
 
-        const std::string config_path = "data/samples.json";
-        const std::string beamline = "numi-fhc";
-        const std::vector<std::string> periods = {"run1"};
-
-        rarexsec::Hub hub(config_path);
+        const auto env = rarexsec::Env::from_env();
+        auto hub = env.make_hub();
 
         const auto preset = rarexsec::selection::Preset::InclusiveMuCC;
         auto preset_to_string = [](rarexsec::selection::Preset value) {
@@ -45,7 +43,7 @@ void apply_inclusive_mucc_preset() {
 
         std::cout << "Using preset: " << preset_to_string(preset) << "\n";
 
-        const auto samples = hub.simulation_entries(beamline, periods);
+        const auto samples = hub.simulation_entries(env.beamline, env.periods);
         std::cout << "Found " << samples.size() << " simulation samples" << std::endl;
 
         for (const auto* entry : samples) {

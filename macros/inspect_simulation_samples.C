@@ -1,6 +1,7 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <TSystem.h>
+#include <rarexsec/Env.hh>
 #include <rarexsec/Hub.hh>
 
 #include <iostream>
@@ -16,15 +17,12 @@ void inspect_simulation_samples() {
             throw std::runtime_error("Failed to load librexsec");
         }
 
-        const std::string config_path = "data/samples.json";
-        const std::string beamline = "numi-fhc";
-        const std::vector<std::string> periods = {"run1"};
+        const auto env = rarexsec::Env::from_env();
+        auto hub = env.make_hub();
+        const auto samples = hub.simulation_entries(env.beamline, env.periods);
 
-        rarexsec::Hub hub(config_path);
-        const auto samples = hub.simulation_entries(beamline, periods);
-
-        std::cout << "Loaded beamline " << beamline << " for";
-        for (const auto& period : periods) {
+        std::cout << "Loaded beamline " << env.beamline << " for";
+        for (const auto& period : env.periods) {
             std::cout << ' ' << period;
         }
         std::cout << " with " << samples.size() << " simulation samples." << std::endl;
