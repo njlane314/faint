@@ -18,7 +18,7 @@ void plot_topology_variables() {
         for (const auto& period : env.periods) {
             std::cout << ' ' << period;
         }
-        std::cout << " with " << samples.size() << " simulation samples." << std::endl;
+        std::cout << " with " << mc_samples.size() << " simulation samples." << std::endl;
 
         rarexsec::plot::Options opt;
         opt.out_dir = "plots/selection";
