@@ -25,24 +25,24 @@ struct Options {
 
 inline std::string source_to_string(Source s) {
     switch (s) {
-        case Source::Data:
-            return "data";
-        case Source::Ext:
-            return "ext";
-        case Source::MC:
-            return "mc";
+    case Source::Data:
+        return "data";
+    case Source::Ext:
+        return "ext";
+    case Source::MC:
+        return "mc";
     }
     return "unknown";
 }
 
 inline std::string slice_to_string(Slice s) {
     switch (s) {
-        case Slice::None:
-            return "none";
-        case Slice::BeamInclusive:
-            return "beam";
-        case Slice::StrangenessInclusive:
-            return "strangeness";
+    case Slice::None:
+        return "none";
+    case Slice::BeamInclusive:
+        return "beam";
+    case Slice::StrangenessInclusive:
+        return "strangeness";
     }
     return "unknown";
 }
@@ -52,7 +52,8 @@ inline std::string sample_label(const Entry& e) {
         return "dirt";
     if (e.source == Source::MC) {
         const auto slice = slice_to_string(e.slice);
-        if (slice == "none") return "mc";
+        if (slice == "none")
+            return "mc";
         return slice;
     }
     return source_to_string(e.source);
@@ -68,7 +69,9 @@ inline std::string sanitise(std::string s) {
 
 inline const std::vector<std::string>& default_columns() {
     static const std::vector<std::string> cols{
-        "run", "subrun", "event",
+        "run",
+        "subrun",
+        "event",
         "w_nominal",
         "analysis_channels",
     };
@@ -97,54 +100,54 @@ inline std::string make_out_path(const Options& opt, const Entry& e, const std::
                        sanitise(sample_label(e));
     if (!detvar.empty()) {
         name += "__" + sanitise(detvar);
-    return name;
-}
-
-inline std::string make_out_file(const Options& opt) {
-    std::filesystem::create_directories(opt.outdir);
-    return (std::filesystem::path(opt.outdir) / opt.outfile).string();
-}
-
-inline std::vector<std::string> write(const std::vector<const Entry*>& samples,
-                                      const Options& opt = {}) {
-    std::vector<std::string> outputs;
-    outputs.reserve(1);
-
-    const std::string outFile = make_out_file(opt);
-    bool fileExists = std::filesystem::exists(outFile);
-
-    auto snapshot_once = [&](ROOT::RDF::RNode node,
-                             const std::string& treeName,
-                             const std::vector<std::string>& cols) {
-        ROOT::RDF::RSnapshotOptions sopt;
-        sopt.fMode = fileExists ? "UPDATE" : "RECREATE";
-        sopt.fOverwriteIfExists = true;
-        node.Snapshot(treeName, outFile, cols, sopt).GetValue();
-        fileExists = true;
-    };
-
-    for (const Entry* e : samples) {
-        if (!e)
-            continue;
-
-        {
-            const auto cols = intersect_cols(e->rnode(), opt.columns);
-            const auto treeName = make_tree_name(opt, *e, "");
-            snapshot_once(e->rnode(), treeName, cols);
-        }
-
-        for (const auto& kv : e->detvars) {
-            const auto& tag = kv.first;
-            const auto& dv = kv.second;
-            const auto cols = intersect_cols(dv.rnode(), opt.columns);
-            const auto treeName = make_tree_name(opt, *e, tag);
-            snapshot_once(dv.rnode(), treeName, cols);
-        }
+        return name;
     }
 
-    if (!samples.empty())
-        outputs.push_back(outFile);
-    return outputs;
-}
+    inline std::string make_out_file(const Options& opt) {
+        std::filesystem::create_directories(opt.outdir);
+        return (std::filesystem::path(opt.outdir) / opt.outfile).string();
+    }
+
+    inline std::vector<std::string> write(const std::vector<const Entry*>& samples,
+                                          const Options& opt = {}) {
+        std::vector<std::string> outputs;
+        outputs.reserve(1);
+
+        const std::string outFile = make_out_file(opt);
+        bool fileExists = std::filesystem::exists(outFile);
+
+        auto snapshot_once = [&](ROOT::RDF::RNode node,
+                                 const std::string& treeName,
+                                 const std::vector<std::string>& cols) {
+            ROOT::RDF::RSnapshotOptions sopt;
+            sopt.fMode = fileExists ? "UPDATE" : "RECREATE";
+            sopt.fOverwriteIfExists = true;
+            node.Snapshot(treeName, outFile, cols, sopt).GetValue();
+            fileExists = true;
+        };
+
+        for (const Entry* e : samples) {
+            if (!e)
+                continue;
+
+            {
+                const auto cols = intersect_cols(e->rnode(), opt.columns);
+                const auto treeName = make_tree_name(opt, *e, "");
+                snapshot_once(e->rnode(), treeName, cols);
+            }
+
+            for (const auto& kv : e->detvars) {
+                const auto& tag = kv.first;
+                const auto& dv = kv.second;
+                const auto cols = intersect_cols(dv.rnode(), opt.columns);
+                const auto treeName = make_tree_name(opt, *e, tag);
+                snapshot_once(dv.rnode(), treeName, cols);
+            }
+        }
+
+        if (!samples.empty())
+            outputs.push_back(outFile);
+        return outputs;
+    }
 }
 }

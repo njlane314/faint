@@ -1,265 +1,258 @@
-// analytical_correction.C — analytical Λ→pπ acceptance with *smooth* thresholds
-// Usage: root -l -q analytical_correction.C
+
 
 #include <TCanvas.h>
-#include <TGraph.h>
-#include <TLegend.h>
-#include <TH2D.h>
-#include <TStyle.h>
 #include <TFile.h>
-#include <TSystem.h>
+#include <TGraph.h>
+#include <TH2D.h>
+#include <TLegend.h>
 #include <TPad.h>
 #include <TPaletteAxis.h>
+#include <TStyle.h>
+#include <TSystem.h>
 
-#include <cmath>
 #include <algorithm>
-#include <vector>
-#include <string>
+#include <cmath>
 #include <iostream>
 #include <limits>
+#include <string>
+#include <vector>
 
 #include "rarexsec/Plotter.hh"
 
 namespace ana {
 
-    // ------------------------- Physical constants (GeV, cm) -------------------------
-    constexpr double mL   = 1.115683;       // Λ mass
-    constexpr double mp   = 0.938272;       // proton mass
-    constexpr double mpi  = 0.139570;       // charged pion mass
-    constexpr double ctau = 7.89;           // cτ_Λ (cm)
-    constexpr double BpPi = 0.639;          // Br(Λ→pπ−)
-    constexpr double alphaLambda = 0.732;   // PDG decay asymmetry α_Λ
+constexpr double mL = 1.115683;
+constexpr double mp = 0.938272;
+constexpr double mpi = 0.139570;
+constexpr double ctau = 7.89;
+constexpr double BpPi = 0.639;
+constexpr double alphaLambda = 0.732;
 
-    // ------------------------- Configurable knobs -----------------------------------
-    struct AcceptCfg {
-        double Lmin_cm   = 1.5;    // resolvable PV–DV separation
-        double Lmax_cm   = 200.;   // available in-volume flight (set large to ignore)
-        double pthr_p    = 0.25;   // proton p-threshold [GeV/c]
-        double pthr_pi   = 0.10;   // pion  p-threshold [GeV/c]
-        double PLambda   = 0.0;    // longitudinal polarisation (0 = unpolarised)
-        double alpha     = alphaLambda;
+struct AcceptCfg {
+    double Lmin_cm = 1.5;
+    double Lmax_cm = 200.;
+    double pthr_p = 0.25;
+    double pthr_pi = 0.10;
+    double PLambda = 0.0;
+    double alpha = alphaLambda;
 
-        // Smooth energy turn-ons (σ_E in GeV). 0 => hard cut (original behaviour).
-        double sigmaE_p  = 0.010;  // 10 MeV by default
-        double sigmaE_pi = 0.010;  // 10 MeV by default
+    double sigmaE_p = 0.010;
+    double sigmaE_pi = 0.010;
+};
+static AcceptCfg gCfg{};
+
+inline double kallen(double a, double b, double c) {
+    return a * a + b * b + c * c - 2.0 * (a * b + a * c + b * c);
+}
+inline double beta_from_p(double p) {
+    const double E = std::sqrt(p * p + mL * mL);
+    return (E > 0) ? p / E : 0.0;
+}
+inline double gamma_from_p(double p) {
+    return std::sqrt(1.0 + (p * p) / (mL * mL));
+}
+
+inline double Alength(double beta_gamma, double Lmin, double Lmax) {
+    const double lambda = std::max(1e-12, beta_gamma * ctau);
+    const double t1 = std::exp(-Lmin / lambda);
+    const double t2 = (Lmax > 0 ? std::exp(-Lmax / lambda) : 0.0);
+
+    return t1 - t2;
+}
+
+inline double Akin(double p, double pthr_p, double pthr_pi, double P, double alpha) {
+    const double beta = beta_from_p(p);
+    const double gamma = gamma_from_p(p);
+    if (beta <= 0.0)
+        return 0.0;
+
+    const double lam = kallen(mL * mL, mp * mp, mpi * mpi);
+    if (lam <= 0.0)
+        return 0.0;
+
+    const double pst = 0.5 * std::sqrt(lam) / mL;
+    const double Epst = std::sqrt(mp * mp + pst * pst);
+    const double Epist = std::sqrt(mpi * mpi + pst * pst);
+
+    const double Ethr_p = std::sqrt(mp * mp + pthr_p * pthr_p);
+    const double Ethr_pi = std::sqrt(mpi * mpi + pthr_pi * pthr_pi);
+
+    const double denom = beta * pst;
+    if (denom <= 0.0)
+        return 0.0;
+
+    const double cmin_p = (Ethr_p / gamma - Epst) / denom;
+    const double cmax_pi = (Epist - Ethr_pi / gamma) / denom;
+    const double raw_width = cmax_pi - cmin_p;
+    const double tol = 64 * std::numeric_limits<double>::epsilon() *
+                       std::max({std::abs(cmin_p), std::abs(cmax_pi), 1.0});
+    if (raw_width <= tol)
+        return 0.0;
+
+    const double l = std::clamp(cmin_p, -1.0, 1.0);
+    const double u = std::clamp(cmax_pi, -1.0, 1.0);
+    const double width = std::max(u - l, 0.0);
+    if (width <= 0.0)
+        return 0.0;
+
+    const double Aiso = 0.5 * width;
+    const double Apol = 0.25 * alpha * P * (u * u - l * l);
+    return Aiso + Apol;
+}
+
+static constexpr double GL64_X[64] = {
+    -0.99930504173577217042, -0.99634011677195521983, -0.99101337147674428696, -0.98333625388462597705,
+    -0.97332682778991097550, -0.96100879965205376898, -0.94641137485840276522, -0.92956917213193956950,
+    -0.91052213707850282454, -0.88931544599511413995, -0.86599939815409276989, -0.84062929625258031585,
+    -0.81326531512279753855, -0.78397235894334138528, -0.75281990726053193974, -0.71988185017161077095,
+    -0.68523631305423327031, -0.64896547125465731121, -0.61115535517239327756, -0.57189564620263400041,
+    -0.53127946401989456504, -0.48940314570705295560, -0.44636601725346408687, -0.40227015796399162584,
+    -0.35722015833766812554, -0.31132287199021096979, -0.26468716220876742362, -0.21742364374000708316,
+    -0.16964442042399280330, -0.12146281929612055828, -0.07299312178779904237, -0.02435029266342442905,
+    0.02435029266342442905, 0.07299312178779904237, 0.12146281929612055828, 0.16964442042399280330,
+    0.21742364374000708316, 0.26468716220876742362, 0.31132287199021096979, 0.35722015833766812554,
+    0.40227015796399162584, 0.44636601725346408687, 0.48940314570705295560, 0.53127946401989456504,
+    0.57189564620263400041, 0.61115535517239327756, 0.64896547125465731121, 0.68523631305423327031,
+    0.71988185017161077095, 0.75281990726053193974, 0.78397235894334138528, 0.81326531512279753855,
+    0.84062929625258031585, 0.86599939815409276989, 0.88931544599511413995, 0.91052213707850282454,
+    0.92956917213193956950, 0.94641137485840276522, 0.96100879965205376898, 0.97332682778991097550,
+    0.98333625388462597705, 0.99101337147674428696, 0.99634011677195521983, 0.99930504173577217042};
+static constexpr double GL64_W[64] = {
+    0.00178328072169421517, 0.00414703326056292329, 0.00650445796897965427, 0.00884675982636439102,
+    0.01116813946013146645, 0.01346304789671823147, 0.01572603047602508242, 0.01795171577569730156,
+    0.02013482315353009450, 0.02227017380838300711, 0.02435270256871085309, 0.02637746971505462723,
+    0.02833967261425970191, 0.03023465707240249531, 0.03205792835485145320, 0.03380516183714178668,
+    0.03547221325688232341, 0.03705512854024015090, 0.03855015317861559127, 0.03995374113272034955,
+    0.04126256324262348590, 0.04247351512365359766, 0.04358372452932346430, 0.04459055816375654541,
+    0.04549162792741811429, 0.04628479658131437469, 0.04696818281620999957, 0.04754016571483030140,
+    0.04799938859645831724, 0.04834476223480295431, 0.04857546744150345597, 0.04869095700913975144,
+    0.04869095700913975144, 0.04857546744150345597, 0.04834476223480295431, 0.04799938859645831724,
+    0.04754016571483030140, 0.04696818281620999957, 0.04628479658131437469, 0.04549162792741811429,
+    0.04459055816375654541, 0.04358372452932346430, 0.04247351512365359766, 0.04126256324262348590,
+    0.03995374113272034955, 0.03855015317861559127, 0.03705512854024015090, 0.03547221325688232341,
+    0.03380516183714178668, 0.03205792835485145320, 0.03023465707240249531, 0.02833967261425970191,
+    0.02637746971505462723, 0.02435270256871085309, 0.02227017380838300711, 0.02013482315353009450,
+    0.01795171577569730156, 0.01572603047602508242, 0.01346304789671823147, 0.01116813946013146645,
+    0.00884675982636439102, 0.00650445796897965427, 0.00414703326056292329, 0.00178328072169421517};
+
+inline double smooth_step_erf(double E, double Ethr, double sigmaE) {
+    if (sigmaE <= 0.0)
+        return (E >= Ethr) ? 1.0 : 0.0;
+    const double t = (E - Ethr) / (std::sqrt(2.0) * sigmaE);
+
+    return std::max(0.0, std::min(1.0, 0.5 * (1.0 + std::erf(t))));
+}
+
+inline double Akin_smooth(double p,
+                          double pthr_p, double pthr_pi,
+                          double P, double alpha,
+                          double sigmaE_p, double sigmaE_pi) {
+    const double beta = beta_from_p(p);
+    const double gamma = gamma_from_p(p);
+    if (beta <= 0.0)
+        return 0.0;
+
+    const double lam = kallen(mL * mL, mp * mp, mpi * mpi);
+    if (lam <= 0.0)
+        return 0.0;
+
+    const double pst = 0.5 * std::sqrt(lam) / mL;
+    const double Epst = std::sqrt(mp * mp + pst * pst);
+    const double Epist = std::sqrt(mpi * mpi + pst * pst);
+
+    const double Ethr_p = std::sqrt(mp * mp + pthr_p * pthr_p);
+    const double Ethr_pi = std::sqrt(mpi * mpi + pthr_pi * pthr_pi);
+
+    const double A_p = gamma * Epst;
+    const double B_p = gamma * beta * pst;
+    const double A_pi = gamma * Epist;
+    const double B_pi = -gamma * beta * pst;
+
+    auto eps = [&](double x) -> double {
+        const double Ep = A_p + B_p * x;
+        const double Epi = A_pi + B_pi * x;
+        const double ep = smooth_step_erf(Ep, Ethr_p, sigmaE_p);
+        const double epi = smooth_step_erf(Epi, Ethr_pi, sigmaE_pi);
+        return ep * epi;
     };
-    static AcceptCfg gCfg{};
 
-    // ------------------------- Helper kinematics (Eqs. 6.3–6.6) ---------------------
-    inline double kallen(double a, double b, double c) {
-        return a*a + b*b + c*c - 2.0*(a*b + a*c + b*c);
-    }
-    inline double beta_from_p(double p) {
-        const double E = std::sqrt(p*p + mL*mL);
-        return (E > 0) ? p / E : 0.0;
-    }
-    inline double gamma_from_p(double p) {
-        return std::sqrt(1.0 + (p*p)/(mL*mL));
+    double I0 = 0.0, I1 = 0.0;
+    for (int i = 0; i < 64; ++i) {
+        const double x = GL64_X[i];
+        const double w = GL64_W[i];
+        const double e = eps(x);
+        I0 += w * e;
+        I1 += w * (x * e);
     }
 
-    // Alength: e^{−Lmin/λ} − e^{−Lmax/λ}, λ = βγ cτ_Λ  (Eq. 6.2)
-    inline double Alength(double beta_gamma, double Lmin, double Lmax) {
-        const double lambda = std::max(1e-12, beta_gamma * ctau);
-        const double t1 = std::exp(-Lmin / lambda);
-        const double t2 = (Lmax > 0 ? std::exp(-Lmax / lambda) : 0.0);
-        // no clamp needed; mathematically 0..1 already
-        return t1 - t2;
+    const double A = 0.5 * I0 + 0.5 * alpha * P * I1;
+    return A;
+}
+
+inline double Akin_with_cfg(double p, const AcceptCfg& C) {
+    if (C.sigmaE_p > 0.0 || C.sigmaE_pi > 0.0) {
+        return Akin_smooth(p, C.pthr_p, C.pthr_pi, C.PLambda, C.alpha,
+                           C.sigmaE_p, C.sigmaE_pi);
     }
+    return Akin(p, C.pthr_p, C.pthr_pi, C.PLambda, C.alpha);
+}
 
-    // ------------------------- HARD (piecewise) Akin (original) ---------------------
-    inline double Akin(double p, double pthr_p, double pthr_pi, double P, double alpha) {
-        const double beta  = beta_from_p(p);
-        const double gamma = gamma_from_p(p);
-        if (beta <= 0.0) return 0.0;
+inline double APS_from_p(double p) {
+    const double beta_gamma = p / mL;
+    const double Alen = Alength(beta_gamma, gCfg.Lmin_cm, gCfg.Lmax_cm);
+    const double A2 = Akin_with_cfg(p, gCfg);
+    const double aps = BpPi * Alen * A2;
+    return aps;
+}
+inline double APS_from_bg(double beta_gamma) {
+    const double p = beta_gamma * mL;
+    return APS_from_p(p);
+}
 
-        const double lam = kallen(mL*mL, mp*mp, mpi*mpi);
-        if (lam <= 0.0) return 0.0;
+}
 
-        const double pst   = 0.5 * std::sqrt(lam) / mL;     // p* in Λ rest frame (Eq. 6.3)
-        const double Epst  = std::sqrt(mp*mp  + pst*pst);
-        const double Epist = std::sqrt(mpi*mpi + pst*pst);
-
-        // Implement p-thresholds as energy thresholds (Eq. 6.5)
-        const double Ethr_p  = std::sqrt(mp*mp  + pthr_p*pthr_p);
-        const double Ethr_pi = std::sqrt(mpi*mpi + pthr_pi*pthr_pi);
-
-        const double denom = beta * pst; // linear bounds in cosθ* (Eq. 6.6)
-        if (denom <= 0.0) return 0.0;
-
-        const double cmin_p  = (Ethr_p/gamma  - Epst) / denom; // x ≥ cmin_p
-        const double cmax_pi = (Epist - Ethr_pi/gamma) / denom; // x ≤ cmax_pi
-        const double raw_width = cmax_pi - cmin_p;
-        const double tol = 64 * std::numeric_limits<double>::epsilon() *
-                           std::max({std::abs(cmin_p), std::abs(cmax_pi), 1.0});
-        if (raw_width <= tol) return 0.0;
-
-        const double l = std::clamp(cmin_p, -1.0, 1.0);
-        const double u = std::clamp(cmax_pi, -1.0, 1.0);
-        const double width = std::max(u - l, 0.0);
-        if (width <= 0.0) return 0.0;
-
-        // Unpolarised fraction plus polarisation correction (Eqs. 6.7–6.8)
-        const double Aiso = 0.5 * width;
-        const double Apol = 0.25 * alpha * P * (u*u - l*l);
-        return Aiso + Apol;   // no clamp; expression is already in [0,1]
-    }
-
-    // ------------------------- SMOOTH turn-on Akin (Gauss–Legendre) ----------------
-
-    // 64-point Gauss–Legendre nodes/weights on [-1,1]
-    static constexpr double GL64_X[64] = {
-        -0.99930504173577217042, -0.99634011677195521983, -0.99101337147674428696, -0.98333625388462597705, 
-        -0.97332682778991097550, -0.96100879965205376898, -0.94641137485840276522, -0.92956917213193956950, 
-        -0.91052213707850282454, -0.88931544599511413995, -0.86599939815409276989, -0.84062929625258031585, 
-        -0.81326531512279753855, -0.78397235894334138528, -0.75281990726053193974, -0.71988185017161077095, 
-        -0.68523631305423327031, -0.64896547125465731121, -0.61115535517239327756, -0.57189564620263400041, 
-        -0.53127946401989456504, -0.48940314570705295560, -0.44636601725346408687, -0.40227015796399162584, 
-        -0.35722015833766812554, -0.31132287199021096979, -0.26468716220876742362, -0.21742364374000708316, 
-        -0.16964442042399280330, -0.12146281929612055828, -0.07299312178779904237, -0.02435029266342442905, 
-         0.02435029266342442905,  0.07299312178779904237,  0.12146281929612055828,  0.16964442042399280330, 
-         0.21742364374000708316,  0.26468716220876742362,  0.31132287199021096979,  0.35722015833766812554, 
-         0.40227015796399162584,  0.44636601725346408687,  0.48940314570705295560,  0.53127946401989456504, 
-         0.57189564620263400041,  0.61115535517239327756,  0.64896547125465731121,  0.68523631305423327031, 
-         0.71988185017161077095,  0.75281990726053193974,  0.78397235894334138528,  0.81326531512279753855, 
-         0.84062929625258031585,  0.86599939815409276989,  0.88931544599511413995,  0.91052213707850282454, 
-         0.92956917213193956950,  0.94641137485840276522,  0.96100879965205376898,  0.97332682778991097550, 
-         0.98333625388462597705,  0.99101337147674428696,  0.99634011677195521983,  0.99930504173577217042
-    };
-    static constexpr double GL64_W[64] = {
-        0.00178328072169421517, 0.00414703326056292329, 0.00650445796897965427, 0.00884675982636439102, 
-        0.01116813946013146645, 0.01346304789671823147, 0.01572603047602508242, 0.01795171577569730156, 
-        0.02013482315353009450, 0.02227017380838300711, 0.02435270256871085309, 0.02637746971505462723, 
-        0.02833967261425970191, 0.03023465707240249531, 0.03205792835485145320, 0.03380516183714178668, 
-        0.03547221325688232341, 0.03705512854024015090, 0.03855015317861559127, 0.03995374113272034955, 
-        0.04126256324262348590, 0.04247351512365359766, 0.04358372452932346430, 0.04459055816375654541, 
-        0.04549162792741811429, 0.04628479658131437469, 0.04696818281620999957, 0.04754016571483030140, 
-        0.04799938859645831724, 0.04834476223480295431, 0.04857546744150345597, 0.04869095700913975144, 
-        0.04869095700913975144, 0.04857546744150345597, 0.04834476223480295431, 0.04799938859645831724, 
-        0.04754016571483030140, 0.04696818281620999957, 0.04628479658131437469, 0.04549162792741811429, 
-        0.04459055816375654541, 0.04358372452932346430, 0.04247351512365359766, 0.04126256324262348590, 
-        0.03995374113272034955, 0.03855015317861559127, 0.03705512854024015090, 0.03547221325688232341, 
-        0.03380516183714178668, 0.03205792835485145320, 0.03023465707240249531, 0.02833967261425970191, 
-        0.02637746971505462723, 0.02435270256871085309, 0.02227017380838300711, 0.02013482315353009450, 
-        0.01795171577569730156, 0.01572603047602508242, 0.01346304789671823147, 0.01116813946013146645, 
-        0.00884675982636439102, 0.00650445796897965427, 0.00414703326056292329, 0.00178328072169421517
-    };
-
-    inline double smooth_step_erf(double E, double Ethr, double sigmaE) {
-        if (sigmaE <= 0.0) return (E >= Ethr) ? 1.0 : 0.0;  // hard cut
-        const double t = (E - Ethr) / (std::sqrt(2.0) * sigmaE);
-        // clamp only the *single* erf to [0,1]; this is continuous and avoids NaNs
-        return std::max(0.0, std::min(1.0, 0.5 * (1.0 + std::erf(t))));
-    }
-
-    // Smooth Akin using Gauss–Legendre 64
-    inline double Akin_smooth(double p,
-                              double pthr_p, double pthr_pi,
-                              double P, double alpha,
-                              double sigmaE_p, double sigmaE_pi) {
-        const double beta  = beta_from_p(p);
-        const double gamma = gamma_from_p(p);
-        if (beta <= 0.0) return 0.0;
-
-        const double lam = kallen(mL*mL, mp*mp, mpi*mpi);
-        if (lam <= 0.0) return 0.0;
-
-        const double pst   = 0.5 * std::sqrt(lam) / mL;
-        const double Epst  = std::sqrt(mp*mp  + pst*pst);
-        const double Epist = std::sqrt(mpi*mpi + pst*pst);
-
-        // thresholds → energies (same mapping as in hard version)
-        const double Ethr_p  = std::sqrt(mp*mp  + pthr_p*pthr_p);
-        const double Ethr_pi = std::sqrt(mpi*mpi + pthr_pi*pthr_pi);
-
-        // Linear in x: E_p(x) = A_p + B_p x,  E_pi(x) = A_pi + B_pi x
-        const double A_p  = gamma * Epst;
-        const double B_p  = gamma * beta * pst;
-        const double A_pi = gamma * Epist;
-        const double B_pi = -gamma * beta * pst;
-
-        auto eps = [&](double x)->double {
-            const double Ep  = A_p  + B_p  * x;
-            const double Epi = A_pi + B_pi * x;
-            const double ep  = smooth_step_erf(Ep , Ethr_p , sigmaE_p );
-            const double epi = smooth_step_erf(Epi, Ethr_pi, sigmaE_pi);
-            return ep * epi; // both tracks must pass
-        };
-
-        double I0 = 0.0, I1 = 0.0;
-        for (int i = 0; i < 64; ++i) {
-            const double x = GL64_X[i];
-            const double w = GL64_W[i];
-            const double e = eps(x);
-            I0 += w * e;
-            I1 += w * (x * e);
-        }
-
-        // A = 1/2 ∫ (1 + α P x) ε_p ε_π dx
-        const double A = 0.5 * I0 + 0.5 * alpha * P * I1;
-        return A; // no clamp: integral is already within [0,1] up to roundoff
-    }
-
-    // Choose smooth vs hard based on config.
-    inline double Akin_with_cfg(double p, const AcceptCfg& C) {
-        if (C.sigmaE_p > 0.0 || C.sigmaE_pi > 0.0) {
-            return Akin_smooth(p, C.pthr_p, C.pthr_pi, C.PLambda, C.alpha,
-                               C.sigmaE_p, C.sigmaE_pi);
-        }
-        return Akin(p, C.pthr_p, C.pthr_pi, C.PLambda, C.alpha);
-    }
-
-    // APS: B × Alength × Akin (Eq. 6.1)
-    inline double APS_from_p(double p) {
-        const double beta_gamma = p / mL; // βγ = p/m
-        const double Alen = Alength(beta_gamma, gCfg.Lmin_cm, gCfg.Lmax_cm);
-        const double A2   = Akin_with_cfg(p, gCfg);
-        const double aps  = BpPi * Alen * A2;
-        return aps; // no clamp; physics ensures aps <= BpPi
-    }
-    inline double APS_from_bg(double beta_gamma) { // convenience: APS vs βγ
-        const double p = beta_gamma * mL;
-        return APS_from_p(p);
-    }
-
-} // namespace ana
-
-// ------------------------- Plot builders ------------------------------------------
 void draw_APS_vs_bg(const std::string& outdir) {
     const int N = 1200;
     std::vector<double> x(N), y_nom(N), y_loL(N), y_hiL(N), y_noThr(N), y_polp(N), y_polm(N);
 
-    // Variants
     ana::AcceptCfg cfg_nom = ana::gCfg;
-    ana::AcceptCfg cfg_loL = ana::gCfg; cfg_loL.Lmin_cm = 0.5;
-    ana::AcceptCfg cfg_hiL = ana::gCfg; cfg_hiL.Lmin_cm = 2.5;
-    ana::AcceptCfg cfg_thr = ana::gCfg; cfg_thr.pthr_p = 0.0; cfg_thr.pthr_pi = 0.0;
-    cfg_thr.sigmaE_p = 0.0; cfg_thr.sigmaE_pi = 0.0; // true "no thresholds"
-    ana::AcceptCfg cfg_pP  = ana::gCfg; cfg_pP.PLambda = +0.4;
-    ana::AcceptCfg cfg_mP  = ana::gCfg; cfg_mP.PLambda = -0.4;
+    ana::AcceptCfg cfg_loL = ana::gCfg;
+    cfg_loL.Lmin_cm = 0.5;
+    ana::AcceptCfg cfg_hiL = ana::gCfg;
+    cfg_hiL.Lmin_cm = 2.5;
+    ana::AcceptCfg cfg_thr = ana::gCfg;
+    cfg_thr.pthr_p = 0.0;
+    cfg_thr.pthr_pi = 0.0;
+    cfg_thr.sigmaE_p = 0.0;
+    cfg_thr.sigmaE_pi = 0.0;
+    ana::AcceptCfg cfg_pP = ana::gCfg;
+    cfg_pP.PLambda = +0.4;
+    ana::AcceptCfg cfg_mP = ana::gCfg;
+    cfg_mP.PLambda = -0.4;
 
-    auto eval_APS = [](double bg, const ana::AcceptCfg& C)->double {
+    auto eval_APS = [](double bg, const ana::AcceptCfg& C) -> double {
         const double p = bg * ana::mL;
         const double Alen = ana::Alength(bg, C.Lmin_cm, C.Lmax_cm);
-        const double A2   = ana::Akin_with_cfg(p, C);
+        const double A2 = ana::Akin_with_cfg(p, C);
         return ana::BpPi * Alen * A2;
     };
 
     const double bg_min = 0.0, bg_max = 10.0;
     for (int i = 0; i < N; ++i) {
         const double bg = bg_min + (bg_max - bg_min) * i / (N - 1);
-        x[i]       = bg;
-        y_nom[i]   = eval_APS(bg, cfg_nom);
-        y_loL[i]   = eval_APS(bg, cfg_loL);
-        y_hiL[i]   = eval_APS(bg, cfg_hiL);
+        x[i] = bg;
+        y_nom[i] = eval_APS(bg, cfg_nom);
+        y_loL[i] = eval_APS(bg, cfg_loL);
+        y_hiL[i] = eval_APS(bg, cfg_hiL);
         y_noThr[i] = eval_APS(bg, cfg_thr);
-        y_polp[i]  = eval_APS(bg, cfg_pP);
-        y_polm[i]  = eval_APS(bg, cfg_mP);
+        y_polp[i] = eval_APS(bg, cfg_pP);
+        y_polm[i] = eval_APS(bg, cfg_mP);
     }
 
-    TCanvas c("c_APS","APS vs beta*gamma",900,700);
+    TCanvas c("c_APS", "APS vs beta*gamma", 900, 700);
     gStyle->SetOptStat(0);
 
-    auto* pad_main   = new TPad("pad_main", "pad_main", 0., 0.00, 1., 0.82);
+    auto* pad_main = new TPad("pad_main", "pad_main", 0., 0.00, 1., 0.82);
     auto* pad_legend = new TPad("pad_legend", "pad_legend", 0., 0.82, 1., 1.00);
     pad_main->SetTopMargin(0.02);
     pad_main->SetBottomMargin(0.12);
@@ -273,19 +266,30 @@ void draw_APS_vs_bg(const std::string& outdir) {
     pad_legend->Draw();
 
     pad_main->cd();
-    auto g_nom   = new TGraph(N, x.data(), y_nom.data());
-    auto g_loL   = new TGraph(N, x.data(), y_loL.data());
-    auto g_hiL   = new TGraph(N, x.data(), y_hiL.data());
-    auto g_thr   = new TGraph(N, x.data(), y_noThr.data());
-    auto g_polp  = new TGraph(N, x.data(), y_polp.data());
-    auto g_polm  = new TGraph(N, x.data(), y_polm.data());
+    auto g_nom = new TGraph(N, x.data(), y_nom.data());
+    auto g_loL = new TGraph(N, x.data(), y_loL.data());
+    auto g_hiL = new TGraph(N, x.data(), y_hiL.data());
+    auto g_thr = new TGraph(N, x.data(), y_noThr.data());
+    auto g_polp = new TGraph(N, x.data(), y_polp.data());
+    auto g_polm = new TGraph(N, x.data(), y_polm.data());
 
-    g_nom ->SetLineColor(kBlue+1);    g_nom ->SetLineWidth(3);
-    g_loL ->SetLineColor(kGreen+2);   g_loL ->SetLineStyle(2); g_loL ->SetLineWidth(2);
-    g_hiL ->SetLineColor(kGreen+2);   g_hiL ->SetLineStyle(9); g_hiL ->SetLineWidth(2);
-    g_thr ->SetLineColor(kRed+1);     g_thr ->SetLineStyle(3); g_thr ->SetLineWidth(2);
-    g_polp->SetLineColor(kMagenta+1); g_polp->SetLineStyle(7); g_polp->SetLineWidth(2);
-    g_polm->SetLineColor(kMagenta+1); g_polm->SetLineStyle(7); g_polm->SetLineWidth(2);
+    g_nom->SetLineColor(kBlue + 1);
+    g_nom->SetLineWidth(3);
+    g_loL->SetLineColor(kGreen + 2);
+    g_loL->SetLineStyle(2);
+    g_loL->SetLineWidth(2);
+    g_hiL->SetLineColor(kGreen + 2);
+    g_hiL->SetLineStyle(9);
+    g_hiL->SetLineWidth(2);
+    g_thr->SetLineColor(kRed + 1);
+    g_thr->SetLineStyle(3);
+    g_thr->SetLineWidth(2);
+    g_polp->SetLineColor(kMagenta + 1);
+    g_polp->SetLineStyle(7);
+    g_polp->SetLineWidth(2);
+    g_polm->SetLineColor(kMagenta + 1);
+    g_polm->SetLineStyle(7);
+    g_polm->SetLineWidth(2);
 
     g_nom->SetTitle(";#beta#gamma ( #it{#Lambda} boost );A_{PS}(#beta#gamma)");
     g_nom->GetXaxis()->SetLimits(bg_min, bg_max);
@@ -304,11 +308,10 @@ void draw_APS_vs_bg(const std::string& outdir) {
     leg.SetFillStyle(0);
     leg.SetTextFont(42);
     leg.SetNColumns(2);
-    leg.AddEntry(g_nom , Form("Nominal thresholds (#sigma_{E}^{p}=%.0f MeV, #sigma_{E}^{#pi}=%.0f MeV)",
-                              1000.*ana::gCfg.sigmaE_p, 1000.*ana::gCfg.sigmaE_pi), "l");
-    leg.AddEntry(g_thr , "No thresholds", "l");
-    leg.AddEntry(g_loL , "L_{min}=0.5 cm", "l");
-    leg.AddEntry(g_hiL , "L_{min}=2.5 cm", "l");
+    leg.AddEntry(g_nom, Form("Nominal thresholds (#sigma_{E}^{p}=%.0f MeV, #sigma_{E}^{#pi}=%.0f MeV)", 1000. * ana::gCfg.sigmaE_p, 1000. * ana::gCfg.sigmaE_pi), "l");
+    leg.AddEntry(g_thr, "No thresholds", "l");
+    leg.AddEntry(g_loL, "L_{min}=0.5 cm", "l");
+    leg.AddEntry(g_hiL, "L_{min}=2.5 cm", "l");
     leg.AddEntry(g_polp, "P_{#Lambda}=+0.4", "l");
     leg.AddEntry(g_polm, "P_{#Lambda}=-0.4", "l");
     leg.Draw();
@@ -318,31 +321,37 @@ void draw_APS_vs_bg(const std::string& outdir) {
 }
 
 void draw_Akin_vs_bg(const std::string& outdir) {
-    // Show purely the kinematic factor (thresholds & polarisation) versus βγ
+
     const int N = 1200;
     const double bg_min = 0.0, bg_max = 10.0;
     std::vector<double> x(N), y_nom(N), y_noThr(N), y_polp(N), y_polm(N);
 
-    ana::AcceptCfg c_nom = ana::gCfg; c_nom.PLambda = 0.0;
-    ana::AcceptCfg c_thr = ana::gCfg; c_thr.pthr_p = 0.0; c_thr.pthr_pi = 0.0;
-                                     c_thr.sigmaE_p = 0.0; c_thr.sigmaE_pi = 0.0;
-    ana::AcceptCfg c_pP  = ana::gCfg; c_pP.PLambda  = +0.4;
-    ana::AcceptCfg c_mP  = ana::gCfg; c_mP.PLambda  = -0.4;
+    ana::AcceptCfg c_nom = ana::gCfg;
+    c_nom.PLambda = 0.0;
+    ana::AcceptCfg c_thr = ana::gCfg;
+    c_thr.pthr_p = 0.0;
+    c_thr.pthr_pi = 0.0;
+    c_thr.sigmaE_p = 0.0;
+    c_thr.sigmaE_pi = 0.0;
+    ana::AcceptCfg c_pP = ana::gCfg;
+    c_pP.PLambda = +0.4;
+    ana::AcceptCfg c_mP = ana::gCfg;
+    c_mP.PLambda = -0.4;
 
     for (int i = 0; i < N; ++i) {
         const double bg = bg_min + (bg_max - bg_min) * i / (N - 1);
-        const double p  = bg * ana::mL;
-        x[i]      = bg;
-        y_nom[i]  = ana::Akin_with_cfg(p, c_nom);
-        y_noThr[i]= ana::Akin_with_cfg(p, c_thr);
+        const double p = bg * ana::mL;
+        x[i] = bg;
+        y_nom[i] = ana::Akin_with_cfg(p, c_nom);
+        y_noThr[i] = ana::Akin_with_cfg(p, c_thr);
         y_polp[i] = ana::Akin_with_cfg(p, c_pP);
         y_polm[i] = ana::Akin_with_cfg(p, c_mP);
     }
 
-    TCanvas c("c_Akin","A_kin vs beta*gamma",900,700);
+    TCanvas c("c_Akin", "A_kin vs beta*gamma", 900, 700);
     gStyle->SetOptStat(0);
 
-    auto* pad_main   = new TPad("pad_main", "pad_main", 0., 0.00, 1., 0.82);
+    auto* pad_main = new TPad("pad_main", "pad_main", 0., 0.00, 1., 0.82);
     auto* pad_legend = new TPad("pad_legend", "pad_legend", 0., 0.82, 1., 1.00);
     pad_main->SetTopMargin(0.02);
     pad_main->SetBottomMargin(0.12);
@@ -356,15 +365,22 @@ void draw_Akin_vs_bg(const std::string& outdir) {
     pad_legend->Draw();
 
     pad_main->cd();
-    auto g_nom   = new TGraph(N, x.data(), y_nom.data());
-    auto g_thr   = new TGraph(N, x.data(), y_noThr.data());
-    auto g_polp  = new TGraph(N, x.data(), y_polp.data());
-    auto g_polm  = new TGraph(N, x.data(), y_polm.data());
+    auto g_nom = new TGraph(N, x.data(), y_nom.data());
+    auto g_thr = new TGraph(N, x.data(), y_noThr.data());
+    auto g_polp = new TGraph(N, x.data(), y_polp.data());
+    auto g_polm = new TGraph(N, x.data(), y_polm.data());
 
-    g_nom ->SetLineColor(kBlue+1);    g_nom ->SetLineWidth(3);
-    g_thr ->SetLineColor(kRed+1);     g_thr ->SetLineStyle(3); g_thr ->SetLineWidth(2);
-    g_polp->SetLineColor(kMagenta+1); g_polp->SetLineStyle(7); g_polp->SetLineWidth(2);
-    g_polm->SetLineColor(kMagenta+1); g_polm->SetLineStyle(7); g_polm->SetLineWidth(2);
+    g_nom->SetLineColor(kBlue + 1);
+    g_nom->SetLineWidth(3);
+    g_thr->SetLineColor(kRed + 1);
+    g_thr->SetLineStyle(3);
+    g_thr->SetLineWidth(2);
+    g_polp->SetLineColor(kMagenta + 1);
+    g_polp->SetLineStyle(7);
+    g_polp->SetLineWidth(2);
+    g_polm->SetLineColor(kMagenta + 1);
+    g_polm->SetLineStyle(7);
+    g_polm->SetLineWidth(2);
 
     g_nom->SetTitle(";#beta#gamma ( #it{#Lambda} boost );A_{kin}");
     g_nom->GetXaxis()->SetLimits(bg_min, bg_max);
@@ -381,9 +397,8 @@ void draw_Akin_vs_bg(const std::string& outdir) {
     leg.SetFillStyle(0);
     leg.SetTextFont(42);
     leg.SetNColumns(2);
-    leg.AddEntry(g_nom , Form("Nominal thresholds (#sigma_{E}^{p}=%.0f MeV, #sigma_{E}^{#pi}=%.0f MeV)",
-                              1000.*ana::gCfg.sigmaE_p, 1000.*ana::gCfg.sigmaE_pi), "l");
-    leg.AddEntry(g_thr , "No thresholds", "l");
+    leg.AddEntry(g_nom, Form("Nominal thresholds (#sigma_{E}^{p}=%.0f MeV, #sigma_{E}^{#pi}=%.0f MeV)", 1000. * ana::gCfg.sigmaE_p, 1000. * ana::gCfg.sigmaE_pi), "l");
+    leg.AddEntry(g_thr, "No thresholds", "l");
     leg.AddEntry(g_polp, "P_{#Lambda}=+0.4", "l");
     leg.AddEntry(g_polm, "P_{#Lambda}=-0.4", "l");
     leg.Draw();
@@ -393,15 +408,14 @@ void draw_Akin_vs_bg(const std::string& outdir) {
 }
 
 void draw_APS_heatmap_Lmin_vs_bg(const std::string& outdir) {
-    // Heatmap: A_PS(βγ, L_min). L_max fixed, thresholds fixed.
+
     const int Nx = 400, Ny = 120;
     const double bg_min = 0.0, bg_max = 10.0;
     const double Lmin_min = 0.0, Lmin_max = 3.0;
 
-    TH2D h("hAPS",";#beta#gamma ( #it{#Lambda} boost );L_{min} [cm]",
-            Nx, bg_min, bg_max, Ny, Lmin_min, Lmin_max);
+    TH2D h("hAPS", ";#beta#gamma ( #it{#Lambda} boost );L_{min} [cm]",
+           Nx, bg_min, bg_max, Ny, Lmin_min, Lmin_max);
 
-    // Temporary copy of config to sweep Lmin
     ana::AcceptCfg cfg = ana::gCfg;
 
     for (int ix = 1; ix <= Nx; ++ix) {
@@ -410,13 +424,13 @@ void draw_APS_heatmap_Lmin_vs_bg(const std::string& outdir) {
             cfg.Lmin_cm = h.GetYaxis()->GetBinCenter(iy);
             const double p = bg * ana::mL;
             const double Alen = ana::Alength(bg, cfg.Lmin_cm, cfg.Lmax_cm);
-            const double A2   = ana::Akin_with_cfg(p, cfg);
-            const double aps  = ana::BpPi * Alen * A2;
+            const double A2 = ana::Akin_with_cfg(p, cfg);
+            const double aps = ana::BpPi * Alen * A2;
             h.SetBinContent(ix, iy, aps);
         }
     }
 
-    TCanvas c("c_heat","A_{PS}(#beta#gamma, L_{min})",900,700);
+    TCanvas c("c_heat", "A_{PS}(#beta#gamma, L_{min})", 900, 700);
     gStyle->SetOptStat(0);
     c.SetTopMargin(0.08);
     c.SetBottomMargin(0.12);
@@ -438,7 +452,7 @@ void draw_APS_heatmap_Lmin_vs_bg(const std::string& outdir) {
     auto* h_contours = static_cast<TH2D*>(h.Clone("hAPS_contours"));
     if (h_contours) {
         h_contours->SetDirectory(nullptr);
-        h_contours->SetLineColor(kGray+3);
+        h_contours->SetLineColor(kGray + 3);
         h_contours->SetLineWidth(1);
         h_contours->Draw("CONT3 SAME");
     }
@@ -446,20 +460,18 @@ void draw_APS_heatmap_Lmin_vs_bg(const std::string& outdir) {
     c.SaveAs((outdir + "/APS_heatmap_Lmin_vs_bg.pdf").c_str());
 }
 
-// ------------------------- Top-level: analytical_correction() ---------------------
 void analytical_correction() {
-    // Configure the analytical acceptance
+
     ana::gCfg = {
-        .Lmin_cm = 1.5,   // cm
-        .Lmax_cm = 200.,  // cm
-        .pthr_p  = 0.25,  // GeV/c
-        .pthr_pi = 0.10,  // GeV/c
-        .PLambda = 0.0,   // unpolarised
-        .alpha   = ana::alphaLambda,
-        // Smooth turn-ons (set to 0 for hard cuts)
-        .sigmaE_p  = 0.010, // 10 MeV
-        .sigmaE_pi = 0.010  // 10 MeV
-    };
+        .Lmin_cm = 1.5,
+        .Lmax_cm = 200.,
+        .pthr_p = 0.25,
+        .pthr_pi = 0.10,
+        .PLambda = 0.0,
+        .alpha = ana::alphaLambda,
+
+        .sigmaE_p = 0.010,
+        .sigmaE_pi = 0.010};
 
     const std::string outdir = "plots/analytical";
     gSystem->mkdir(outdir.c_str(), kTRUE);
@@ -471,8 +483,8 @@ void analytical_correction() {
               << "p_thr^p=" << ana::gCfg.pthr_p << " GeV, "
               << "p_thr^pi=" << ana::gCfg.pthr_pi << " GeV, "
               << "P_Lambda=" << ana::gCfg.PLambda << ", "
-              << "sigmaE_p=" << ana::gCfg.sigmaE_p  << " GeV, "
-              << "sigmaE_pi="<< ana::gCfg.sigmaE_pi << " GeV" << std::endl;
+              << "sigmaE_p=" << ana::gCfg.sigmaE_p << " GeV, "
+              << "sigmaE_pi=" << ana::gCfg.sigmaE_pi << " GeV" << std::endl;
 
     draw_APS_vs_bg(outdir);
     draw_Akin_vs_bg(outdir);

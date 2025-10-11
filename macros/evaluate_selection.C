@@ -1,30 +1,33 @@
-#include <ROOT/RDataFrame.hxx>
 #include <ROOT/RDFHelpers.hxx>
-#include <TSystem.h>
+#include <ROOT/RDataFrame.hxx>
 #include <TCanvas.h>
-#include <TLegend.h>
-#include <TStyle.h>
+#include <TColor.h>
+#include <TGraph.h>
 #include <TH1F.h>
 #include <THStack.h>
-#include <TGraph.h>
 #include <TLatex.h>
+#include <TLegend.h>
 #include <TLine.h>
-#include <TColor.h>
+#include <TStyle.h>
+#include <TSystem.h>
 #include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <iostream>
 #include <map>
-#include <string>
-#include <vector>
 #include <rarexsec/Hub.hh>
-#include <rarexsec/proc/Selection.hh>
 #include <rarexsec/Plotter.hh>
 #include <rarexsec/plot/Channels.hh>
+#include <rarexsec/proc/Selection.hh>
+#include <string>
+#include <vector>
 
 namespace rx = rarexsec;
 
-struct StageDesc { rx::selection::Preset preset; const char* name; };
+struct StageDesc {
+    rx::selection::Preset preset;
+    const char* name;
+};
 
 static inline void rx_set_style() {
     gStyle->SetOptStat(0);
@@ -57,8 +60,7 @@ static inline const std::vector<StageDesc>& rx_stages() {
         {rx::selection::Preset::Fiducial, "Fiducial (Reco)"},
         {rx::selection::Preset::Topology, "Topology"},
         {rx::selection::Preset::Muon, "Muon ID"},
-        {rx::selection::Preset::InclusiveMuCC, "Inclusive #mu#nu CC (cum.)"}
-    };
+        {rx::selection::Preset::InclusiveMuCC, "Inclusive #mu#nu CC (cum.)"}};
     return v;
 }
 
@@ -68,22 +70,33 @@ static inline bool is_ext(rx::sample::origin k) {
 
 static inline const char* origin_to_str(rx::sample::origin k) {
     switch (k) {
-        case rx::sample::origin::data: return "data";
-        case rx::sample::origin::beam: return "beam";
-        case rx::sample::origin::strangeness: return "strangeness";
-        case rx::sample::origin::ext: return "ext";
-        case rx::sample::origin::dirt: return "dirt";
-        default: return "unknown";
+    case rx::sample::origin::data:
+        return "data";
+    case rx::sample::origin::beam:
+        return "beam";
+    case rx::sample::origin::strangeness:
+        return "strangeness";
+    case rx::sample::origin::ext:
+        return "ext";
+    case rx::sample::origin::dirt:
+        return "dirt";
+    default:
+        return "unknown";
     }
 }
 
 static inline int origin_color(rx::sample::origin k) {
     switch (k) {
-        case rx::sample::origin::beam: return kAzure-4;
-        case rx::sample::origin::strangeness: return kTeal+2;
-        case rx::sample::origin::dirt: return kGray+2;
-        case rx::sample::origin::ext: return kOrange+7;
-        default: return kViolet-5;
+    case rx::sample::origin::beam:
+        return kAzure - 4;
+    case rx::sample::origin::strangeness:
+        return kTeal + 2;
+    case rx::sample::origin::dirt:
+        return kGray + 2;
+    case rx::sample::origin::ext:
+        return kOrange + 7;
+    default:
+        return kViolet - 5;
     }
 }
 
@@ -94,19 +107,22 @@ void selection_efficiency_purity_plots(const std::string& config_path = "data/sa
                                        const std::string& img_fmt = "png") {
     try {
         ROOT::EnableImplicitMT();
-        if (gSystem->Load("librarexsec") < 0) throw std::runtime_error("Failed to load librexsec");
+        if (gSystem->Load("librarexsec") < 0)
+            throw std::runtime_error("Failed to load librexsec");
         rx_set_style();
         rx_ensure_dir(out_dir);
         rx::Hub hub(config_path);
         const auto mc = hub.simulation_entries(beamline, periods);
         const auto data = hub.data_entries(beamline, periods);
-        if (mc.empty() && data.empty()) throw std::runtime_error("No samples found");
+        if (mc.empty() && data.empty())
+            throw std::runtime_error("No samples found");
         const auto& stages = rx_stages();
         const int NS = static_cast<int>(stages.size());
         auto truth_inclusive = [](int pdg, int ccnc, bool infv) { return (std::abs(pdg) == 14) && (ccnc == 0) && infv; };
         double denom_inclusive = 0.0, denom_actual = 0.0;
         for (const auto* e : mc) {
-            if (!e) continue;
+            if (!e)
+                continue;
             auto n0 = e->rnode();
             if (!is_ext(e->kind)) {
                 auto nt = n0.Filter(truth_inclusive, {"neutrino_pdg", "interaction_ccnc", "in_fiducial"});
@@ -121,9 +137,11 @@ void selection_efficiency_purity_plots(const std::string& config_path = "data/sa
             double sum_mc = 0.0, s_inc = 0.0, s_act = 0.0;
             ULong64_t sum_d = 0ULL;
             for (const auto* e : mc) {
-                if (!e) continue;
+                if (!e)
+                    continue;
                 auto n = e->rnode();
-                for (int j = 0; j <= i; ++j) n = rx::selection::apply(n, stages[j].preset, *e);
+                for (int j = 0; j <= i; ++j)
+                    n = rx::selection::apply(n, stages[j].preset, *e);
                 sum_mc += static_cast<double>(n.Sum("w_nominal").GetValue());
                 if (!is_ext(e->kind)) {
                     auto ns = n.Filter(truth_inclusive, {"neutrino_pdg", "interaction_ccnc", "in_fiducial"});
@@ -133,9 +151,11 @@ void selection_efficiency_purity_plots(const std::string& config_path = "data/sa
                 s_act += static_cast<double>(na.Sum("w_nominal").GetValue());
             }
             for (const auto* e : data) {
-                if (!e) continue;
+                if (!e)
+                    continue;
                 auto n = e->rnode();
-                for (int j = 0; j <= i; ++j) n = rx::selection::apply(n, stages[j].preset, *e);
+                for (int j = 0; j <= i; ++j)
+                    n = rx::selection::apply(n, stages[j].preset, *e);
                 sum_d += static_cast<ULong64_t>(n.Count().GetValue());
             }
             mc_total[i] = sum_mc;
@@ -152,7 +172,8 @@ void selection_efficiency_purity_plots(const std::string& config_path = "data/sa
         }
         auto make_frame = [&](const char* name, const char* ytitle, double ymin, double ymax) {
             auto* h = new TH1F(name, "", NS, -0.5, NS - 0.5);
-            for (int i = 0; i < NS; ++i) h->GetXaxis()->SetBinLabel(i + 1, stages[i].name);
+            for (int i = 0; i < NS; ++i)
+                h->GetXaxis()->SetBinLabel(i + 1, stages[i].name);
             h->GetXaxis()->LabelsOption("v");
             h->SetMinimum(ymin);
             h->SetMaximum(ymax);
@@ -162,7 +183,8 @@ void selection_efficiency_purity_plots(const std::string& config_path = "data/sa
         };
         auto make_graph = [&](const std::vector<double>& y, int mstyle, int lstyle) {
             std::vector<double> x(NS);
-            for (int i = 0; i < NS; ++i) x[i] = i;
+            for (int i = 0; i < NS; ++i)
+                x[i] = i;
             auto* g = new TGraph(NS, x.data(), y.data());
             g->SetMarkerStyle(mstyle);
             g->SetMarkerSize(1.0);
@@ -216,7 +238,8 @@ void composition_by_stage(const std::string& config_path = "data/samples.json",
                           const std::string& img_fmt = "png") {
     try {
         ROOT::EnableImplicitMT();
-        if (gSystem->Load("librarexsec") < 0) throw std::runtime_error("Failed to load librexsec");
+        if (gSystem->Load("librarexsec") < 0)
+            throw std::runtime_error("Failed to load librexsec");
         rx_set_style();
         rx_ensure_dir(out_dir);
         rx::Hub hub(config_path);
@@ -225,15 +248,17 @@ void composition_by_stage(const std::string& config_path = "data/samples.json",
         const int NS = static_cast<int>(stages.size());
         std::vector<rx::sample::origin> origins = {
             rx::sample::origin::beam, rx::sample::origin::strangeness,
-            rx::sample::origin::dirt, rx::sample::origin::ext
-        };
+            rx::sample::origin::dirt, rx::sample::origin::ext};
         std::map<rx::sample::origin, std::vector<double>> yield_by_origin;
-        for (auto o : origins) yield_by_origin[o] = std::vector<double>(NS, 0.0);
+        for (auto o : origins)
+            yield_by_origin[o] = std::vector<double>(NS, 0.0);
         for (int i = 0; i < NS; ++i) {
             for (const auto* e : mc) {
-                if (!e) continue;
+                if (!e)
+                    continue;
                 auto n = e->rnode();
-                for (int j = 0; j <= i; ++j) n = rx::selection::apply(n, stages[j].preset, *e);
+                for (int j = 0; j <= i; ++j)
+                    n = rx::selection::apply(n, stages[j].preset, *e);
                 yield_by_origin[e->kind][i] += static_cast<double>(n.Sum("w_nominal").GetValue());
             }
         }
@@ -243,8 +268,10 @@ void composition_by_stage(const std::string& config_path = "data/samples.json",
             std::map<rx::sample::origin, TH1F*> hmap;
             for (auto o : origins) {
                 auto* h = new TH1F((std::string("h_") + origin_to_str(o)).c_str(), "", NS, -0.5, NS - 0.5);
-                for (int i = 0; i < NS; ++i) h->GetXaxis()->SetBinLabel(i + 1, stages[i].name);
-                for (int i = 0; i < NS; ++i) h->SetBinContent(i + 1, yield_by_origin[o][i]);
+                for (int i = 0; i < NS; ++i)
+                    h->GetXaxis()->SetBinLabel(i + 1, stages[i].name);
+                for (int i = 0; i < NS; ++i)
+                    h->SetBinContent(i + 1, yield_by_origin[o][i]);
                 h->SetFillColor(origin_color(o));
                 h->SetLineColor(kBlack);
                 h->SetLineWidth(1);
@@ -257,7 +284,8 @@ void composition_by_stage(const std::string& config_path = "data/samples.json",
             TLegend leg(0.70, 0.70, 0.93, 0.93);
             leg.SetBorderSize(0);
             leg.SetFillStyle(0);
-            for (auto o : origins) leg.AddEntry(hmap[o], origin_to_str(o), "f");
+            for (auto o : origins)
+                leg.AddEntry(hmap[o], origin_to_str(o), "f");
             leg.Draw();
             c.SaveAs((out_dir + "/composition_by_origin." + img_fmt).c_str());
             c.SaveAs((out_dir + "/composition_by_origin.pdf").c_str());
@@ -265,15 +293,18 @@ void composition_by_stage(const std::string& config_path = "data/samples.json",
         {
             const auto channels = rarexsec::plot::Channels::mc_keys();
             std::map<int, std::vector<double>> yield_by_channel;
-            for (int ch : channels) yield_by_channel[ch] = std::vector<double>(NS, 0.0);
+            for (int ch : channels)
+                yield_by_channel[ch] = std::vector<double>(NS, 0.0);
             for (int i = 0; i < NS; ++i) {
                 for (const auto* e : mc) {
-                    if (!e) continue;
+                    if (!e)
+                        continue;
                     auto n = e->rnode();
-                    for (int j = 0; j <= i; ++j) n = rx::selection::apply(n, stages[j].preset, *e);
-                    auto nc = n.Filter([](int c){ return c>=0; }, {"analysis_channels"});
+                    for (int j = 0; j <= i; ++j)
+                        n = rx::selection::apply(n, stages[j].preset, *e);
+                    auto nc = n.Filter([](int c) { return c >= 0; }, {"analysis_channels"});
                     for (int ch : channels) {
-                        auto nf = nc.Filter([ch](int c){ return c==ch; }, {"analysis_channels"});
+                        auto nf = nc.Filter([ch](int c) { return c == ch; }, {"analysis_channels"});
                         yield_by_channel[ch][i] += static_cast<double>(nf.Sum("w_nominal").GetValue());
                     }
                 }
@@ -283,8 +314,10 @@ void composition_by_stage(const std::string& config_path = "data/samples.json",
             std::vector<TH1F*> hlist;
             for (int ch : channels) {
                 auto* h = new TH1F((std::string("h_ch_") + std::to_string(ch)).c_str(), "", NS, -0.5, NS - 0.5);
-                for (int i = 0; i < NS; ++i) h->GetXaxis()->SetBinLabel(i + 1, stages[i].name);
-                for (int i = 0; i < NS; ++i) h->SetBinContent(i + 1, yield_by_channel[ch][i]);
+                for (int i = 0; i < NS; ++i)
+                    h->GetXaxis()->SetBinLabel(i + 1, stages[i].name);
+                for (int i = 0; i < NS; ++i)
+                    h->SetBinContent(i + 1, yield_by_channel[ch][i]);
                 h->SetFillColor(rarexsec::plot::Channels::color(ch));
                 h->SetLineColor(kBlack);
                 h->SetLineWidth(1);
@@ -298,7 +331,8 @@ void composition_by_stage(const std::string& config_path = "data/samples.json",
             leg.SetFillStyle(0);
             int nadded = 0;
             for (int ch : channels) {
-                if (nadded >= 18) break;
+                if (nadded >= 18)
+                    break;
                 leg.AddEntry(hlist[nadded], rarexsec::plot::Channels::label(ch).c_str(), "f");
                 ++nadded;
             }
@@ -320,16 +354,19 @@ void scan_threshold_roc(const std::string& config_path = "data/samples.json",
                         const std::string& img_fmt = "png") {
     try {
         ROOT::EnableImplicitMT();
-        if (gSystem->Load("librarexsec") < 0) throw std::runtime_error("Failed to load librexsec");
+        if (gSystem->Load("librarexsec") < 0)
+            throw std::runtime_error("Failed to load librexsec");
         rx_set_style();
         rx_ensure_dir(out_dir);
         rx::Hub hub(config_path);
         const auto mc = hub.simulation_entries(beamline, periods);
-        if (mc.empty()) throw std::runtime_error("No MC found");
+        if (mc.empty())
+            throw std::runtime_error("No MC found");
         auto truth_inclusive = [](int pdg, int ccnc, bool infv) { return (std::abs(pdg) == 14) && (ccnc == 0) && infv; };
         double denom_inclusive = 0.0, denom_actual = 0.0;
         for (const auto* e : mc) {
-            if (!e) continue;
+            if (!e)
+                continue;
             auto n0 = e->rnode();
             if (!is_ext(e->kind)) {
                 auto nt = n0.Filter(truth_inclusive, {"neutrino_pdg", "interaction_ccnc", "in_fiducial"});
@@ -341,11 +378,13 @@ void scan_threshold_roc(const std::string& config_path = "data/samples.json",
         std::vector<double> xs_eff_incl, ys_pur_incl, xs_eff_act, ys_pur_act, thr_vals;
         const bool is_muon_param = (param == "muon_min_track_score" || param == "muon_min_llr" || param == "muon_min_track_length" || param == "muon_max_track_distance");
         const bool is_topo_param = (param == "topology_min_contained_fraction" || param == "topology_min_cluster_fraction");
-        if (!is_muon_param && !is_topo_param) throw std::runtime_error("Unsupported parameter");
+        if (!is_muon_param && !is_topo_param)
+            throw std::runtime_error("Unsupported parameter");
         for (double thr = start; (step > 0 ? thr <= stop : thr >= stop); thr += step) {
             double tot_mc = 0.0, s_inc = 0.0, s_act = 0.0;
             for (const auto* e : mc) {
-                if (!e) continue;
+                if (!e)
+                    continue;
                 auto n = e->rnode();
                 n = rx::selection::apply(n, rx::selection::Preset::Trigger, *e);
                 n = rx::selection::apply(n, rx::selection::Preset::Slice, *e);
@@ -353,7 +392,7 @@ void scan_threshold_roc(const std::string& config_path = "data/samples.json",
                 if (is_topo_param) {
                     const double cmin = (param == "topology_min_contained_fraction") ? thr : rx::selection::topology_min_contained_fraction;
                     const double lmin = (param == "topology_min_cluster_fraction") ? thr : rx::selection::topology_min_cluster_fraction;
-                    n = n.Filter([=](float cf, float cl){ return cf >= cmin && cl >= lmin; }, {"contained_fraction", "slice_cluster_fraction"});
+                    n = n.Filter([=](float cf, float cl) { return cf >= cmin && cl >= lmin; }, {"contained_fraction", "slice_cluster_fraction"});
                     n = rx::selection::apply(n, rx::selection::Preset::Muon, *e);
                 } else {
                     n = rx::selection::apply(n, rx::selection::Preset::Topology, *e);
@@ -370,10 +409,12 @@ void scan_threshold_roc(const std::string& config_path = "data/samples.json",
                         const auto n = scores.size();
                         for (std::size_t i = 0; i < n; ++i) {
                             const bool pass = scores[i] > smin && llrs[i] > lmin && lengths[i] > lenmin && distances[i] < dmax && generations[i] == genreq;
-                            if (pass) return true;
+                            if (pass)
+                                return true;
                         }
                         return false;
-                    }, {"track_shower_scores", "trk_llr_pid_v", "track_length", "track_distance_to_vertex", "pfp_generations"});
+                    },
+                                 {"track_shower_scores", "trk_llr_pid_v", "track_length", "track_distance_to_vertex", "pfp_generations"});
                 }
                 tot_mc += static_cast<double>(n.Sum("w_nominal").GetValue());
                 if (!is_ext(e->kind)) {
@@ -435,19 +476,22 @@ void evaluate_recognised_signal_vs_stage(const std::string& config_path = "data/
                                          const std::string& img_fmt = "png") {
     try {
         ROOT::EnableImplicitMT();
-        if (gSystem->Load("librarexsec") < 0) throw std::runtime_error("Failed to load librexsec");
+        if (gSystem->Load("librarexsec") < 0)
+            throw std::runtime_error("Failed to load librexsec");
         rx_set_style();
         rx_ensure_dir(out_dir);
         rx::Hub hub(config_path);
         const auto mc = hub.simulation_entries(beamline, periods);
         const auto data = hub.data_entries(beamline, periods);
-        if (mc.empty() && data.empty()) throw std::runtime_error("No samples found");
+        if (mc.empty() && data.empty())
+            throw std::runtime_error("No samples found");
         const auto& stages = rx_stages();
         const int NS = static_cast<int>(stages.size());
         auto truth_inclusive = [](int pdg, int ccnc, bool infv) { return (std::abs(pdg) == 14) && (ccnc == 0) && infv; };
         double denom_inclusive = 0.0;
         for (const auto* e : mc) {
-            if (!e) continue;
+            if (!e)
+                continue;
             if (!is_ext(e->kind)) {
                 auto nt = e->rnode().Filter(truth_inclusive, {"neutrino_pdg", "interaction_ccnc", "in_fiducial"});
                 denom_inclusive += static_cast<double>(nt.Sum("w_nominal").GetValue());
@@ -456,9 +500,11 @@ void evaluate_recognised_signal_vs_stage(const std::string& config_path = "data/
         std::vector<double> mc_total(NS, 0.0), S_rec(NS, 0.0);
         for (int i = 0; i < NS; ++i) {
             for (const auto* e : mc) {
-                if (!e) continue;
+                if (!e)
+                    continue;
                 auto n = e->rnode();
-                for (int j = 0; j <= i; ++j) n = rx::selection::apply(n, stages[j].preset, *e);
+                for (int j = 0; j <= i; ++j)
+                    n = rx::selection::apply(n, stages[j].preset, *e);
                 mc_total[i] += static_cast<double>(n.Sum("w_nominal").GetValue());
                 auto nr = n.Filter("recognised_signal");
                 S_rec[i] += static_cast<double>(nr.Sum("w_nominal").GetValue());
@@ -471,7 +517,8 @@ void evaluate_recognised_signal_vs_stage(const std::string& config_path = "data/
         }
         auto make_frame = [&](const char* name, const char* ytitle, double ymin, double ymax) {
             auto* h = new TH1F(name, "", NS, -0.5, NS - 0.5);
-            for (int i = 0; i < NS; ++i) h->GetXaxis()->SetBinLabel(i + 1, stages[i].name);
+            for (int i = 0; i < NS; ++i)
+                h->GetXaxis()->SetBinLabel(i + 1, stages[i].name);
             h->GetXaxis()->LabelsOption("v");
             h->SetMinimum(ymin);
             h->SetMaximum(ymax);
@@ -481,7 +528,8 @@ void evaluate_recognised_signal_vs_stage(const std::string& config_path = "data/
         };
         auto make_graph = [&](const std::vector<double>& y, int mstyle, int lstyle) {
             std::vector<double> x(NS);
-            for (int i = 0; i < NS; ++i) x[i] = i;
+            for (int i = 0; i < NS; ++i)
+                x[i] = i;
             auto* g = new TGraph(NS, x.data(), y.data());
             g->SetMarkerStyle(mstyle);
             g->SetMarkerSize(1.0);
@@ -519,7 +567,8 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
                                  const std::string& img_fmt = "png") {
     try {
         ROOT::EnableImplicitMT();
-        if (gSystem->Load("librarexsec") < 0) throw std::runtime_error("Failed to load librexsec");
+        if (gSystem->Load("librarexsec") < 0)
+            throw std::runtime_error("Failed to load librexsec");
         rx_set_style();
         rx_ensure_dir(out_dir);
         rx::Hub hub(config_path);
@@ -542,7 +591,9 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             s.id = "topological_score";
             s.title = ";Topological score;Events";
             s.expr = "topological_score";
-            s.nbins = 20; s.xmin = 0; s.xmax = 1.0;
+            s.nbins = 20;
+            s.xmin = 0;
+            s.xmax = 1.0;
             s.sel = rx::selection::Preset::InclusiveMuCC;
             hspecs.push_back(s);
         }
@@ -551,7 +602,9 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             s.id = "contained_fraction";
             s.title = ";Contained fraction;Events";
             s.expr = "contained_fraction";
-            s.nbins = 20; s.xmin = 0; s.xmax = 1.0;
+            s.nbins = 20;
+            s.xmin = 0;
+            s.xmax = 1.0;
             s.sel = rx::selection::Preset::InclusiveMuCC;
             hspecs.push_back(s);
         }
@@ -560,7 +613,9 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             s.id = "slice_cluster_fraction";
             s.title = ";Slice cluster fraction;Events";
             s.expr = "slice_cluster_fraction";
-            s.nbins = 20; s.xmin = 0; s.xmax = 1.0;
+            s.nbins = 20;
+            s.xmin = 0;
+            s.xmax = 1.0;
             s.sel = rx::selection::Preset::InclusiveMuCC;
             hspecs.push_back(s);
         }
@@ -569,7 +624,9 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             s.id = "reco_vtx_x";
             s.title = ";Reco vertex x [cm];Events";
             s.expr = "reco_neutrino_vertex_sce_x";
-            s.nbins = 30; s.xmin = -200; s.xmax = 200;
+            s.nbins = 30;
+            s.xmin = -200;
+            s.xmax = 200;
             s.sel = rx::selection::Preset::InclusiveMuCC;
             hspecs.push_back(s);
         }
@@ -578,7 +635,9 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             s.id = "reco_vtx_y";
             s.title = ";Reco vertex y [cm];Events";
             s.expr = "reco_neutrino_vertex_sce_y";
-            s.nbins = 30; s.xmin = -200; s.xmax = 200;
+            s.nbins = 30;
+            s.xmin = -200;
+            s.xmax = 200;
             s.sel = rx::selection::Preset::InclusiveMuCC;
             hspecs.push_back(s);
         }
@@ -587,11 +646,14 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             s.id = "reco_vtx_z";
             s.title = ";Reco vertex z [cm];Events";
             s.expr = "reco_neutrino_vertex_sce_z";
-            s.nbins = 40; s.xmin = 0; s.xmax = 1100;
+            s.nbins = 40;
+            s.xmin = 0;
+            s.xmax = 1100;
             s.sel = rx::selection::Preset::InclusiveMuCC;
             hspecs.push_back(s);
         }
-        for (const auto& s : hspecs) plotter.draw_stack_by_channel(s, mc, data);
+        for (const auto& s : hspecs)
+            plotter.draw_stack_by_channel(s, mc, data);
     } catch (const std::exception& ex) {
         std::cerr << "Error in plot_final_stage_kinematics: " << ex.what() << std::endl;
     }
@@ -599,12 +661,13 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
 
 void period_stability_summary(const std::string& config_path = "data/samples.json",
                               const std::string& beamline = "numi-fhc",
-                              const std::vector<std::string>& periods = {"run1","run2","run3"},
+                              const std::vector<std::string>& periods = {"run1", "run2", "run3"},
                               const std::string& out_dir = "plots/stability",
                               const std::string& img_fmt = "png") {
     try {
         ROOT::EnableImplicitMT();
-        if (gSystem->Load("librarexsec") < 0) throw std::runtime_error("Failed to load librexsec");
+        if (gSystem->Load("librarexsec") < 0)
+            throw std::runtime_error("Failed to load librexsec");
         rx_set_style();
         rx_ensure_dir(out_dir);
         rx::Hub hub(config_path);
@@ -616,7 +679,8 @@ void period_stability_summary(const std::string& config_path = "data/samples.jso
             const auto data = hub.data_entries(beamline, {per});
             double denom_inclusive = 0.0, denom_actual = 0.0;
             for (const auto* e : mc) {
-                if (!e) continue;
+                if (!e)
+                    continue;
                 if (!is_ext(e->kind)) {
                     auto nt = e->rnode().Filter(truth_inclusive, {"neutrino_pdg", "interaction_ccnc", "in_fiducial"});
                     denom_inclusive += static_cast<double>(nt.Sum("w_nominal").GetValue());
@@ -626,7 +690,8 @@ void period_stability_summary(const std::string& config_path = "data/samples.jso
             }
             double tot_mc = 0.0, s_inc = 0.0, s_act = 0.0;
             for (const auto* e : mc) {
-                if (!e) continue;
+                if (!e)
+                    continue;
                 auto n = e->rnode();
                 n = rx::selection::apply(n, rx::selection::Preset::InclusiveMuCC, *e);
                 tot_mc += static_cast<double>(n.Sum("w_nominal").GetValue());
@@ -649,7 +714,8 @@ void period_stability_summary(const std::string& config_path = "data/samples.jso
         }
         auto make_frame = [&](const char* name, const char* ytitle, int N, double ymin, double ymax) {
             auto* h = new TH1F(name, "", N, -0.5, N - 0.5);
-            for (int i = 0; i < N; ++i) h->GetXaxis()->SetBinLabel(i + 1, labs[i].c_str());
+            for (int i = 0; i < N; ++i)
+                h->GetXaxis()->SetBinLabel(i + 1, labs[i].c_str());
             h->GetXaxis()->LabelsOption("v");
             h->SetMinimum(ymin);
             h->SetMaximum(ymax);
@@ -660,7 +726,8 @@ void period_stability_summary(const std::string& config_path = "data/samples.jso
         auto make_graph = [&](const std::vector<double>& y, int mstyle, int lstyle) {
             const int N = static_cast<int>(y.size());
             std::vector<double> x(N);
-            for (int i = 0; i < N; ++i) x[i] = i;
+            for (int i = 0; i < N; ++i)
+                x[i] = i;
             auto* g = new TGraph(N, x.data(), y.data());
             g->SetMarkerStyle(mstyle);
             g->SetMarkerSize(1.0);

@@ -8,10 +8,10 @@
 #include <variant>
 #include <vector>
 
-#include "TH1F.h"
-#include "TH2F.h"
 #include "TCanvas.h"
 #include "TColor.h"
+#include "TH1F.h"
+#include "TH2F.h"
 #include "TLegend.h"
 #include "TStyle.h"
 
@@ -25,34 +25,36 @@ class Plotter;
 class EventDisplay {
     friend class Plotter;
 
-public:
-    enum class Mode { Detector, Semantic };
+  public:
+    enum class Mode { Detector,
+                      Semantic };
 
     static Mode parse_mode(const std::string& s) {
-        if (s == "semantic" || s == "Semantic") return Mode::Semantic;
+        if (s == "semantic" || s == "Semantic")
+            return Mode::Semantic;
         return Mode::Detector;
     }
 
     struct Spec {
         std::string id;
         std::string title;
-        Mode        mode{Mode::Detector};
-        int         grid_w{0};
-        int         grid_h{0};
+        Mode mode{Mode::Detector};
+        int grid_w{0};
+        int grid_h{0};
     };
 
     struct Options {
         std::string out_dir = "plots";
-        int         canvas_size = 800;
-        double      margin = 0.10;
-        bool        use_log_z = true;
+        int canvas_size = 800;
+        double margin = 0.10;
+        bool use_log_z = true;
 
-        double      det_threshold = 4.0;
-        double      det_min       = 1.0;
-        double      det_max       = 1000.0;
+        double det_threshold = 4.0;
+        double det_min = 1.0;
+        double det_max = 1000.0;
 
-        bool        show_legend   = true;
-        int         legend_cols   = 5;
+        bool show_legend = true;
+        int legend_cols = 5;
     };
 
     using DetectorData = std::vector<float>;
@@ -72,7 +74,7 @@ public:
         std::string combined_pdf;
         std::string manifest_path;
 
-        std::vector<std::string> planes{"U","V","W"};
+        std::vector<std::string> planes{"U", "V", "W"};
 
         struct Columns {
             std::string run = "run";
@@ -88,13 +90,13 @@ public:
 
         std::string file_pattern{"{plane}_{run}_{sub}_{evt}"};
 
-        Mode     mode{Mode::Detector};
-        Options  display;
+        Mode mode{Mode::Detector};
+        Options display;
     };
 
     static void render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt);
 
-private:
+  private:
     EventDisplay(Spec spec, Options opt, DetectorData data);
     EventDisplay(Spec spec, Options opt, SemanticData data);
 
@@ -105,17 +107,17 @@ private:
     void draw_semantic(TCanvas& c);
     void draw_semantic_legend();
 
-    static std::pair<int,int> deduce_grid(int requested_w,
-                                          int requested_h,
-                                          std::size_t flat_size);
+    static std::pair<int, int> deduce_grid(int requested_w,
+                                           int requested_h,
+                                           std::size_t flat_size);
 
-private:
-    Spec  spec_;
+  private:
+    Spec spec_;
     Options opt_;
 
     std::variant<DetectorData, SemanticData> data_;
 
-    std::unique_ptr<TH2F>    hist_;
+    std::unique_ptr<TH2F> hist_;
     std::unique_ptr<TLegend> legend_;
     std::vector<std::unique_ptr<TH1F>> legend_entries_;
 

@@ -6,55 +6,45 @@
 #include <cmath>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <mutex>
 #include <numeric>
 #include <sstream>
 #include <string>
 #include <system_error>
 #include <utility>
-#include <iostream>
 
-#include <nlohmann/json.hpp>
 #include <ROOT/RConfig.h>
 #include <TStyle.h>
+#include <nlohmann/json.hpp>
 
 #include "rarexsec/Plotter.hh"
 
-namespace rarexsec {
-namespace plot {
+rarexsec::plot::EventDisplay::EventDisplay(Spec spec, Options opt, DetectorData data)
+    : spec_(std::move(spec)), opt_(std::move(opt)), data_(std::move(data)), plot_name_(rarexsec::plot::Plotter::sanitise(spec_.id)), output_directory_(opt_.out_dir) {}
 
-EventDisplay::EventDisplay(Spec spec, Options opt, DetectorData data)
-: spec_(std::move(spec))
-, opt_(std::move(opt))
-, data_(std::move(data))
-, plot_name_(rarexsec::plot::Plotter::sanitise(spec_.id))
-, output_directory_(opt_.out_dir) {}
+rarexsec::plot::EventDisplay::EventDisplay(Spec spec, Options opt, SemanticData data)
+    : spec_(std::move(spec)), opt_(std::move(opt)), data_(std::move(data)), plot_name_(rarexsec::plot::Plotter::sanitise(spec_.id)), output_directory_(opt_.out_dir) {}
 
-EventDisplay::EventDisplay(Spec spec, Options opt, SemanticData data)
-: spec_(std::move(spec))
-, opt_(std::move(opt))
-, data_(std::move(data))
-, plot_name_(rarexsec::plot::Plotter::sanitise(spec_.id))
-, output_directory_(opt_.out_dir) {}
-
-void EventDisplay::draw(TCanvas& canvas) {
+void rarexsec::plot::EventDisplay::draw(TCanvas& canvas) {
     setup_canvas(canvas);
     build_histogram();
 
     switch (spec_.mode) {
-        case Mode::Detector:
-            draw_detector(canvas);
-            break;
-        case Mode::Semantic:
-            draw_semantic(canvas);
-            if (opt_.show_legend) draw_semantic_legend();
-            break;
+    case Mode::Detector:
+        draw_detector(canvas);
+        break;
+    case Mode::Semantic:
+        draw_semantic(canvas);
+        if (opt_.show_legend)
+            draw_semantic_legend();
+        break;
     }
 
     canvas.Update();
 }
 
-void EventDisplay::draw_and_save(const std::string& image_format) {
+void rarexsec::plot::EventDisplay::draw_and_save(const std::string& image_format) {
     std::filesystem::create_directories(output_directory_);
     TCanvas canvas(plot_name_.c_str(), spec_.title.c_str(),
                    opt_.canvas_size, opt_.canvas_size);
@@ -64,8 +54,8 @@ void EventDisplay::draw_and_save(const std::string& image_format) {
     canvas.SaveAs((output_directory_ + "/" + plot_name_ + "." + fmt).c_str());
 }
 
-void EventDisplay::draw_and_save(const std::string& image_format,
-                                 const std::string& file_override) {
+void rarexsec::plot::EventDisplay::draw_and_save(const std::string& image_format,
+                                                 const std::string& file_override) {
     std::filesystem::create_directories(output_directory_);
     TCanvas canvas(plot_name_.c_str(), spec_.title.c_str(),
                    opt_.canvas_size, opt_.canvas_size);
@@ -79,7 +69,7 @@ void EventDisplay::draw_and_save(const std::string& image_format,
     }
 }
 
-void EventDisplay::setup_canvas(TCanvas& c) const {
+void rarexsec::plot::EventDisplay::setup_canvas(TCanvas& c) const {
     c.SetCanvasSize(opt_.canvas_size, opt_.canvas_size);
     c.SetBorderMode(0);
     c.SetFrameBorderMode(0);
@@ -95,13 +85,14 @@ void EventDisplay::setup_canvas(TCanvas& c) const {
 
     gStyle->SetTitleAlign(23);
     gStyle->SetTitleX(0.5);
-    gStyle->SetTitleY(1 - m/3.0);
+    gStyle->SetTitleY(1 - m / 3.0);
 }
 
-std::pair<int,int> EventDisplay::deduce_grid(int requested_w,
-                                             int requested_h,
-                                             std::size_t flat_size) {
-    if (requested_w > 0 && requested_h > 0) return {requested_w, requested_h};
+std::pair<int, int> rarexsec::plot::EventDisplay::deduce_grid(int requested_w,
+                                                              int requested_h,
+                                                              std::size_t flat_size) {
+    if (requested_w > 0 && requested_h > 0)
+        return {requested_w, requested_h};
     if (requested_w > 0 && requested_h == 0) {
         int h = static_cast<int>(flat_size / requested_w);
         return {requested_w, std::max(1, h)};
@@ -115,11 +106,12 @@ std::pair<int,int> EventDisplay::deduce_grid(int requested_w,
     return {dim, dim};
 }
 
-void EventDisplay::build_histogram() {
+void rarexsec::plot::EventDisplay::build_histogram() {
     const int bin_offset = 1;
-    const auto [W, H] = std::visit([&](auto const& vec){
+    const auto [W, H] = std::visit([&](auto const& vec) {
         return deduce_grid(spec_.grid_w, spec_.grid_h, vec.size());
-    }, data_);
+    },
+                                   data_);
 
     hist_.reset(new TH2F(spec_.id.c_str(), spec_.title.c_str(),
                          W, 0, W,
@@ -132,7 +124,8 @@ void EventDisplay::build_histogram() {
         for (int r = 0; r < H; ++r) {
             for (int c = 0; c < W; ++c) {
                 const int idx = r * W + c;
-                if (idx >= n) break;
+                if (idx >= n)
+                    break;
                 const float x = v[idx];
                 const float y = (x > opt_.det_threshold) ? x : static_cast<float>(opt_.det_min);
                 hist_->SetBinContent(c + bin_offset, r + bin_offset, y);
@@ -144,14 +137,15 @@ void EventDisplay::build_histogram() {
         for (int r = 0; r < H; ++r) {
             for (int c = 0; c < W; ++c) {
                 const int idx = r * W + c;
-                if (idx >= n) break;
+                if (idx >= n)
+                    break;
                 hist_->SetBinContent(c + bin_offset, r + bin_offset, v[idx]);
             }
         }
     }
 }
 
-void EventDisplay::draw_detector(TCanvas& c) {
+void rarexsec::plot::EventDisplay::draw_detector(TCanvas& c) {
     c.SetFillColor(kWhite);
     c.SetTicks(0, 0);
 
@@ -175,12 +169,13 @@ void EventDisplay::draw_detector(TCanvas& c) {
     hist_->GetXaxis()->SetAxisColor(0);
     hist_->GetYaxis()->SetAxisColor(0);
 
-    if (opt_.use_log_z) c.SetLogz();
+    if (opt_.use_log_z)
+        c.SetLogz();
 
     hist_->Draw("COL");
 }
 
-void EventDisplay::draw_semantic(TCanvas& c) {
+void rarexsec::plot::EventDisplay::draw_semantic(TCanvas& c) {
     constexpr int palette_size = 15;
     const int background = TColor::GetColor(230, 230, 230);
 
@@ -199,8 +194,7 @@ void EventDisplay::draw_semantic(TCanvas& c) {
         TColor::GetColor("#66a61e"),
         TColor::GetColor("#e6ab02"),
         TColor::GetColor("#a6cee3"),
-        TColor::GetColor("#b15928")
-    };
+        TColor::GetColor("#b15928")};
     gStyle->SetPalette(palette_size, palette.data());
 
     c.SetFillColor(kWhite);
@@ -229,21 +223,22 @@ void EventDisplay::draw_semantic(TCanvas& c) {
     hist_->Draw("COL");
 }
 
-void EventDisplay::draw_semantic_legend() {
+void rarexsec::plot::EventDisplay::draw_semantic_legend() {
     constexpr int palette_size = 15;
     const int background = TColor::GetColor(230, 230, 230);
 
     std::array<int, palette_size> counts{};
     if (std::holds_alternative<SemanticData>(data_)) {
         for (int v : std::get<SemanticData>(data_)) {
-            if (v >= 0 && v < palette_size) counts[static_cast<std::size_t>(v)]++;
+            if (v >= 0 && v < palette_size)
+                counts[static_cast<std::size_t>(v)]++;
         }
     }
 
     std::vector<int> order(palette_size - 1);
     std::iota(order.begin(), order.end(), 1);
     std::stable_sort(order.begin(), order.end(),
-                     [&](int a, int b){ return counts[a] > counts[b]; });
+                     [&](int a, int b) { return counts[a] > counts[b]; });
 
     legend_.reset(new TLegend(0.12, 0.86, 0.95, 0.975, "", "brNDC"));
     legend_->SetNColumns(std::max(1, opt_.legend_cols));
@@ -255,11 +250,10 @@ void EventDisplay::draw_semantic_legend() {
 
     const std::array<const char*, palette_size> labels = {
         "#emptyset",
-        "Cosmic",      "#mu",        "e^{-}",     "#gamma",
-        "#pi^{#pm}",   "#pi^{0}",    "n",         "p",
-        "K^{#pm}",     "K^{0}",      "#Lambda",   "#Sigma^{#pm}",
-        "#Sigma^{0}",  "Other"
-    };
+        "Cosmic", "#mu", "e^{-}", "#gamma",
+        "#pi^{#pm}", "#pi^{0}", "n", "p",
+        "K^{#pm}", "K^{0}", "#Lambda", "#Sigma^{#pm}",
+        "#Sigma^{0}", "Other"};
 
     std::array<int, palette_size> palette = {
         background,
@@ -276,8 +270,7 @@ void EventDisplay::draw_semantic_legend() {
         TColor::GetColor("#66a61e"),
         TColor::GetColor("#e6ab02"),
         TColor::GetColor("#a6cee3"),
-        TColor::GetColor("#b15928")
-    };
+        TColor::GetColor("#b15928")};
 
     legend_entries_.clear();
     for (int idx : order) {
@@ -303,9 +296,9 @@ void EventDisplay::draw_semantic_legend() {
     legend_->Draw();
 }
 
-namespace {
-inline std::string replace_all(std::string s, const std::string& from, const std::string& to) {
-    if (from.empty()) return s;
+static std::string replace_all(std::string s, const std::string& from, const std::string& to) {
+    if (from.empty())
+        return s;
     std::size_t pos = 0;
     while ((pos = s.find(from, pos)) != std::string::npos) {
         s.replace(pos, from.size(), to);
@@ -314,16 +307,14 @@ inline std::string replace_all(std::string s, const std::string& from, const std
     return s;
 }
 
-inline std::string format_tag(std::string pattern, const std::string& plane, int run, int sub, int evt) {
+static std::string format_tag(std::string pattern, const std::string& plane, int run, int sub, int evt) {
     pattern = replace_all(std::move(pattern), "{plane}", plane);
-    pattern = replace_all(std::move(pattern), "{run}",   std::to_string(run));
-    pattern = replace_all(std::move(pattern), "{sub}",   std::to_string(sub));
-    pattern = replace_all(std::move(pattern), "{evt}",   std::to_string(evt));
+    pattern = replace_all(std::move(pattern), "{run}", std::to_string(run));
+    pattern = replace_all(std::move(pattern), "{sub}", std::to_string(sub));
+    pattern = replace_all(std::move(pattern), "{evt}", std::to_string(evt));
     return pattern;
 }
-}
-
-void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt) {
+void rarexsec::plot::EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt) {
     std::error_code ec;
     std::filesystem::create_directories(opt.out_dir, ec);
     if (ec) {
@@ -332,7 +323,8 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
     }
 
     auto filtered = df;
-    if (!opt.selection_expr.empty()) filtered = filtered.Filter(opt.selection_expr);
+    if (!opt.selection_expr.empty())
+        filtered = filtered.Filter(opt.selection_expr);
 
     auto limited = filtered.Range(static_cast<ULong64_t>(opt.n_events));
 
@@ -371,8 +363,7 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
     if (opt.mode == Mode::Detector) {
         const std::vector<std::string> cols{
             opt.cols.run, opt.cols.sub, opt.cols.evt,
-            opt.cols.det_u, opt.cols.det_v, opt.cols.det_w
-        };
+            opt.cols.det_u, opt.cols.det_v, opt.cols.det_w};
 
         std::atomic<std::size_t> page_idx{0};
         limited.Foreach(
@@ -380,55 +371,56 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
                 const std::vector<float>& det_u,
                 const std::vector<float>& det_v,
                 const std::vector<float>& det_w) {
-
                 auto pick = [&](const std::string& plane) -> const std::vector<float>& {
-                    if      (plane == "U") return det_u;
-                    else if (plane == "V") return det_v;
-                    else                   return det_w;
+                    if (plane == "U")
+                        return det_u;
+                    else if (plane == "V")
+                        return det_v;
+                    else
+                        return det_w;
                 };
 
                 for (const auto& plane : opt.planes) {
                     const auto& img = pick(plane);
-                    const std::string tag   = format_tag(opt.file_pattern, plane, run, sub, evt);
+                    const std::string tag = format_tag(opt.file_pattern, plane, run, sub, evt);
                     const std::string title =
                         "Detector Image, Plane " + plane +
                         " - Run " + std::to_string(run) +
                         ", Subrun " + std::to_string(sub) +
                         ", Event " + std::to_string(evt);
 
-                    EventDisplay::Spec spec{ tag, title, Mode::Detector };
+                    rarexsec::plot::EventDisplay::Spec spec{tag, title, Mode::Detector};
                     EventDisplay ed(spec, display_opts, img);
 
                     if (use_combined_pdf) {
                         const std::size_t idx = page_idx++;
                         std::string target = combined_path.string();
-                        if (idx == 0)                  target += "(";
-                        else if (idx + 1 == total_pages) target += ")";
+                        if (idx == 0)
+                            target += "(";
+                        else if (idx + 1 == total_pages)
+                            target += ")";
                         ed.draw_and_save("pdf", target);
                         if (!opt.manifest_path.empty()) {
                             std::lock_guard<std::mutex> lock(manifest_mutex);
-                            manifest.push_back({{"run", run}, {"sub", sub}, {"evt", evt},
-                                                {"plane", plane}, {"file", combined_path.string()}});
+                            manifest.push_back({{"run", run}, {"sub", sub}, {"evt", evt}, {"plane", plane}, {"file", combined_path.string()}});
                         }
                     } else {
                         ed.draw_and_save(opt.image_format);
                         if (!opt.manifest_path.empty()) {
                             const std::string file = (std::filesystem::path(opt.out_dir) /
-                                (rarexsec::plot::Plotter::sanitise(tag) + "." + opt.image_format)).string();
+                                                      (rarexsec::plot::Plotter::sanitise(tag) + "." + opt.image_format))
+                                                         .string();
                             std::lock_guard<std::mutex> lock(manifest_mutex);
-                            manifest.push_back({{"run", run}, {"sub", sub}, {"evt", evt},
-                                                {"plane", plane}, {"file", file}});
+                            manifest.push_back({{"run", run}, {"sub", sub}, {"evt", evt}, {"plane", plane}, {"file", file}});
                         }
                     }
                 }
             },
-            cols
-        );
+            cols);
     } else {
         const std::vector<std::string> cols{
             opt.cols.run, opt.cols.sub, opt.cols.evt,
-            opt.cols.sem_u, opt.cols.sem_v, opt.cols.sem_w
-        };
+            opt.cols.sem_u, opt.cols.sem_v, opt.cols.sem_w};
 
         std::atomic<std::size_t> page_idx{0};
         limited.Foreach(
@@ -436,57 +428,56 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
                 const std::vector<int>& sem_u,
                 const std::vector<int>& sem_v,
                 const std::vector<int>& sem_w) {
-
                 auto pick = [&](const std::string& plane) -> const std::vector<int>& {
-                    if      (plane == "U") return sem_u;
-                    else if (plane == "V") return sem_v;
-                    else                   return sem_w;
+                    if (plane == "U")
+                        return sem_u;
+                    else if (plane == "V")
+                        return sem_v;
+                    else
+                        return sem_w;
                 };
 
                 for (const auto& plane : opt.planes) {
                     const auto& img = pick(plane);
-                    const std::string tag   = format_tag(opt.file_pattern, plane, run, sub, evt);
+                    const std::string tag = format_tag(opt.file_pattern, plane, run, sub, evt);
                     const std::string title =
                         "Semantic Image, Plane " + plane +
                         " - Run " + std::to_string(run) +
                         ", Subrun " + std::to_string(sub) +
                         ", Event " + std::to_string(evt);
 
-                    EventDisplay::Spec spec{ tag, title, Mode::Semantic };
+                    rarexsec::plot::EventDisplay::Spec spec{tag, title, Mode::Semantic};
                     EventDisplay ed(spec, display_opts, img);
 
                     if (use_combined_pdf) {
                         const std::size_t idx = page_idx++;
                         std::string target = combined_path.string();
-                        if (idx == 0)                  target += "(";
-                        else if (idx + 1 == total_pages) target += ")";
+                        if (idx == 0)
+                            target += "(";
+                        else if (idx + 1 == total_pages)
+                            target += ")";
                         ed.draw_and_save("pdf", target);
                         if (!opt.manifest_path.empty()) {
                             std::lock_guard<std::mutex> lock(manifest_mutex);
-                            manifest.push_back({{"run", run}, {"sub", sub}, {"evt", evt},
-                                                {"plane", plane}, {"file", combined_path.string()}});
+                            manifest.push_back({{"run", run}, {"sub", sub}, {"evt", evt}, {"plane", plane}, {"file", combined_path.string()}});
                         }
                     } else {
                         ed.draw_and_save(opt.image_format);
                         if (!opt.manifest_path.empty()) {
                             const std::string file = (std::filesystem::path(opt.out_dir) /
-                                (rarexsec::plot::Plotter::sanitise(tag) + "." + opt.image_format)).string();
+                                                      (rarexsec::plot::Plotter::sanitise(tag) + "." + opt.image_format))
+                                                         .string();
                             std::lock_guard<std::mutex> lock(manifest_mutex);
-                            manifest.push_back({{"run", run}, {"sub", sub}, {"evt", evt},
-                                                {"plane", plane}, {"file", file}});
+                            manifest.push_back({{"run", run}, {"sub", sub}, {"evt", evt}, {"plane", plane}, {"file", file}});
                         }
                     }
                 }
             },
-            cols
-        );
+            cols);
     }
     if (!opt.manifest_path.empty()) {
         std::ofstream ofs(opt.manifest_path);
         ofs << manifest.dump(2);
         std::clog << "[EventDisplay] Wrote event display manifest: " << opt.manifest_path << '\n';
     }
-}
-
-}
 }

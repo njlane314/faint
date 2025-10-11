@@ -15,7 +15,7 @@ struct Entry;
 namespace plot {
 
 class UnstackedHist {
-public:
+  public:
     UnstackedHist(Histogram1DSpec spec,
                   Options opt,
                   std::vector<const Entry*> mc,
@@ -26,7 +26,7 @@ public:
     void draw(TCanvas& canvas);
     void draw_and_save(const std::string& image_format = "");
 
-private:
+  private:
     void build_histograms();
     void setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_legend) const;
     void draw_curves(TPad* p_main, double& max_y);

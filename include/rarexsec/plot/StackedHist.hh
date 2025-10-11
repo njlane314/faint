@@ -1,13 +1,13 @@
 #pragma once
-#include <memory>
-#include <string>
-#include <vector>
+#include "TCanvas.h"
 #include "TH1.h"
 #include "THStack.h"
 #include "TLegend.h"
 #include "TLegendEntry.h"
-#include "TCanvas.h"
 #include "TPad.h"
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "rarexsec/Hub.hh"
 #include "rarexsec/plot/Descriptors.hh"
@@ -16,7 +16,7 @@ namespace rarexsec {
 namespace plot {
 
 class StackedHist {
-public:
+  public:
     StackedHist(Histogram1DSpec spec,
                 Options opt,
                 std::vector<const Entry*> mc,
@@ -25,10 +25,10 @@ public:
 
     void draw_and_save(const std::string& image_format);
 
-protected:
+  protected:
     void draw(TCanvas& canvas);
 
-private:
+  private:
     bool want_ratio() const { return opt_.show_ratio && data_hist_ && mc_total_; }
     void build_histograms();
     void setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_ratio, TPad*& p_legend) const;

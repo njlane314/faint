@@ -1,6 +1,6 @@
+#include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <TSystem.h>
-#include <ROOT/RDFHelpers.hxx>
 #include <rarexsec/Hub.hh>
 #include <rarexsec/Plotter.hh>
 
@@ -57,8 +57,7 @@ void plot_true_vertex() {
             .nbins = 50,
             .xmin = 0.,
             .xmax = 256.,
-            .sel = rarexsec::selection::Preset::Empty
-        },
+            .sel = rarexsec::selection::Preset::Empty},
         rarexsec::plot::Histogram1DSpec{
             .id = "true_vertex_y",
             .title = ";y^{true}_{#nu} [cm];Events",
@@ -67,8 +66,7 @@ void plot_true_vertex() {
             .nbins = 50,
             .xmin = -116.,
             .xmax = 116.,
-            .sel = rarexsec::selection::Preset::Empty
-        },
+            .sel = rarexsec::selection::Preset::Empty},
         rarexsec::plot::Histogram1DSpec{
             .id = "true_vertex_z",
             .title = ";z^{true}_{#nu} [cm];Events",
@@ -77,9 +75,7 @@ void plot_true_vertex() {
             .nbins = 80,
             .xmin = 0.,
             .xmax = 1036.,
-            .sel = rarexsec::selection::Preset::Empty
-        }
-    };
+            .sel = rarexsec::selection::Preset::Empty}};
 
     for (const auto& plot_spec : plots) {
         std::cout << "Drawing plot: " << plot_spec.id << std::endl;

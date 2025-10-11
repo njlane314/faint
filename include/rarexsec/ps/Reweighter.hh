@@ -35,7 +35,7 @@ struct Axes4 {
 };
 
 class Reweighter {
-public:
+  public:
     static std::shared_ptr<Reweighter> from_histogram(const THnF& histogram, double laplace = 1.0) {
         auto* clone = static_cast<THnF*>(histogram.Clone((std::string(histogram.GetName()) + "_clone").c_str()));
         clone->SetDirectory(nullptr);
@@ -84,7 +84,7 @@ public:
         return laplace_;
     }
 
-private:
+  private:
     explicit Reweighter(std::unique_ptr<THnF> histogram, double laplace)
         : histogram_(std::move(histogram)), laplace_(laplace) {}
 
@@ -256,4 +256,3 @@ inline std::pair<double, double> chi_squared_constant_two_d(const TH2& histogram
 
 }
 }
-

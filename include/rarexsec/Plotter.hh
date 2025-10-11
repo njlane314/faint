@@ -4,15 +4,15 @@
 #include <vector>
 
 #include "rarexsec/Hub.hh"
-#include "rarexsec/plot/EventDisplay.hh"
 #include "rarexsec/plot/Descriptors.hh"
+#include "rarexsec/plot/EventDisplay.hh"
 
 class TMatrixDSym;
 
 namespace rarexsec::plot {
 
 class Plotter {
-public:
+  public:
     Plotter();
     explicit Plotter(Options opt);
 
@@ -57,7 +57,7 @@ public:
 
     void set_global_style() const;
 
-private:
+  private:
     Options opt_;
 };
 

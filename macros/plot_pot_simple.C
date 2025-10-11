@@ -1,20 +1,20 @@
+#include "RVersion.h"
 #include "TCanvas.h"
+#include "TColor.h"
+#include "TGaxis.h"
+#include "TGraph.h"
 #include "TH1D.h"
 #include "THStack.h"
 #include "TLegend.h"
-#include "TGaxis.h"
-#include "TGraph.h"
+#include "TROOT.h"
 #include "TStyle.h"
 #include "TSystem.h"
-#include "TColor.h"
-#include "TROOT.h"
-#include "RVersion.h"
-#include <sqlite3.h>
-#include <ctime>
-#include <cstring>
-#include <string>
-#include <iostream>
 #include <algorithm>
+#include <cstring>
+#include <ctime>
+#include <iostream>
+#include <sqlite3.h>
+#include <string>
 #include <vector>
 
 #include "rarexsec/Plotter.hh"
@@ -59,7 +59,7 @@ void configure_style() {
     gStyle->SetTitleSize(0.045, "YZ");
     gStyle->SetPadTickY(0);
     TGaxis::SetMaxDigits(3);
-#if ROOT_VERSION_CODE >= ROOT_VERSION(6,30,0)
+#if ROOT_VERSION_CODE >= ROOT_VERSION(6, 30, 0)
     gStyle->SetTimeOffset(0, "gmt");
 #else
     gStyle->SetTimeOffset(0);
