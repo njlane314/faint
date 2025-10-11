@@ -1,17 +1,17 @@
 #include "rarexsec/Plotter.hh"
+#include "rarexsec/plot/EventDisplay.hh"
+#include "rarexsec/plot/StackedHist.hh"
+#include "rarexsec/plot/UnstackedHist.hh"
+#include <TGaxis.h>
+#include <TMatrixDSym.h>
+#include <TROOT.h>
+#include <TStyle.h>
 #include <cctype>
 #include <iomanip>
 #include <memory>
 #include <sstream>
 #include <utility>
 #include <vector>
-#include <TROOT.h>
-#include <TStyle.h>
-#include <TGaxis.h>
-#include <TMatrixDSym.h>
-#include "rarexsec/plot/EventDisplay.hh"
-#include "rarexsec/plot/StackedHist.hh"
-#include "rarexsec/plot/UnstackedHist.hh"
 
 rarexsec::plot::Plotter::Plotter() = default;
 

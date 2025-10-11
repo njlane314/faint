@@ -2,13 +2,13 @@
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
 #include <RtypesCore.h>
-#include <iostream>
 #include <cstddef>
+#include <iostream>
 #include <string>
 #include <vector>
 
-#include "rarexsec/proc/Volume.hh"
 #include "rarexsec/Hub.hh"
+#include "rarexsec/proc/Volume.hh"
 
 namespace rarexsec {
 namespace selection {
@@ -40,67 +40,67 @@ enum class Preset {
 
 inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::Entry& rec) {
     switch (p) {
-        case Preset::Empty:
-            return node;
-        case Preset::Trigger:
-            return node.Filter([src = rec.source](float pe_beam, float pe_veto, int sw){
-                                   const bool requires_dataset_gate = (src == Source::MC);
-                                   const bool dataset_gate = requires_dataset_gate
-                                                                ? (pe_beam > trigger_min_beam_pe &&
-                                                                   pe_veto < trigger_max_veto_pe &&
-                                                                   sw > 0)
-                                                                : true;
-                                   return dataset_gate;
-                               },
-                               {"optical_filter_pe_beam", "optical_filter_pe_veto", "software_trigger"});
-        case Preset::Slice:
-            return node.Filter([](int ns, float topo){
-                                   return ns == slice_required_count &&
-                                          topo > slice_min_topology_score;
-                               },
-                               {"num_slices", "topological_score"});
-        case Preset::Fiducial:
-            return node.Filter([](bool fv){ return fv; },
-                               {"in_reco_fiducial"});
-        case Preset::Topology:
-            return node.Filter([](float cf, float cl){
-                                   return cf >= topology_min_contained_fraction &&
-                                          cl >= topology_min_cluster_fraction;
-                               },
-                               {"contained_fraction", "slice_cluster_fraction"});
-        case Preset::Muon:
-            return node.Filter(
-                [](const ROOT::RVec<float>& scores,
-                   const ROOT::RVec<float>& llrs,
-                   const ROOT::RVec<float>& lengths,
-                   const ROOT::RVec<float>& distances,
-                   const ROOT::RVec<unsigned>& generations) {
-                    const auto n = scores.size();
-                    for (std::size_t i = 0; i < n; ++i) {
-                        const bool passes = scores[i] > muon_min_track_score &&
-                                            llrs[i] > muon_min_llr &&
-                                            lengths[i] > muon_min_track_length &&
-                                            distances[i] < muon_max_track_distance &&
-                                            generations[i] == muon_required_generation;
-                        if (passes) {
-                            return true;
-                        }
+    case Preset::Empty:
+        return node;
+    case Preset::Trigger:
+        return node.Filter([src = rec.source](float pe_beam, float pe_veto, int sw) {
+            const bool requires_dataset_gate = (src == Source::MC);
+            const bool dataset_gate = requires_dataset_gate
+                                          ? (pe_beam > trigger_min_beam_pe &&
+                                             pe_veto < trigger_max_veto_pe &&
+                                             sw > 0)
+                                          : true;
+            return dataset_gate;
+        },
+                           {"optical_filter_pe_beam", "optical_filter_pe_veto", "software_trigger"});
+    case Preset::Slice:
+        return node.Filter([](int ns, float topo) {
+            return ns == slice_required_count &&
+                   topo > slice_min_topology_score;
+        },
+                           {"num_slices", "topological_score"});
+    case Preset::Fiducial:
+        return node.Filter([](bool fv) { return fv; },
+                           {"in_reco_fiducial"});
+    case Preset::Topology:
+        return node.Filter([](float cf, float cl) {
+            return cf >= topology_min_contained_fraction &&
+                   cl >= topology_min_cluster_fraction;
+        },
+                           {"contained_fraction", "slice_cluster_fraction"});
+    case Preset::Muon:
+        return node.Filter(
+            [](const ROOT::RVec<float>& scores,
+               const ROOT::RVec<float>& llrs,
+               const ROOT::RVec<float>& lengths,
+               const ROOT::RVec<float>& distances,
+               const ROOT::RVec<unsigned>& generations) {
+                const auto n = scores.size();
+                for (std::size_t i = 0; i < n; ++i) {
+                    const bool passes = scores[i] > muon_min_track_score &&
+                                        llrs[i] > muon_min_llr &&
+                                        lengths[i] > muon_min_track_length &&
+                                        distances[i] < muon_max_track_distance &&
+                                        generations[i] == muon_required_generation;
+                    if (passes) {
+                        return true;
                     }
-                    return false;
-                },
-                {"track_shower_scores",
-                 "trk_llr_pid_v",
-                 "track_length",
-                 "track_distance_to_vertex",
-                 "pfp_generations"});
-        case Preset::InclusiveMuCC:
-        default: {
-            auto filtered = apply(node, Preset::Trigger, rec);
-            filtered = apply(filtered, Preset::Slice, rec);
-            filtered = apply(filtered, Preset::Fiducial, rec);
-            filtered = apply(filtered, Preset::Topology, rec);
-            return apply(filtered, Preset::Muon, rec);
-        }
+                }
+                return false;
+            },
+            {"track_shower_scores",
+             "trk_llr_pid_v",
+             "track_length",
+             "track_distance_to_vertex",
+             "pfp_generations"});
+    case Preset::InclusiveMuCC:
+    default: {
+        auto filtered = apply(node, Preset::Trigger, rec);
+        filtered = apply(filtered, Preset::Slice, rec);
+        filtered = apply(filtered, Preset::Fiducial, rec);
+        filtered = apply(filtered, Preset::Topology, rec);
+        return apply(filtered, Preset::Muon, rec);
+    }
     }
 }
 

@@ -1,12 +1,13 @@
 #include "rarexsec/plot/StackedHist.hh"
-#include "rarexsec/Plotter.hh"
 #include "ROOT/RDFHelpers.hxx"
 #include "TArrow.h"
 #include "TCanvas.h"
-#include "TLine.h"
 #include "TLatex.h"
-#include "TMatrixDSym.h"
+#include "TLine.h"
 #include "TList.h"
+#include "TMatrixDSym.h"
+#include "rarexsec/Plotter.hh"
+#include "rarexsec/plot/Channels.hh"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -14,9 +15,6 @@
 #include <map>
 #include <sstream>
 #include <utility>
-#include "rarexsec/plot/Channels.hh"
-
-namespace {
 
 static void apply_total_errors(TH1D& h, const TMatrixDSym* cov, const std::vector<double>* syst_bin) {
     const int nb = h.GetNbinsX();
@@ -36,36 +34,29 @@ static void apply_total_errors(TH1D& h, const TMatrixDSym* cov, const std::vecto
 static std::string selection_label(rarexsec::selection::Preset preset) {
     using rarexsec::selection::Preset;
     switch (preset) {
-        case Preset::Trigger:
-            return "Trigger Selection";
-        case Preset::Slice:
-            return "Slice Selection";
-        case Preset::Fiducial:
-            return "Fiducial Selection";
-        case Preset::Topology:
-            return "Topology Selection";
-        case Preset::Muon:
-            return "Muon Selection";
-        case Preset::InclusiveMuCC:
-            return "Inclusive Muon CC Selection";
-        case Preset::Empty:
-        default:
-            return "Empty Selection";
+    case Preset::Trigger:
+        return "Trigger Selection";
+    case Preset::Slice:
+        return "Slice Selection";
+    case Preset::Fiducial:
+        return "Fiducial Selection";
+    case Preset::Topology:
+        return "Topology Selection";
+    case Preset::Muon:
+        return "Muon Selection";
+    case Preset::InclusiveMuCC:
+        return "Inclusive Muon CC Selection";
+    case Preset::Empty:
+    default:
+        return "Empty Selection";
     }
 }
 
-}
-
 rarexsec::plot::StackedHist::StackedHist(Histogram1DSpec spec,
-                              Options opt,
-                              std::vector<const Entry*> mc,
-                              std::vector<const Entry*> data)
-: spec_(std::move(spec))
-, opt_(std::move(opt))
-, mc_(std::move(mc))
-, data_(std::move(data))
-, plot_name_(rarexsec::plot::Plotter::sanitise(spec_.id))
-, output_directory_(opt_.out_dir) {}
+                                         Options opt,
+                                         std::vector<const Entry*> mc,
+                                         std::vector<const Entry*> data)
+    : spec_(std::move(spec)), opt_(std::move(opt)), mc_(std::move(mc)), data_(std::move(data)), plot_name_(rarexsec::plot::Plotter::sanitise(spec_.id)), output_directory_(opt_.out_dir) {}
 
 void rarexsec::plot::StackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p_ratio, TPad*& p_legend) const {
     c.cd();
@@ -77,47 +68,70 @@ void rarexsec::plot::StackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p
 
     if (opt_.legend_on_top) {
         if (want_ratio()) {
-            p_ratio  = new TPad("pad_ratio",  "pad_ratio",   0., 0.00, 1., 0.30);
-            p_main   = new TPad("pad_main",   "pad_main",    0., 0.30, 1., split);
-            p_legend = new TPad("pad_legend", "pad_legend",  0., split, 1., 1.00);
-
-            p_main ->SetTopMargin(0.02);   p_main ->SetBottomMargin(0.02);
-            p_main ->SetLeftMargin(0.12);  p_main ->SetRightMargin(0.05);
-
-            p_ratio->SetTopMargin(0.05);   p_ratio->SetBottomMargin(0.35);
-            p_ratio->SetLeftMargin(0.12);  p_ratio->SetRightMargin(0.05);
-
-            p_legend->SetTopMargin(0.05);  p_legend->SetBottomMargin(0.01);
-            p_legend->SetLeftMargin(0.02); p_legend->SetRightMargin(0.02);
-        } else {
-            p_main   = new TPad("pad_main",   "pad_main",   0., 0.00, 1., split);
+            p_ratio = new TPad("pad_ratio", "pad_ratio", 0., 0.00, 1., 0.30);
+            p_main = new TPad("pad_main", "pad_main", 0., 0.30, 1., split);
             p_legend = new TPad("pad_legend", "pad_legend", 0., split, 1., 1.00);
 
-            p_main ->SetTopMargin(0.01);  p_main ->SetBottomMargin(0.12);
-            p_main ->SetLeftMargin(0.12); p_main ->SetRightMargin(0.05);
+            p_main->SetTopMargin(0.02);
+            p_main->SetBottomMargin(0.02);
+            p_main->SetLeftMargin(0.12);
+            p_main->SetRightMargin(0.05);
 
-            p_legend->SetTopMargin(0.05); p_legend->SetBottomMargin(0.01);
-            p_legend->SetLeftMargin(0.02); p_legend->SetRightMargin(0.02);
+            p_ratio->SetTopMargin(0.05);
+            p_ratio->SetBottomMargin(0.35);
+            p_ratio->SetLeftMargin(0.12);
+            p_ratio->SetRightMargin(0.05);
+
+            p_legend->SetTopMargin(0.05);
+            p_legend->SetBottomMargin(0.01);
+            p_legend->SetLeftMargin(0.02);
+            p_legend->SetRightMargin(0.02);
+        } else {
+            p_main = new TPad("pad_main", "pad_main", 0., 0.00, 1., split);
+            p_legend = new TPad("pad_legend", "pad_legend", 0., split, 1., 1.00);
+
+            p_main->SetTopMargin(0.01);
+            p_main->SetBottomMargin(0.12);
+            p_main->SetLeftMargin(0.12);
+            p_main->SetRightMargin(0.05);
+
+            p_legend->SetTopMargin(0.05);
+            p_legend->SetBottomMargin(0.01);
+            p_legend->SetLeftMargin(0.02);
+            p_legend->SetRightMargin(0.02);
         }
-        if (opt_.use_log_y && p_main) p_main->SetLogy();
-        if (p_ratio)  p_ratio->Draw();
-        if (p_main)   p_main->Draw();
-        if (p_legend) p_legend->Draw();
+        if (opt_.use_log_y && p_main)
+            p_main->SetLogy();
+        if (p_ratio)
+            p_ratio->Draw();
+        if (p_main)
+            p_main->Draw();
+        if (p_legend)
+            p_legend->Draw();
     } else {
         if (want_ratio()) {
-            p_main  = new TPad("pad_main","pad_main", 0.,0.30,1.,1.);
-            p_ratio = new TPad("pad_ratio","pad_ratio",0.,0.,  1.,0.30);
-            p_main ->SetTopMargin(0.06);  p_main ->SetBottomMargin(0.02);
-            p_main ->SetLeftMargin(0.12); p_main ->SetRightMargin(0.05);
-            p_ratio->SetTopMargin(0.05);  p_ratio->SetBottomMargin(0.35);
-            p_ratio->SetLeftMargin(0.12); p_ratio->SetRightMargin(0.05);
-            if (opt_.use_log_y) p_main->SetLogy();
-            p_ratio->Draw(); p_main->Draw();
+            p_main = new TPad("pad_main", "pad_main", 0., 0.30, 1., 1.);
+            p_ratio = new TPad("pad_ratio", "pad_ratio", 0., 0., 1., 0.30);
+            p_main->SetTopMargin(0.06);
+            p_main->SetBottomMargin(0.02);
+            p_main->SetLeftMargin(0.12);
+            p_main->SetRightMargin(0.05);
+            p_ratio->SetTopMargin(0.05);
+            p_ratio->SetBottomMargin(0.35);
+            p_ratio->SetLeftMargin(0.12);
+            p_ratio->SetRightMargin(0.05);
+            if (opt_.use_log_y)
+                p_main->SetLogy();
+            p_ratio->Draw();
+            p_main->Draw();
         } else {
-            p_main  = new TPad("pad_main","pad_main", 0.,0.,1.,1.);
-            p_main ->SetTopMargin(0.06);  p_main ->SetBottomMargin(0.12);
-            p_main ->SetLeftMargin(0.12); p_main ->SetRightMargin(0.05);
-            if (opt_.use_log_y) p_main->SetLogy();
+            p_main = new TPad("pad_main", "pad_main", 0., 0., 1., 1.);
+            p_main->SetTopMargin(0.06);
+            p_main->SetBottomMargin(0.12);
+            p_main->SetLeftMargin(0.12);
+            p_main->SetRightMargin(0.05);
+            if (opt_.use_log_y)
+                p_main->SetLogy();
             p_main->Draw();
         }
     }
@@ -136,29 +150,31 @@ void rarexsec::plot::StackedHist::build_histograms() {
 
     for (size_t ie = 0; ie < mc_.size(); ++ie) {
         const Entry* e = mc_[ie];
-        if (!e) continue;
+        if (!e)
+            continue;
         auto n0 = selection::apply(e->rnode(), spec_.sel, *e);
-        auto n  = (spec_.expr.empty() ? n0 : n0.Define("_rx_expr_", spec_.expr));
+        auto n = (spec_.expr.empty() ? n0 : n0.Define("_rx_expr_", spec_.expr));
         const std::string var = spec_.expr.empty() ? spec_.id : "_rx_expr_";
         for (int ch : channels) {
-            auto nf = n.Filter([ch](int c){ return c==ch; }, {"analysis_channels"});
-            auto h  = nf.Histo1D(spec_.model("_mc_ch"+std::to_string(ch)+"_src"+std::to_string(ie)), var, spec_.weight);
+            auto nf = n.Filter([ch](int c) { return c == ch; }, {"analysis_channels"});
+            auto h = nf.Histo1D(spec_.model("_mc_ch" + std::to_string(ch) + "_src" + std::to_string(ie)), var, spec_.weight);
             booked[ch].push_back(h);
         }
     }
 
     std::vector<int> order;
     std::map<int, std::unique_ptr<TH1D>> sum_by_channel;
-    std::vector<std::pair<int,double>> yields;
+    std::vector<std::pair<int, double>> yields;
 
     for (int ch : channels) {
         auto it = booked.find(ch);
-        if (it == booked.end() || it->second.empty()) continue;
+        if (it == booked.end() || it->second.empty())
+            continue;
         std::unique_ptr<TH1D> sum;
         for (auto& rr : it->second) {
             const TH1D& h = rr.GetValue();
             if (!sum) {
-                sum.reset(static_cast<TH1D*>(h.Clone((spec_.id+"_mc_sum_ch"+std::to_string(ch)).c_str())));
+                sum.reset(static_cast<TH1D*>(h.Clone((spec_.id + "_mc_sum_ch" + std::to_string(ch)).c_str())));
                 sum->SetDirectory(nullptr);
             } else {
                 sum->Add(&h);
@@ -171,8 +187,9 @@ void rarexsec::plot::StackedHist::build_histograms() {
         }
     }
 
-    std::stable_sort(yields.begin(), yields.end(), [](const auto& a, const auto& b){
-        if (a.second == b.second) return a.first < b.first;
+    std::stable_sort(yields.begin(), yields.end(), [](const auto& a, const auto& b) {
+        if (a.second == b.second)
+            return a.first < b.first;
         return a.second > b.second;
     });
 
@@ -180,7 +197,8 @@ void rarexsec::plot::StackedHist::build_histograms() {
     for (auto& cy : yields) {
         int ch = cy.first;
         auto it = sum_by_channel.find(ch);
-        if (it == sum_by_channel.end()) continue;
+        if (it == sum_by_channel.end())
+            continue;
         auto& sum = it->second;
         sum->SetFillColor(rarexsec::plot::Channels::color(ch));
         sum->SetFillStyle(rarexsec::plot::Channels::fill_style(ch));
@@ -193,7 +211,7 @@ void rarexsec::plot::StackedHist::build_histograms() {
 
     for (auto& uptr : mc_ch_hists_) {
         if (!mc_total_) {
-            mc_total_.reset(static_cast<TH1D*>(uptr->Clone((spec_.id+"_mc_total").c_str())));
+            mc_total_.reset(static_cast<TH1D*>(uptr->Clone((spec_.id + "_mc_total").c_str())));
             mc_total_->SetDirectory(nullptr);
         } else {
             mc_total_->Add(uptr.get());
@@ -204,16 +222,17 @@ void rarexsec::plot::StackedHist::build_histograms() {
         std::vector<ROOT::RDF::RResultPtr<TH1D>> parts;
         for (size_t ie = 0; ie < data_.size(); ++ie) {
             const Entry* e = data_[ie];
-            if (!e) continue;
+            if (!e)
+                continue;
             auto n0 = selection::apply(e->rnode(), spec_.sel, *e);
-            auto n  = (spec_.expr.empty() ? n0 : n0.Define("_rx_expr_", spec_.expr));
+            auto n = (spec_.expr.empty() ? n0 : n0.Define("_rx_expr_", spec_.expr));
             const std::string var = spec_.expr.empty() ? spec_.id : "_rx_expr_";
-            parts.push_back(n.Histo1D(spec_.model("_data_src"+std::to_string(ie)), var));
+            parts.push_back(n.Histo1D(spec_.model("_data_src" + std::to_string(ie)), var));
         }
         for (auto& rr : parts) {
             const TH1D& h = rr.GetValue();
             if (!data_hist_) {
-                data_hist_.reset(static_cast<TH1D*>(h.Clone((spec_.id+"_data").c_str())));
+                data_hist_.reset(static_cast<TH1D*>(h.Clone((spec_.id + "_data").c_str())));
                 data_hist_->SetDirectory(nullptr);
             } else {
                 data_hist_->Add(&h);
@@ -242,7 +261,7 @@ void rarexsec::plot::StackedHist::build_histograms() {
             signal_scale_ = tot_sum / sig_sum;
             sig->Scale(signal_scale_);
         }
-        sig->SetLineColor(kGreen+2);
+        sig->SetLineColor(kGreen + 2);
         sig->SetLineStyle(kDashed);
         sig->SetLineWidth(2);
         sig->SetFillStyle(0);
@@ -251,7 +270,8 @@ void rarexsec::plot::StackedHist::build_histograms() {
 }
 
 void rarexsec::plot::StackedHist::draw_stack_and_unc(TPad* p_main, double& max_y) {
-    if (!p_main) return;
+    if (!p_main)
+        return;
     p_main->cd();
 
     if (auto* hists = stack_->GetHists()) {
@@ -267,12 +287,15 @@ void rarexsec::plot::StackedHist::draw_stack_and_unc(TPad* p_main, double& max_y
     if (frame) {
         frame->SetLineWidth(2);
     }
-    if (frame && spec_.xmin < spec_.xmax) frame->GetXaxis()->SetLimits(spec_.xmin, spec_.xmax);
+    if (frame && spec_.xmin < spec_.xmax)
+        frame->GetXaxis()->SetLimits(spec_.xmin, spec_.xmax);
     if (frame) {
         frame->GetXaxis()->SetNdivisions(510);
         frame->GetXaxis()->SetTickLength(0.02);
-        if (!opt_.x_title.empty()) frame->GetXaxis()->SetTitle(opt_.x_title.c_str());
-        if (!opt_.y_title.empty()) frame->GetYaxis()->SetTitle(opt_.y_title.c_str());
+        if (!opt_.x_title.empty())
+            frame->GetXaxis()->SetTitle(opt_.x_title.c_str());
+        if (!opt_.y_title.empty())
+            frame->GetYaxis()->SetTitle(opt_.y_title.c_str());
     }
     if (mc_total_) {
         if (opt_.total_cov || !opt_.syst_bin.empty()) {
@@ -281,12 +304,13 @@ void rarexsec::plot::StackedHist::draw_stack_and_unc(TPad* p_main, double& max_y
         }
 
         max_y = mc_total_->GetMaximum() + mc_total_->GetBinError(mc_total_->GetMaximumBin());
-        if (opt_.y_max > 0) max_y = opt_.y_max;
+        if (opt_.y_max > 0)
+            max_y = opt_.y_max;
 
         stack_->SetMaximum(max_y * (opt_.use_log_y ? 10. : 1.3));
         stack_->SetMinimum(opt_.use_log_y ? 0.1 : opt_.y_min);
 
-        auto* h = static_cast<TH1D*>(mc_total_->Clone((spec_.id+"_mc_totband").c_str()));
+        auto* h = static_cast<TH1D*>(mc_total_->Clone((spec_.id + "_mc_totband").c_str()));
         h->SetDirectory(nullptr);
         h->SetFillColor(kBlack);
         h->SetFillStyle(3004);
@@ -295,16 +319,19 @@ void rarexsec::plot::StackedHist::draw_stack_and_unc(TPad* p_main, double& max_y
         h->SetLineWidth(1);
         h->Draw("E2 SAME");
     }
-    if (sig_hist_)  sig_hist_->Draw("HIST SAME");
-    if (data_hist_) data_hist_->Draw("E1 SAME");
+    if (sig_hist_)
+        sig_hist_->Draw("HIST SAME");
+    if (data_hist_)
+        data_hist_->Draw("E1 SAME");
 }
 
 void rarexsec::plot::StackedHist::draw_ratio(TPad* p_ratio) {
-    if (!p_ratio || !data_hist_ || !mc_total_) return;
+    if (!p_ratio || !data_hist_ || !mc_total_)
+        return;
     p_ratio->cd();
 
     auto ratio = std::unique_ptr<TH1D>(static_cast<TH1D*>(
-        data_hist_->Clone((spec_.id+"_ratio").c_str())));
+        data_hist_->Clone((spec_.id + "_ratio").c_str())));
     ratio->SetDirectory(nullptr);
     ratio->Divide(mc_total_.get());
     ratio->SetTitle("; ;Data / MC");
@@ -322,11 +349,11 @@ void rarexsec::plot::StackedHist::draw_ratio(TPad* p_ratio) {
 
     std::unique_ptr<TH1D> band;
     if (opt_.show_ratio_band) {
-        band.reset(static_cast<TH1D*>(mc_total_->Clone((spec_.id+"_ratio_band").c_str())));
+        band.reset(static_cast<TH1D*>(mc_total_->Clone((spec_.id + "_ratio_band").c_str())));
         band->SetDirectory(nullptr);
         const int nb = band->GetNbinsX();
         for (int i = 1; i <= nb; ++i) {
-            const double m  = mc_total_->GetBinContent(i);
+            const double m = mc_total_->GetBinContent(i);
             const double em = mc_total_->GetBinError(i);
             band->SetBinContent(i, 1.0);
             band->SetBinError(i, (m > 0 ? em / m : 0.0));
@@ -342,23 +369,30 @@ void rarexsec::plot::StackedHist::draw_ratio(TPad* p_ratio) {
 }
 
 void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
-    if (!p) return;
+    if (!p)
+        return;
     p->cd();
     legend_ = std::make_unique<TLegend>(0.12, 0.0, 0.95, 0.75);
     auto* leg = legend_.get();
     if (!opt_.legend_on_top) {
-        leg->SetX1NDC(opt_.leg_x1); leg->SetY1NDC(opt_.leg_y1);
-        leg->SetX2NDC(opt_.leg_x2); leg->SetY2NDC(opt_.leg_y2);
+        leg->SetX1NDC(opt_.leg_x1);
+        leg->SetY1NDC(opt_.leg_y1);
+        leg->SetX2NDC(opt_.leg_x2);
+        leg->SetY2NDC(opt_.leg_y2);
     }
     leg->SetBorderSize(0);
     leg->SetFillStyle(0);
     leg->SetTextFont(42);
 
     int n_entries = static_cast<int>(mc_ch_hists_.size());
-    if (mc_total_) ++n_entries;
-    if (sig_hist_) ++n_entries;
-    if (data_hist_) ++n_entries;
-    if (n_entries > 0) leg->SetNColumns(n_entries > 4 ? 3 : 2);
+    if (mc_total_)
+        ++n_entries;
+    if (sig_hist_)
+        ++n_entries;
+    if (data_hist_)
+        ++n_entries;
+    if (n_entries > 0)
+        leg->SetNColumns(n_entries > 4 ? 3 : 2);
 
     legend_proxies_.clear();
 
@@ -370,7 +404,7 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
             label += " : " + rarexsec::plot::Plotter::fmt_commas(sum, 2);
         }
         auto proxy = std::unique_ptr<TH1D>(static_cast<TH1D*>(
-            mc_ch_hists_[i]->Clone((spec_.id+"_leg_ch"+std::to_string(ch)).c_str())));
+            mc_ch_hists_[i]->Clone((spec_.id + "_leg_ch" + std::to_string(ch)).c_str())));
         proxy->SetDirectory(nullptr);
         proxy->Reset("ICES");
 
@@ -382,7 +416,7 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
 
     if (mc_total_) {
         auto proxy = std::unique_ptr<TH1D>(static_cast<TH1D*>(
-            mc_total_->Clone((spec_.id+"_leg_unc").c_str())));
+            mc_total_->Clone((spec_.id + "_leg_unc").c_str())));
         proxy->SetDirectory(nullptr);
         proxy->Reset("ICES");
         proxy->SetFillColor(kBlack);
@@ -409,10 +443,12 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
 }
 
 void rarexsec::plot::StackedHist::draw_cuts(TPad* p, double max_y) {
-    if (!opt_.show_cuts || opt_.cuts.empty()) return;
+    if (!opt_.show_cuts || opt_.cuts.empty())
+        return;
     p->cd();
     TH1* frame = stack_->GetHistogram();
-    if (!frame) return;
+    if (!frame)
+        return;
     const double y = max_y * 0.85;
     const double xmin = frame->GetXaxis()->GetXmin();
     const double xmax = frame->GetXaxis()->GetXmax();
@@ -435,7 +471,8 @@ void rarexsec::plot::StackedHist::draw_cuts(TPad* p, double max_y) {
 }
 
 void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const {
-    if (!p) return;
+    if (!p)
+        return;
     p->cd();
 
     const std::string line1 = "#bf{#muBooNE Simulation, Preliminary}";
@@ -445,7 +482,8 @@ void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const
         double total = 0.0;
         std::map<std::pair<std::string, std::string>, std::vector<double>> seen;
         for (const auto* e : entries) {
-            if (!e || e->pot_nom <= 0.0) continue;
+            if (!e || e->pot_nom <= 0.0)
+                continue;
             const auto key = std::make_pair(e->beamline, e->period);
             auto& values = seen[key];
             const double pot = e->pot_nom;
@@ -462,8 +500,10 @@ void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const
     };
 
     double pot_value = opt_.total_protons_on_target;
-    if (pot_value <= 0.0) pot_value = sum_pot(data_);
-    if (pot_value <= 0.0) pot_value = sum_pot(mc_);
+    if (pot_value <= 0.0)
+        pot_value = sum_pot(data_);
+    if (pot_value <= 0.0)
+        pot_value = sum_pot(mc_);
 
     auto format_pot = [](double value) {
         std::ostringstream ss;
@@ -482,30 +522,41 @@ void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const
     const auto first_non_empty = [](const std::vector<const rarexsec::Entry*>& entries,
                                     auto getter) -> std::string {
         for (const auto* e : entries) {
-            if (!e) continue;
+            if (!e)
+                continue;
             auto value = getter(*e);
-            if (!value.empty()) return value;
+            if (!value.empty())
+                return value;
         }
         return {};
     };
 
     auto beam_name = opt_.beamline;
-    if (beam_name.empty()) beam_name = first_non_empty(data_, [](const auto& e) { return e.beamline; });
-    if (beam_name.empty()) beam_name = first_non_empty(mc_, [](const auto& e) { return e.beamline; });
-    if (beam_name == "numi_fhc") beam_name = "NuMI FHC";
-    else if (beam_name == "numi_rhc") beam_name = "NuMI RHC";
-    if (beam_name.empty()) beam_name = "N/A";
+    if (beam_name.empty())
+        beam_name = first_non_empty(data_, [](const auto& e) { return e.beamline; });
+    if (beam_name.empty())
+        beam_name = first_non_empty(mc_, [](const auto& e) { return e.beamline; });
+    if (beam_name == "numi_fhc")
+        beam_name = "NuMI FHC";
+    else if (beam_name == "numi_rhc")
+        beam_name = "NuMI RHC";
+    if (beam_name.empty())
+        beam_name = "N/A";
 
     std::vector<std::string> runs = opt_.run_numbers;
-    if (runs.empty()) runs = opt_.periods;
+    if (runs.empty())
+        runs = opt_.periods;
     if (runs.empty()) {
         auto run = first_non_empty(data_, [](const auto& e) { return e.period; });
-        if (run.empty()) run = first_non_empty(mc_, [](const auto& e) { return e.period; });
-        if (!run.empty()) runs.push_back(std::move(run));
+        if (run.empty())
+            run = first_non_empty(mc_, [](const auto& e) { return e.period; });
+        if (!run.empty())
+            runs.push_back(std::move(run));
     }
 
     auto format_run = [](std::string label) {
-        if (label.rfind("run", 0) == 0) label.erase(0, 3);
+        if (label.rfind("run", 0) == 0)
+            label.erase(0, 3);
         try {
             label = rarexsec::plot::Plotter::fmt_commas(std::stod(label), 0);
         } catch (...) {
@@ -517,14 +568,16 @@ void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const
     if (!runs.empty()) {
         std::ostringstream ss;
         for (size_t i = 0; i < runs.size(); ++i) {
-            if (i) ss << ", ";
+            if (i)
+                ss << ", ";
             ss << format_run(runs[i]);
         }
         runs_str = ss.str();
     }
 
     std::string region_label = opt_.analysis_region_label;
-    if (region_label.empty()) region_label = selection_label(spec_.sel);
+    if (region_label.empty())
+        region_label = selection_label(spec_.sel);
 
     const std::string line2 = "Beam(s), Run(s): " + beam_name + ", " + runs_str +
                               " (" + pot_str + " POT)";
@@ -554,8 +607,10 @@ void rarexsec::plot::StackedHist::draw(TCanvas& canvas) {
     draw_cuts(p_main, max_y);
     draw_watermark(p_main, mc_total_ ? mc_total_->Integral() : 0.0);
     draw_legend(p_legend ? p_legend : p_main);
-    if (want_ratio()) draw_ratio(p_ratio);
-    if (p_main) p_main->RedrawAxis();
+    if (want_ratio())
+        draw_ratio(p_ratio);
+    if (p_main)
+        p_main->RedrawAxis();
     canvas.Update();
 }
 

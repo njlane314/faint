@@ -5,8 +5,8 @@
 #include <utility>
 #include <vector>
 
-#include <TMatrixDSym.h>
 #include <TH1D.h>
+#include <TMatrixDSym.h>
 
 #include "rarexsec/Hub.hh"
 #include "rarexsec/Plotter.hh"
@@ -23,33 +23,33 @@ struct UnionSamples {
 };
 
 struct UnionConfig {
-    bool use_stat   = true;
-    bool use_ppfx   = true;
-    bool use_genie  = true;
-    bool use_reint  = true;
-    bool use_pot    = true;
+    bool use_stat = true;
+    bool use_ppfx = true;
+    bool use_genie = true;
+    bool use_reint = true;
+    bool use_pot = true;
     bool use_detvar = true;
 
     bool include_dirt = true;
-    bool include_ext  = true;
+    bool include_ext = true;
 
-    int N_ppfx  = -1;
+    int N_ppfx = -1;
     int N_genie = -1;
     int N_reint = -1;
 
-    std::string ppfx_branch     = "weightsPPFX";
-    std::string ppfx_cv_branch  = "ppfx_cv";
-    std::string map_branch      = "weights";
-    std::string genie_key       = "All_UBGenie";
+    std::string ppfx_branch = "weightsPPFX";
+    std::string ppfx_cv_branch = "ppfx_cv";
+    std::string map_branch = "weights";
+    std::string genie_key = "All_UBGenie";
     std::string genie_cv_branch = "weightSplineTimesTune";
-    std::string reint_key       = "reint_all";
+    std::string reint_key = "reint_all";
 
-    std::vector<std::pair<std::string,std::string>> detvar_pairs;
+    std::vector<std::pair<std::string, std::string>> detvar_pairs;
     std::vector<std::string> detvar_unisims;
 
-    double pot_frac       = 0.0;
+    double pot_frac = 0.0;
     double dirt_norm_frac = 0.0;
-    double ext_norm_frac  = 0.0;
+    double ext_norm_frac = 0.0;
 
     bool make_sum = true;
 };

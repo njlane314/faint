@@ -14,7 +14,8 @@
 namespace rarexsec {
 namespace plot {
 
-enum class CutDir { LessThan, GreaterThan };
+enum class CutDir { LessThan,
+                    GreaterThan };
 
 struct CutSpec {
     double x = 0.0;
@@ -80,7 +81,7 @@ struct TH1DModel {
         return ";" + base + ";Events";
     }
 
-private:
+  private:
     static std::string sanitise(const std::string& raw) {
         std::string out;
         out.reserve(raw.size());
