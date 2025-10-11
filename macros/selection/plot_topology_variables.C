@@ -14,6 +14,12 @@ void plot_topology_variables() {
         auto hub = env.make_hub();
         const auto mc_samples = hub.simulation_entries(env.beamline, env.periods);
 
+        std::cout << "Loaded beamline " << env.beamline << " for";
+        for (const auto& period : env.periods) {
+            std::cout << ' ' << period;
+        }
+        std::cout << " with " << samples.size() << " simulation samples." << std::endl;
+
         rarexsec::plot::Options opt;
         opt.out_dir = "plots/selection";
         opt.image_format = "png";
