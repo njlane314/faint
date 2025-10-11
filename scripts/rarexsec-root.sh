@@ -22,7 +22,7 @@ for d in "${TOPDIR}/include" "${TOPDIR}/include/rarexsec"; do
 done
 : "${INCDIR:=${TOPDIR}/include}"
 MACRO=""
-for f in "${TOPDIR}/setup_rarexsec.C" "${TOPDIR}/scripts/setup_rarexsec.C"; do
+for f in "${TOPDIR}/scripts/setup_rarexsec.C" "${TOPDIR}/setup_rarexsec.C"; do
   [[ -f "$f" ]] && { MACRO="$f"; break; }
 done
 if [[ -z "$MACRO" ]]; then
