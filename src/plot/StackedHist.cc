@@ -6,7 +6,7 @@
 #include "TLine.h"
 #include "TList.h"
 #include "TMatrixDSym.h"
-#include "rarexsec/Plotter.hh"
+#include "rarexsec/plot/Plotter.hh"
 #include "rarexsec/plot/Channels.hh"
 #include <algorithm>
 #include <cmath>

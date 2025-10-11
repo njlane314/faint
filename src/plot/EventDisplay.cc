@@ -18,7 +18,7 @@
 #include <TStyle.h>
 #include <nlohmann/json.hpp>
 
-#include "rarexsec/Plotter.hh"
+#include "rarexsec/plot/Plotter.hh"
 
 rarexsec::plot::EventDisplay::EventDisplay(Spec spec, Options opt, DetectorData data)
     : spec_(std::move(spec)), opt_(std::move(opt)), data_(std::move(data)), plot_name_(rarexsec::plot::Plotter::sanitise(spec_.id)), output_directory_(opt_.out_dir) {}

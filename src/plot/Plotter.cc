@@ -1,4 +1,4 @@
-#include "rarexsec/Plotter.hh"
+#include "rarexsec/plot/Plotter.hh"
 #include "rarexsec/plot/EventDisplay.hh"
 #include "rarexsec/plot/StackedHist.hh"
 #include "rarexsec/plot/UnstackedHist.hh"
