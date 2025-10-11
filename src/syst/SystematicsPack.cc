@@ -18,10 +18,10 @@ std::unique_ptr<TH1D> clone_reset_like(const TH1D& templ, const std::string& nam
   return h;
 }
 
-std::unique_ptr<TH1D> sum_parts(const std::vector<ROOT::RDF::RResultPtr<TH1D>>& parts,
+std::unique_ptr<TH1D> sum_parts(std::vector<ROOT::RDF::RResultPtr<TH1D>>& parts,
                                 const TH1D& model, const std::string& name) {
   std::unique_ptr<TH1D> total;
-  for (auto const& rr : parts) {
+  for (auto& rr : parts) {
     const TH1D& h = rr.GetValue();
     if (!total) {
       total.reset(static_cast<TH1D*>(h.Clone(name.c_str())));
@@ -91,9 +91,9 @@ std::unique_ptr<TH1D> make_total_hist_universe_ushort(const TH1D& model,
 
 SystematicsPack::SystematicsPack(Config cfg) : cfg_(std::move(cfg)) {}
 
-SystematicsPack::Result SystematicsPack::build(const TH1D& model,
-                                               const std::vector<const rarexsec::Entry*>& mc_entries,
-                                               const std::vector<const rarexsec::Entry*>& ext_entries) const {
+Result SystematicsPack::build(const TH1D& model,
+                              const std::vector<const rarexsec::Entry*>& mc_entries,
+                              const std::vector<const rarexsec::Entry*>& ext_entries) const {
   using rarexsec::syst::mc_stat_covariance;
   using rarexsec::syst::sample_covariance;
   using rarexsec::syst::sum;
