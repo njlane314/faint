@@ -14,11 +14,9 @@
 
 void apply_inclusive_mucc_preset() {
     try {
+        ROOT::EnableThreadSafety();
         ROOT::EnableImplicitMT();
-        if (gSystem->Load("librarexsec") < 0) {
-            throw std::runtime_error("Failed to load librarexsec library");
-        }
-
+    
         const auto env = rarexsec::Env::from_env();
         auto hub = env.make_hub();
 
