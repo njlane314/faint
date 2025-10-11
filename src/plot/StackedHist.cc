@@ -2,6 +2,7 @@
 #include "ROOT/RDFHelpers.hxx"
 #include "TArrow.h"
 #include "TCanvas.h"
+#include "TImage.h"
 #include "TLatex.h"
 #include "TLine.h"
 #include "TList.h"
@@ -287,8 +288,9 @@ void rarexsec::plot::StackedHist::draw_stack_and_unc(TPad* p_main, double& max_y
     if (frame) {
         frame->SetLineWidth(2);
     }
-    if (frame && spec_.xmin < spec_.xmax)
-        frame->GetXaxis()->SetLimits(spec_.xmin, spec_.xmax);
+    if (frame && spec_.xmin < spec_.xmax) {
+        frame->GetXaxis()->SetRangeUser(spec_.xmin, spec_.xmax);
+    }
     if (frame) {
         frame->GetXaxis()->SetNdivisions(510);
         frame->GetXaxis()->SetTickLength(0.02);
@@ -317,7 +319,9 @@ void rarexsec::plot::StackedHist::draw_stack_and_unc(TPad* p_main, double& max_y
         h->SetMarkerSize(0);
         h->SetLineColor(kBlack);
         h->SetLineWidth(1);
+        // Draw shaded band plus a crisp outline like the reference
         h->Draw("E2 SAME");
+        h->Draw("E1 SAME");
     }
     if (sig_hist_)
         sig_hist_->Draw("HIST SAME");
@@ -391,8 +395,10 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
         ++n_entries;
     if (data_hist_)
         ++n_entries;
-    if (n_entries > 0)
-        leg->SetNColumns(4);
+    if (n_entries > 0) {
+        const int n_cols = (n_entries > 4) ? 3 : 2;
+        leg->SetNColumns(n_cols);
+    }
 
     legend_proxies_.clear();
 
@@ -400,6 +406,9 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
         int ch = chan_order_.at(i);
         double sum = mc_ch_hists_[i]->Integral();
         std::string label = rarexsec::plot::Channels::label(ch);
+        // Match the reference convention for empty set
+        if (label == "#emptyset")
+            label = "\xE2\x88\x85";
         if (opt_.annotate_numbers) {
             label += " : " + rarexsec::plot::Plotter::fmt_commas(sum, 2);
         }
@@ -428,10 +437,12 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     }
 
     if (sig_hist_) {
+        // Reference legend: just "Signal" (scale factor displayed on the curve is optional)
         std::string sig_label = "Signal";
-        if (signal_scale_ != 1.0) {
-            sig_label += " (x" + rarexsec::plot::Plotter::fmt_commas(signal_scale_, 2) + ")";
-        }
+        // If you prefer to keep the multiplier, re-enable the lines below.
+        // if (signal_scale_ != 1.0) {
+        //     sig_label += " (x" + rarexsec::plot::Plotter::fmt_commas(signal_scale_, 2) + ")";
+        // }
         leg->AddEntry(sig_hist_.get(), sig_label.c_str(), "l");
     }
 
@@ -619,5 +630,14 @@ void rarexsec::plot::StackedHist::draw_and_save(const std::string& image_format)
     TCanvas canvas(plot_name_.c_str(), plot_name_.c_str(), 800, 600);
     draw(canvas);
     const std::string fmt = image_format.empty() ? "png" : image_format;
-    canvas.SaveAs((output_directory_ + "/" + plot_name_ + "." + fmt).c_str());
+    const std::string out = output_directory_ + "/" + plot_name_ + "." + fmt;
+    if (fmt == "pdf") {
+        canvas.SaveAs(out.c_str());
+    } else {
+        std::unique_ptr<TImage> image(TImage::Create());
+        if (image) {
+            image->FromPad(&canvas);
+            image->WriteImage(out.c_str());
+        }
+    }
 }
