@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "rarexsec/Hub.hh"
-#include "rarexsec/Plotter.hh"
+#include "rarexsec/plot/Plotter.hh"
 #include "rarexsec/proc/Selection.hh"
 
 namespace rarexsec::syst {
