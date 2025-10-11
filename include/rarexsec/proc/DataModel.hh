@@ -132,16 +132,6 @@ inline origin from_source_slice(Source src, Slice sl) {
 
 }
 
-struct ProcessorOptions {
-    std::string tree = "nuselection/EventSelectionFilter";
-    double recognised_purity_min = 0.5;
-    double recognised_completeness_min = 0.1;
-    bool clamp_negative_weights_to_zero = true;
-    bool make_truth_classification = true;
-    bool make_reco_fiducial = true;
-    bool make_signal_flags = true;
-};
-
 struct Frame {
     std::shared_ptr<ROOT::RDataFrame> df;
     mutable std::optional<ROOT::RDF::RNode> node;

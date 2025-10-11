@@ -6,9 +6,7 @@ namespace rarexsec {
 
 class Processor {
   public:
-    ROOT::RDF::RNode run(ROOT::RDF::RNode node,
-                         const rarexsec::Entry& rec,
-                         const ProcessorOptions& opt) const;
+    ROOT::RDF::RNode run(ROOT::RDF::RNode node, const rarexsec::Entry& rec) const;
 };
 
 const Processor& processor();

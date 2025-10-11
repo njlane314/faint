@@ -48,17 +48,17 @@ parse_kind_slice(const std::string& kind, const json& s) {
     throw std::runtime_error("unknown kind: " + kind);
 }
 rarexsec::Frame rarexsec::Hub::sample(const Entry& rec) const {
-    auto df_ptr = std::make_shared<ROOT::RDataFrame>(opts_.tree, rec.files);
+    static const std::string tree = "nuselection/EventSelectionFilter";
+    auto df_ptr = std::make_shared<ROOT::RDataFrame>(tree, rec.files);
     ROOT::RDF::RNode node = *df_ptr;
 
-    node = processor().run(node, rec, opts_);
+    node = processor().run(node, rec);
     node = apply_slice(node, rec);
 
     return Frame{df_ptr, std::move(node)};
 }
 
-rarexsec::Hub::Hub(const std::string& path, ProcessorOptions opts)
-    : opts_(std::move(opts)) {
+rarexsec::Hub::Hub(const std::string& path) {
     std::ifstream cfg(path);
     if (!cfg)
         throw std::runtime_error("cannot open " + path);

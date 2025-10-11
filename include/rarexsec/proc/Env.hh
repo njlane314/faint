@@ -8,11 +8,10 @@
 #include <vector>
 
 #include "rarexsec/Hub.hh"
-#include "rarexsec/Processor.hh"
 
 namespace rarexsec {
 struct Env {
-  std::string cfg, tree, beamline;
+  std::string cfg, beamline;
   std::vector<std::string> periods;
   static Env from_env() {
     auto get_env = [](const char* key) {
@@ -24,10 +23,6 @@ struct Env {
     env.cfg = get_env("RAREXSEC_CFG");
     if (env.cfg.empty()) {
       throw std::runtime_error("RAREXSEC_CFG missing");
-    }
-    env.tree = get_env("RAREXSEC_TREE");
-    if (env.tree.empty()) {
-      env.tree = "events";
     }
     env.beamline = get_env("RAREXSEC_BEAMLINE");
     if (env.beamline.empty()) {
@@ -45,10 +40,6 @@ struct Env {
     }
     return env;
   }
-  Hub make_hub() const {
-    ProcessorOptions o;
-    o.tree = tree;
-    return Hub(cfg, o);
-  }
+  Hub make_hub() const { return Hub(cfg); }
 };
 } // namespace rarexsec

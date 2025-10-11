@@ -10,7 +10,7 @@ namespace rarexsec {
 
 class Hub {
   public:
-    explicit Hub(const std::string& path, ProcessorOptions opts = {});
+    explicit Hub(const std::string& path);
 
     Frame sample(const Entry& rec) const;
 
@@ -19,14 +19,11 @@ class Hub {
     std::vector<const Entry*> data_entries(const std::string& beamline,
                                            const std::vector<std::string>& periods) const;
 
-    const ProcessorOptions& options() const { return opts_; }
-
   private:
     static ROOT::RDF::RNode apply_slice(ROOT::RDF::RNode node, const Entry& rec);
 
     using PeriodDB = std::unordered_map<std::string, std::vector<Entry>>;
     std::unordered_map<std::string, PeriodDB> db_;
-    ProcessorOptions opts_;
 };
 
 }

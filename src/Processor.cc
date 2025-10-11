@@ -6,9 +6,13 @@
 #include <cmath>
 #include <cstdlib>
 
+namespace {
+constexpr double kRecognisedPurityMin = 0.5;
+constexpr double kRecognisedCompletenessMin = 0.1;
+}
+
 ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node,
-                                          const rarexsec::Entry& rec,
-                                          const ProcessorOptions& opt) const {
+                                          const rarexsec::Entry& rec) const {
     const bool is_data = (rec.source == Source::Data);
     const bool is_ext = (rec.source == Source::Ext);
     const bool is_mc = (rec.source == Source::MC);
@@ -23,12 +27,12 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node,
     if (is_mc) {
         node = node.Define(
             "w_nominal",
-            [opt](double w, double w_spline, double w_tune) {
+            [](double w, double w_spline, double w_tune) {
                 double out = w * w_spline * w_tune;
                 if (!std::isfinite(out))
                     return 0.0;
                 if (out < 0.0)
-                    return opt.clamp_negative_weights_to_zero ? 0.0 : out;
+                    return 0.0;
                 return out;
             },
             {"w_base", "weightSpline", "weightTune"});
@@ -36,7 +40,7 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node,
         node = node.Define("w_nominal", [](double w) { return w; }, {"w_base"});
     }
 
-    if (is_mc && opt.make_truth_classification) {
+    if (is_mc) {
         node = node.Define(
             "in_fiducial",
             [](float x, float y, float z) {
@@ -111,19 +115,18 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node,
             {"in_fiducial", "neutrino_pdg", "interaction_ccnc", "count_strange",
              "count_proton", "count_pi_minus", "count_pi_plus", "count_pi_zero", "count_gamma"});
 
-        if (opt.make_signal_flags) {
-            node = node.Define(
-                "is_signal",
-                [](int ch) { return ch == static_cast<int>(Channel::CCS1) || ch == static_cast<int>(Channel::CCSgt1); },
-                {"analysis_channels"});
+        node = node.Define(
+            "is_signal",
+            [](int ch) { return ch == static_cast<int>(Channel::CCS1) || ch == static_cast<int>(Channel::CCSgt1); },
+            {"analysis_channels"});
 
-            node = node.Define(
-                "recognised_signal",
-                [opt](bool is_sig, float purity, float completeness) {
-                    return is_sig && purity > static_cast<float>(opt.recognised_purity_min) && completeness > static_cast<float>(opt.recognised_completeness_min);
-                },
-                {"is_signal", "neutrino_purity_from_pfp", "neutrino_completeness_from_pfp"});
-        }
+        node = node.Define(
+            "recognised_signal",
+            [](bool is_sig, float purity, float completeness) {
+                return is_sig && purity > static_cast<float>(kRecognisedPurityMin) &&
+                       completeness > static_cast<float>(kRecognisedCompletenessMin);
+            },
+            {"is_signal", "neutrino_purity_from_pfp", "neutrino_completeness_from_pfp"});
     } else {
         const int nonmc_channel =
             is_ext ? static_cast<int>(Channel::External) : (is_data ? static_cast<int>(Channel::DataInclusive) : static_cast<int>(Channel::Unknown));
@@ -136,14 +139,12 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node,
         node = node.Define("recognised_signal", [] { return false; });
     }
 
-    if (opt.make_reco_fiducial) {
-        node = node.Define(
-            "in_reco_fiducial",
-            [](float x, float y, float z) {
-                return rarexsec::fiducial::is_in_reco_volume(x, y, z);
-            },
-            {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y", "reco_neutrino_vertex_sce_z"});
-    }
+    node = node.Define(
+        "in_reco_fiducial",
+        [](float x, float y, float z) {
+            return rarexsec::fiducial::is_in_reco_volume(x, y, z);
+        },
+        {"reco_neutrino_vertex_sce_x", "reco_neutrino_vertex_sce_y", "reco_neutrino_vertex_sce_z"});
 
     return node;
 }
