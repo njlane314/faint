@@ -28,10 +28,12 @@ After building, the rarexsec libraries must be discoverable by ROOT.  The `scrip
 
 This command loads the generated libraries, configures ROOT include paths, and runs the `inspect_simulation_samples()` entry point defined in `macros/inspect_simulation_samples.C`.
 
-Alternatively, you can call the setup macro manually from ROOT by providing the absolute library and include directories:
+Alternatively, you can call the setup macro manually from ROOT by providing the absolute library and include directories.  The
+macro lives under `scripts/setup_rarexsec.C` when running from the source tree (or `$PREFIX/scripts/setup_rarexsec.C` after
+installation):
 
 ```bash
-root -l -q -e 'setup_rarexsec("$PWD/build/lib/librarexsec.so","$PWD/include")' macros/example_macro.C
+root -l -q -e 'gROOT->LoadMacro("scripts/setup_rarexsec.C"); setup_rarexsec("$PWD/build/lib/librarexsec.so","$PWD/include")' macros/example_macro.C
 ```
 
 ### Macro multiple entry points

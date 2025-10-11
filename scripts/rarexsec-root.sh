@@ -7,7 +7,7 @@ export RAREXSEC="$TOPDIR"
 
 LIBDIR="$TOPDIR/build/lib"; [[ -d "$LIBDIR" ]] || LIBDIR="$TOPDIR/lib"
 INCDIR="$TOPDIR/include"
-SETUP="$TOPDIR/setup_rarexsec.C"; [[ -f "$SETUP" ]] || SETUP="$TOPDIR/scripts/setup_rarexsec.C"
+SETUP="$TOPDIR/scripts/setup_rarexsec.C"; [[ -f "$SETUP" ]] || SETUP="$TOPDIR/setup_rarexsec.C"
 LIB="$LIBDIR/librarexsec.so"
 MACRO="$TOPDIR/analysis/main.C"
 
