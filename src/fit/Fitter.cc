@@ -10,7 +10,136 @@ namespace rarexsec::internal::fit {
 
 Fitter::Fitter(const std::string &signal_process_label) : signal_label_(signal_process_label) {}
 
+Fitter::Fitter(const Fitter &o)
+    : channels_(o.channels_),
+      all_channels_(o.all_channels_),
+      all_processes_(o.all_processes_),
+      norm_nuis_(o.norm_nuis_),
+      shape_nuis_(o.shape_nuis_),
+      signal_label_(o.signal_label_),
+      sigma_ref_pb_(o.sigma_ref_pb_),
+      mu_lo_(o.mu_lo_),
+      mu_hi_(o.mu_hi_),
+      eps_(o.eps_),
+      n_pars_(o.n_pars_),
+      par_names_(o.par_names_),
+      par_is_norm_(o.par_is_norm_) {}
+
+Fitter &Fitter::operator=(const Fitter &o) {
+  if (this == &o) return *this;
+  channels_ = o.channels_;
+  all_channels_ = o.all_channels_;
+  all_processes_ = o.all_processes_;
+  norm_nuis_ = o.norm_nuis_;
+  shape_nuis_ = o.shape_nuis_;
+  signal_label_ = o.signal_label_;
+  sigma_ref_pb_ = o.sigma_ref_pb_;
+  mu_lo_ = o.mu_lo_;
+  mu_hi_ = o.mu_hi_;
+  eps_ = o.eps_;
+  n_pars_ = o.n_pars_;
+  par_names_ = o.par_names_;
+  par_is_norm_ = o.par_is_norm_;
+  return *this;
+}
+
 Fitter::~Fitter() { clear_(); }
+
+
+Fitter::Process::Process(const Process &o) : name(o.name), is_signal(o.is_signal) {
+  if (o.nominal) {
+    auto *cl = static_cast<TH1D *>(o.nominal->Clone());
+    if (!cl) throw std::runtime_error("Process copy: clone failed");
+    cl->SetDirectory(nullptr);
+    nominal.reset(cl);
+  }
+}
+
+Fitter::Process &Fitter::Process::operator=(const Process &o) {
+  if (this == &o) return *this;
+  name = o.name;
+  is_signal = o.is_signal;
+  if (o.nominal) {
+    auto *cl = static_cast<TH1D *>(o.nominal->Clone());
+    if (!cl) throw std::runtime_error("Process copy: clone failed");
+    cl->SetDirectory(nullptr);
+    nominal.reset(cl);
+  } else {
+    nominal.reset();
+  }
+  return *this;
+}
+
+Fitter::Channel::Channel(const Channel &o)
+    : name(o.name), processes(o.processes), nbins(o.nbins) {
+  if (o.data) {
+    auto *cl = static_cast<TH1D *>(o.data->Clone());
+    if (!cl) throw std::runtime_error("Channel copy: clone failed");
+    cl->SetDirectory(nullptr);
+    data.reset(cl);
+  }
+}
+
+Fitter::Channel &Fitter::Channel::operator=(const Channel &o) {
+  if (this == &o) return *this;
+  name = o.name;
+  nbins = o.nbins;
+  processes = o.processes;
+  if (o.data) {
+    auto *cl = static_cast<TH1D *>(o.data->Clone());
+    if (!cl) throw std::runtime_error("Channel copy: clone failed");
+    cl->SetDirectory(nullptr);
+    data.reset(cl);
+  } else {
+    data.reset();
+  }
+  return *this;
+}
+
+Fitter::ShapeNuisance::ShapeNuisance(const ShapeNuisance &o) : name(o.name), index(o.index) {
+  for (const auto &kv : o.updown) {
+    std::unique_ptr<TH1D> up;
+    std::unique_ptr<TH1D> dn;
+    if (kv.second.first) {
+      auto *cl = static_cast<TH1D *>(kv.second.first->Clone());
+      if (!cl) throw std::runtime_error("ShapeNuisance copy: clone failed (up)");
+      cl->SetDirectory(nullptr);
+      up.reset(cl);
+    }
+    if (kv.second.second) {
+      auto *cl = static_cast<TH1D *>(kv.second.second->Clone());
+      if (!cl) throw std::runtime_error("ShapeNuisance copy: clone failed (down)");
+      cl->SetDirectory(nullptr);
+      dn.reset(cl);
+    }
+    updown.emplace(kv.first, std::make_pair(std::move(up), std::move(dn)));
+  }
+}
+
+Fitter::ShapeNuisance &Fitter::ShapeNuisance::operator=(const ShapeNuisance &o) {
+  if (this == &o) return *this;
+  name = o.name;
+  index = o.index;
+  updown.clear();
+  for (const auto &kv : o.updown) {
+    std::unique_ptr<TH1D> up;
+    std::unique_ptr<TH1D> dn;
+    if (kv.second.first) {
+      auto *cl = static_cast<TH1D *>(kv.second.first->Clone());
+      if (!cl) throw std::runtime_error("ShapeNuisance copy: clone failed (up)");
+      cl->SetDirectory(nullptr);
+      up.reset(cl);
+    }
+    if (kv.second.second) {
+      auto *cl = static_cast<TH1D *>(kv.second.second->Clone());
+      if (!cl) throw std::runtime_error("ShapeNuisance copy: clone failed (down)");
+      cl->SetDirectory(nullptr);
+      dn.reset(cl);
+    }
+    updown.emplace(kv.first, std::make_pair(std::move(up), std::move(dn)));
+  }
+  return *this;
+}
 
 void Fitter::set_sigma_ref(double sigma_ref_pb) { sigma_ref_pb_ = sigma_ref_pb; }
 
