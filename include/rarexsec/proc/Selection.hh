@@ -104,5 +104,41 @@ inline ROOT::RDF::RNode apply(ROOT::RDF::RNode node, Preset p, const rarexsec::E
     }
 }
 
+struct EvalResult {
+    double denom = 0.0;
+    double numer = 0.0;
+    double selected = 0.0;
+    double efficiency() const { return denom > 0.0 ? numer/denom : 0.0; }
+    double purity() const { return selected > 0.0 ? numer/selected : 0.0; }
+};
+
+template <class SignalPredicate>
+inline EvalResult evaluate(const std::vector<const rarexsec::Entry*>& mc,
+                           const SignalPredicate& is_signal_truth,
+                           Preset final_selection) {
+    auto sumw = [](ROOT::RDF::RNode n){ auto r = n.Sum<float>("w_nominal"); return double(r.GetValue()); };
+    EvalResult out;
+    for (const rarexsec::Entry* rec : mc) {
+        ROOT::RDF::RNode base = rec->nominal.node;
+        auto denom = base.Filter([&](int ch){ return is_signal_truth(ch); }, {"analysis_channels"});
+        out.denom += sumw(denom);
+        auto sel = apply(base, final_selection, *rec);
+        out.selected += sumw(sel);
+        auto numer = sel.Filter([&](int ch){ return is_signal_truth(ch); }, {"analysis_channels"});
+        out.numer += sumw(numer);
+    }
+    return out;
+}
+
+inline std::vector<std::string> split_csv(const char* s) {
+    std::vector<std::string> out; if (!s) return out;
+    std::string cur; for (const char* p=s; *p; ++p) {
+        if (*p==',') { if (!cur.empty()) { out.push_back(cur); cur.clear(); } }
+        else { cur.push_back(*p); }
+    }
+    if (!cur.empty()) out.push_back(cur);
+    return out;
+}
+
 }
 }
