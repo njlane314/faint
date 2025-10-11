@@ -10,6 +10,7 @@ SOEXT := so
 SHAREDFLAGS := -shared
 
 CXX ?= $(shell root-config --cxx)
+NLOHMANN_JSON_CFLAGS ?= -isystem $(NLOHMANN_JSON_INC)
 CPPFLAGS += -I$(INC) $(shell root-config --cflags) $(NLOHMANN_JSON_CFLAGS)
 CXXFLAGS += -O3 -std=c++17 -Wall -Wextra -Wpedantic -fPIC
 LDFLAGS  += $(shell root-config --ldflags)
