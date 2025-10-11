@@ -119,7 +119,7 @@ inline EvalResult evaluate(const std::vector<const rarexsec::Entry*>& mc,
     auto sumw = [](ROOT::RDF::RNode n){ auto r = n.Sum<float>("w_nominal"); return double(r.GetValue()); };
     EvalResult out;
     for (const rarexsec::Entry* rec : mc) {
-        ROOT::RDF::RNode base = rec->nominal.node;
+        ROOT::RDF::RNode base = rec->nominal.rnode();
         auto denom = base.Filter([&](int ch){ return is_signal_truth(ch); }, {"analysis_channels"});
         out.denom += sumw(denom);
         auto sel = apply(base, final_selection, *rec);
