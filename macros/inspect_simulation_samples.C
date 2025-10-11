@@ -14,10 +14,6 @@ void inspect_simulation_samples() {
         ROOT::EnableThreadSafety();
         ROOT::EnableImplicitMT();
 
-        if (gSystem->Load("librarexsec") < 0) {
-            throw std::runtime_error("Failed to load librexsec");
-        }
-
         const auto env = rarexsec::Env::from_env();
         auto hub = env.make_hub();
         const auto samples = hub.simulation_entries(env.beamline, env.periods);
