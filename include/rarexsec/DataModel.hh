@@ -3,9 +3,11 @@
 #include <ROOT/RDataFrame.hxx>
 #include <cstdint>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace rarexsec {
@@ -105,9 +107,25 @@ struct ProcessorOptions {
 
 struct Frame {
   std::shared_ptr<ROOT::RDataFrame> df;
-  ROOT::RDF::RNode node;
-  auto report() const { return node.Report(); }
-  ROOT::RDF::RNode rnode() const { return node; }
+  std::shared_ptr<ROOT::RDF::RNode> node;
+
+  Frame() = default;
+
+  Frame(std::shared_ptr<ROOT::RDataFrame> df_in, ROOT::RDF::RNode node_in)
+    : df(std::move(df_in)), node(std::make_shared<ROOT::RDF::RNode>(std::move(node_in))) {}
+
+  auto report() { return node_ref().Report(); }
+  ROOT::RDF::RNode rnode() const { return node_ref(); }
+
+private:
+  ROOT::RDF::RNode& node_ref() {
+    if (!node) throw std::runtime_error("Frame: missing node");
+    return *node;
+  }
+  const ROOT::RDF::RNode& node_ref() const {
+    if (!node) throw std::runtime_error("Frame: missing node");
+    return *node;
+  }
 };
 
 struct Entry {

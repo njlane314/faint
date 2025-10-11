@@ -11,7 +11,7 @@ namespace rarexsec::book {
 inline ROOT::RDF::RResultPtr<TH1D>
 H1(const Frame& f, const TH1D& model, std::string_view col,
    std::string_view wcol = "w_nominal") {
-  return f.node.Histo1D(model, std::string(col), std::string(wcol));
+  return f.rnode().Histo1D(model, std::string(col), std::string(wcol));
 }
 
 inline std::unordered_map<std::string, ROOT::RDF::RResultPtr<TH1D>>
