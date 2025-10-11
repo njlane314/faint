@@ -7,9 +7,8 @@
    git clone https://github.com/<your-org>/rarexsec.git
    cd rarexsec
    ```
-2. Build the project libraries from the provided `build/Makefile`:
+2. Build the project libraries from the repository root:
    ```bash
-   cd build
    make -j"$(nproc)"
    ```
    The compiled artifacts are placed under `build/lib` and `build/bin`.  Add
@@ -21,10 +20,10 @@
 
 ## Running the example ROOT macro
 
-After building, the rarexsec libraries must be discoverable by ROOT.  The `rarexsec-root.sh` wrapper sets up the include and library paths and executes any macro you pass to it.  From the repository root run:
+After building, the rarexsec libraries must be discoverable by ROOT.  The `scripts/rarexsec-root.sh` wrapper sets up the include and library paths and executes any macro you pass to it.  From the repository root run:
 
 ```bash
-./rarexsec-root.sh -b -q macros/inspect_simulation_samples.C
+./scripts/rarexsec-root.sh -b -q macros/inspect_simulation_samples.C
 ```
 
 This command loads the generated libraries, configures ROOT include paths, and runs the `inspect_simulation_samples()` entry point defined in `macros/inspect_simulation_samples.C`.
@@ -44,5 +43,5 @@ Define the functions together and call the one you need in a single command:
 void scan_nominal() { /* ... */ }
 void scan_systematics() { /* ... */ }
 
-./rarexsec-root.sh -b -q 'macros/analysis_tools.C(\"scan_systematics()\")'
+./scripts/rarexsec-root.sh -b -q 'macros/analysis_tools.C(\"scan_systematics()\")'
 ```
