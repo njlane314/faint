@@ -115,7 +115,7 @@ install: all
 	@cp -a $(CONFIG_OUT) $(INSTALL_BIN)/
 	@[ -f $(TOP)/scripts/rarexsec-root.sh ] && chmod +x $(TOP)/scripts/rarexsec-root.sh || true
 	@[ -f $(TOP)/scripts/rarexsec-root.sh ] && cp -a $(TOP)/scripts/rarexsec-root.sh $(INSTALL_BIN)/rarexsec-root || true
-	@[ -f $(TOP)/setup_rarexsec.C ] && cp -a $(TOP)/setup_rarexsec.C $(INSTALL_SCRIPTS)/ || true
+	@[ -f $(TOP)/scripts/setup_rarexsec.C ] && cp -a $(TOP)/scripts/setup_rarexsec.C $(INSTALL_SCRIPTS)/ || true
 	@echo Installed to $(PREFIX)
 
 print:
