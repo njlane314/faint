@@ -9,7 +9,7 @@
 #include <TH1D.h>
 
 #include "rarexsec/Hub.hh"
-#include "rarexsec/plot/Plotter.hh"
+#include "rarexsec/Plotter.hh"
 #include "rarexsec/syst/Systematics.hh"
 
 namespace rarexsec::syst {
@@ -73,25 +73,25 @@ UnionSamples collect_union_samples(const Hub& hub,
                                    const std::string& beamline,
                                    const std::vector<std::string>& periods);
 
-int detect_n_univ_ushort(const plot::H1Spec& spec,
+int detect_n_univ_ushort(const plot::Histogram1DSpec& spec,
                          const std::vector<const Entry*>& mc,
                          const std::string& branch,
                          int default_val = 0);
 
-int detect_n_univ_map(const plot::H1Spec& spec,
+int detect_n_univ_map(const plot::Histogram1DSpec& spec,
                       const std::vector<const Entry*>& mc,
                       const std::string& map_branch,
                       const std::string& key,
                       int default_val = 0);
 
-UnionProducts build_union_systematics(const plot::H1Spec& spec,
+UnionProducts build_union_systematics(const plot::Histogram1DSpec& spec,
                                       const UnionSamples& samp,
                                       const UnionConfig& cfg);
 
 UnionProducts run_union_systematics(const Hub& hub,
                                     const std::string& beamline,
                                     const std::vector<std::string>& periods,
-                                    const plot::H1Spec& spec,
+                                    const plot::Histogram1DSpec& spec,
                                     const UnionConfig& cfg);
 
 std::vector<const Entry*> mc_union_AB(const UnionSamples& s);

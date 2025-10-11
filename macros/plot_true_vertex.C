@@ -48,8 +48,8 @@ void plot_true_vertex() {
 
     rarexsec::plot::Plotter plotter(plot_options);
 
-    const std::array<rarexsec::plot::H1Spec, 3> plots = {
-        rarexsec::plot::H1Spec{
+    const std::array<rarexsec::plot::Histogram1DSpec, 3> plots = {
+        rarexsec::plot::Histogram1DSpec{
             .id = "true_vertex_x",
             .title = ";x^{true}_{#nu} [cm];Events",
             .expr = "neutrino_vertex_x",
@@ -59,7 +59,7 @@ void plot_true_vertex() {
             .xmax = 256.,
             .sel = rarexsec::selection::Preset::Empty
         },
-        rarexsec::plot::H1Spec{
+        rarexsec::plot::Histogram1DSpec{
             .id = "true_vertex_y",
             .title = ";y^{true}_{#nu} [cm];Events",
             .expr = "neutrino_vertex_y",
@@ -69,7 +69,7 @@ void plot_true_vertex() {
             .xmax = 116.,
             .sel = rarexsec::selection::Preset::Empty
         },
-        rarexsec::plot::H1Spec{
+        rarexsec::plot::Histogram1DSpec{
             .id = "true_vertex_z",
             .title = ";z^{true}_{#nu} [cm];Events",
             .expr = "neutrino_vertex_z",

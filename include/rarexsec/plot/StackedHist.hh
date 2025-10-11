@@ -10,14 +10,14 @@
 #include "TPad.h"
 
 #include "rarexsec/Hub.hh"
-#include "rarexsec/plot/Types.hh"
+#include "rarexsec/plot/Descriptors.hh"
 
 namespace rarexsec {
 namespace plot {
 
 class StackedHist {
 public:
-    StackedHist(H1Spec spec,
+    StackedHist(Histogram1DSpec spec,
                 Options opt,
                 std::vector<const Entry*> mc,
                 std::vector<const Entry*> data);
@@ -38,7 +38,7 @@ private:
     void draw_cuts(TPad* p, double max_y);
     void draw_watermark(TPad* p, double total_mc) const;
 
-    H1Spec spec_;
+    Histogram1DSpec spec_;
     Options opt_;
     std::vector<const Entry*> mc_;
     std::vector<const Entry*> data_;

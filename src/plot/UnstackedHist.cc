@@ -20,7 +20,7 @@
 #include <vector>
 #include <array>
 
-#include "rarexsec/Plotter.hh"                // H1Spec, Options, Plotter::fmt_commas/sanitise
+#include "rarexsec/Plotter.hh"                // Histogram1DSpec, Options, Plotter::fmt_commas/sanitise
 #include "rarexsec/plot/Channels.hh"          // channel colors/labels/order
 #include "rarexsec/proc/Selection.hh"              // selection::apply
 #include "rarexsec/Hub.hh"                    // Entry
@@ -80,7 +80,7 @@ inline std::vector<double> make_log_edges(double xmin, double xmax, int bins_per
 
 namespace rarexsec::plot {
 
-UnstackedHist::UnstackedHist(H1Spec spec,
+UnstackedHist::UnstackedHist(Histogram1DSpec spec,
                              Options opt,
                              std::vector<const Entry*> mc,
                              std::vector<const Entry*> data,
