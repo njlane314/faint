@@ -1,5 +1,4 @@
-#ifndef RAREXSEC_PLOT_EVENTDISPLAY_HH
-#define RAREXSEC_PLOT_EVENTDISPLAY_HH
+#pragma once
 
 #include <array>
 #include <memory>
@@ -31,57 +30,47 @@ public:
     }
 
     struct Spec {
-        std::string id;          ///< Unique identifier (used in file names)
-        std::string title;       ///< Canvas / histogram title
+        std::string id;
+        std::string title;
         Mode        mode{Mode::Detector};
-        int         grid_w{0};   ///< Optional; if 0, deduced assuming square
-        int         grid_h{0};   ///< Optional; if 0, deduced assuming square
+        int         grid_w{0};
+        int         grid_h{0};
     };
 
     struct Options {
         std::string out_dir = "plots";
         int         canvas_size = 800;
-        double      margin = 0.10;      ///< symmetric margins (fraction)
-        bool        use_log_z = true;   ///< detector mode only
+        double      margin = 0.10;
+        bool        use_log_z = true;
 
-        // ---- Detector mode tweaks
         double      det_threshold = 4.0;
         double      det_min       = 1.0;
         double      det_max       = 1000.0;
 
-        // ---- Semantic mode tweaks
         bool        show_legend   = true;
-        int         legend_cols   = 5;  ///< semantic legend columns
+        int         legend_cols   = 5;
     };
 
     using DetectorData = std::vector<float>;
     using SemanticData = std::vector<int>;
 
-    // Constructors for detector / semantic images
     EventDisplay(Spec spec, Options opt, DetectorData data);
     EventDisplay(Spec spec, Options opt, SemanticData data);
 
-    // Draw this one display
     void draw(TCanvas& canvas);
 
-    // Draw and save (auto-creates canvas like StackedHist::draw_and_save)
     void draw_and_save(const std::string& image_format = "png");
     void draw_and_save(const std::string& image_format, const std::string& file_override);
 
-    // ----------------- OPTIONAL: batched rendering from RDataFrame -----------------
-    // Still only ONE class (this one). The batch options live inside the class.
     struct BatchOptions {
-        // ---- DataFrame selection
-        std::string selection_expr;       // empty => no filter
+        std::string selection_expr;
         unsigned long long n_events{1};
 
-        // ---- I/O
         std::string out_dir{"./plots/event_displays"};
         std::string image_format{"png"};
-        std::string combined_pdf;         // if non-empty and image_format == "pdf"
-        std::string manifest_path;        // if non-empty, write a json manifest
+        std::string combined_pdf;
+        std::string manifest_path;
 
-        // ---- Planes & columns
         std::vector<std::string> planes{"U","V","W"};
 
         struct Columns {
@@ -96,30 +85,22 @@ public:
             std::string sem_w = "semantic_image_w";
         } cols;
 
-        // ---- File naming
         std::string file_pattern{"{plane}_{run}_{sub}_{evt}"};
 
-        // ---- Mode & per-image display options
         Mode     mode{Mode::Detector};
-        Options  display; // canvas size, margins, logz, legend, etc.
+        Options  display;
     };
 
-    // Render event displays from an RDF node according to BatchOptions.
-    // If 'combined_pdf' is set and 'image_format'=="pdf", output is a single
-    // multi-page PDF using ROOT's "file(", "file", "file)" protocol.
     static void render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt);
 
 private:
-    // lifecycle helpers
     void setup_canvas(TCanvas& c) const;
-    void build_histogram();  // creates TH2 from data based on mode
+    void build_histogram();
 
-    // draw paths
     void draw_detector(TCanvas& c);
     void draw_semantic(TCanvas& c);
     void draw_semantic_legend();
 
-    // utilities
     static std::pair<int,int> deduce_grid(int requested_w,
                                           int requested_h,
                                           std::size_t flat_size);
@@ -138,7 +119,5 @@ private:
     std::string output_directory_;
 };
 
-} // namespace plot
-} // namespace rarexsec
-
-#endif // RAREXSEC_PLOT_EVENTDISPLAY_HH
+}
+}

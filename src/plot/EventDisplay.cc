@@ -18,12 +18,10 @@
 #include <ROOT/RConfig.h>
 #include <TStyle.h>
 
-#include "rarexsec/plot/Plotter.hh"   // for Plotter::sanitise
+#include "rarexsec/plot/Plotter.hh"
 
 namespace rarexsec {
 namespace plot {
-
-// -------------------------- Constructors ------------------------------------
 
 EventDisplay::EventDisplay(Spec spec, Options opt, DetectorData data)
 : spec_(std::move(spec))
@@ -38,8 +36,6 @@ EventDisplay::EventDisplay(Spec spec, Options opt, SemanticData data)
 , data_(std::move(data))
 , plot_name_(rarexsec::plot::Plotter::sanitise(spec_.id))
 , output_directory_(opt_.out_dir) {}
-
-// -------------------------- Public API --------------------------------------
 
 void EventDisplay::draw(TCanvas& canvas) {
     setup_canvas(canvas);
@@ -82,8 +78,6 @@ void EventDisplay::draw_and_save(const std::string& image_format,
         canvas.SaveAs((output_directory_ + "/" + plot_name_ + "." + fmt).c_str());
     }
 }
-
-// -------------------------- Helpers -----------------------------------------
 
 void EventDisplay::setup_canvas(TCanvas& c) const {
     c.SetCanvasSize(opt_.canvas_size, opt_.canvas_size);
@@ -157,8 +151,6 @@ void EventDisplay::build_histogram() {
     }
 }
 
-// -------------------------- Draw paths --------------------------------------
-
 void EventDisplay::draw_detector(TCanvas& c) {
     c.SetFillColor(kWhite);
     c.SetTicks(0, 0);
@@ -194,20 +186,20 @@ void EventDisplay::draw_semantic(TCanvas& c) {
 
     std::array<int, palette_size> palette = {
         background,
-        TColor::GetColor("#666666"), // Cosmic
-        TColor::GetColor("#e41a1c"), // Muon
-        TColor::GetColor("#377eb8"), // Electron
-        TColor::GetColor("#4daf4a"), // Photon
-        TColor::GetColor("#ff7f00"), // ChargedPion
-        TColor::GetColor("#984ea3"), // NeutralPion
-        TColor::GetColor("#ffff33"), // Neutron
-        TColor::GetColor("#1b9e77"), // Proton
-        TColor::GetColor("#f781bf"), // ChargedKaon
-        TColor::GetColor("#a65628"), // NeutralKaon
-        TColor::GetColor("#66a61e"), // Lambda
-        TColor::GetColor("#e6ab02"), // ChargedSigma
-        TColor::GetColor("#a6cee3"), // NeutralSigma
-        TColor::GetColor("#b15928")  // Other
+        TColor::GetColor("#666666"),
+        TColor::GetColor("#e41a1c"),
+        TColor::GetColor("#377eb8"),
+        TColor::GetColor("#4daf4a"),
+        TColor::GetColor("#ff7f00"),
+        TColor::GetColor("#984ea3"),
+        TColor::GetColor("#ffff33"),
+        TColor::GetColor("#1b9e77"),
+        TColor::GetColor("#f781bf"),
+        TColor::GetColor("#a65628"),
+        TColor::GetColor("#66a61e"),
+        TColor::GetColor("#e6ab02"),
+        TColor::GetColor("#a6cee3"),
+        TColor::GetColor("#b15928")
     };
     gStyle->SetPalette(palette_size, palette.data());
 
@@ -311,8 +303,6 @@ void EventDisplay::draw_semantic_legend() {
     legend_->Draw();
 }
 
-// ----------------------- Static batched rendering ---------------------------
-
 namespace {
 inline std::string replace_all(std::string s, const std::string& from, const std::string& to) {
     if (from.empty()) return s;
@@ -331,10 +321,9 @@ inline std::string format_tag(std::string pattern, const std::string& plane, int
     pattern = replace_all(std::move(pattern), "{evt}",   std::to_string(evt));
     return pattern;
 }
-} // unnamed namespace
+}
 
 void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt) {
-    // Ensure output directory exists
     std::error_code ec;
     std::filesystem::create_directories(opt.out_dir, ec);
     if (ec) {
@@ -342,20 +331,16 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
                   << opt.out_dir << "': " << ec.message() << '\n';
     }
 
-    // Optional filter
     auto filtered = df;
     if (!opt.selection_expr.empty()) filtered = filtered.Filter(opt.selection_expr);
 
-    // Limit number of events
     auto limited = filtered.Range(static_cast<ULong64_t>(opt.n_events));
 
-    // Combined PDF handling
     const bool use_combined_pdf = (!opt.combined_pdf.empty() && opt.image_format == "pdf");
     std::filesystem::path combined_path;
     std::size_t total_pages = 0;
     if (use_combined_pdf) {
         combined_path = std::filesystem::path(opt.out_dir) / opt.combined_pdf;
-        // Count rows first to know total pages
         const auto n_rows = static_cast<std::size_t>(limited.Count().GetValue());
         if (n_rows == 0) {
             std::cerr << "[EventDisplay] No rows matched selection; nothing to render." << '\n';
@@ -380,7 +365,6 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
     json manifest = json::array();
     std::mutex manifest_mutex;
 
-    // Ensure displays save under the batch out_dir
     auto display_opts = opt.display;
     display_opts.out_dir = opt.out_dir;
 
@@ -400,7 +384,7 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
                 auto pick = [&](const std::string& plane) -> const std::vector<float>& {
                     if      (plane == "U") return det_u;
                     else if (plane == "V") return det_v;
-                    else                   return det_w; // default
+                    else                   return det_w;
                 };
 
                 for (const auto& plane : opt.planes) {
@@ -456,7 +440,7 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
                 auto pick = [&](const std::string& plane) -> const std::vector<int>& {
                     if      (plane == "U") return sem_u;
                     else if (plane == "V") return sem_v;
-                    else                   return sem_w; // default
+                    else                   return sem_w;
                 };
 
                 for (const auto& plane : opt.planes) {
@@ -497,8 +481,6 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
             cols
         );
     }
-
-    // Write manifest if requested
     if (!opt.manifest_path.empty()) {
         std::ofstream ofs(opt.manifest_path);
         ofs << manifest.dump(2);
@@ -506,5 +488,5 @@ void EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt)
     }
 }
 
-} // namespace plot
-} // namespace rarexsec
+}
+}
