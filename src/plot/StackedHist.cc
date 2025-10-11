@@ -65,7 +65,8 @@ void rarexsec::plot::StackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p
     p_ratio = nullptr;
     p_legend = nullptr;
 
-    const double split = std::clamp(opt_.legend_split, 0.60, 0.95);
+    // Match the reference canvas layout: legend occupies the top 15%
+    const double split = 0.85;
 
     if (opt_.legend_on_top) {
         if (want_ratio()) {
@@ -85,8 +86,9 @@ void rarexsec::plot::StackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p
 
             p_legend->SetTopMargin(0.05);
             p_legend->SetBottomMargin(0.01);
-            p_legend->SetLeftMargin(0.02);
-            p_legend->SetRightMargin(0.02);
+            // Keep full width for the legend, matching the reference implementation
+            p_legend->SetLeftMargin(0.00);
+            p_legend->SetRightMargin(0.00);
         } else {
             p_main = new TPad("pad_main", "pad_main", 0., 0.00, 1., split);
             p_legend = new TPad("pad_legend", "pad_legend", 0., split, 1., 1.00);
@@ -98,8 +100,9 @@ void rarexsec::plot::StackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p
 
             p_legend->SetTopMargin(0.05);
             p_legend->SetBottomMargin(0.01);
-            p_legend->SetLeftMargin(0.02);
-            p_legend->SetRightMargin(0.02);
+            // Keep full width for the legend, matching the reference implementation
+            p_legend->SetLeftMargin(0.00);
+            p_legend->SetRightMargin(0.00);
         }
         if (opt_.use_log_y && p_main)
             p_main->SetLogy();
@@ -376,6 +379,7 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     if (!p)
         return;
     p->cd();
+    // Use the same box placement as the reference analysis::StackedHistogramPlot
     legend_ = std::make_unique<TLegend>(0.12, 0.0, 0.95, 0.75);
     auto* leg = legend_.get();
     if (!opt_.legend_on_top) {
@@ -398,6 +402,14 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     if (n_entries > 0) {
         const int n_cols = (n_entries > 4) ? 3 : 2;
         leg->SetNColumns(n_cols);
+
+        // Scale the text size with the number of rows to maintain a consistent look
+        const int n_rows = (n_entries + n_cols - 1) / n_cols;
+        const double usable_h = 0.75 * 0.70;
+        double txt = usable_h / std::max(1, n_rows);
+        txt *= 0.90; // allow for line spacing
+        txt = std::clamp(txt, 0.025, 0.050);
+        leg->SetTextSize(txt);
     }
 
     legend_proxies_.clear();
@@ -437,13 +449,8 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     }
 
     if (sig_hist_) {
-        // Reference legend: just "Signal" (scale factor displayed on the curve is optional)
-        std::string sig_label = "Signal";
-        // If you prefer to keep the multiplier, re-enable the lines below.
-        // if (signal_scale_ != 1.0) {
-        //     sig_label += " (x" + rarexsec::plot::Plotter::fmt_commas(signal_scale_, 2) + ")";
-        // }
-        leg->AddEntry(sig_hist_.get(), sig_label.c_str(), "l");
+        // Reference legend uses just "Signal"
+        leg->AddEntry(sig_hist_.get(), "Signal", "l");
     }
 
     if (data_hist_) {
