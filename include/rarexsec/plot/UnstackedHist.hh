@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "rarexsec/plot/Types.hh"
+#include "rarexsec/plot/Descriptors.hh"
 
 class TCanvas;
 class TLegend;
@@ -16,7 +16,7 @@ namespace plot {
 
 class UnstackedHist {
 public:
-    UnstackedHist(H1Spec spec,
+    UnstackedHist(Histogram1DSpec spec,
                   Options opt,
                   std::vector<const Entry*> mc,
                   std::vector<const Entry*> data = {},
@@ -33,7 +33,7 @@ private:
     void draw_legend(TPad* p_legend);
     void draw_watermark(TPad* p_main) const;
 
-    H1Spec spec_;
+    Histogram1DSpec spec_;
     Options opt_;
     std::vector<const Entry*> mc_;
     std::vector<const Entry*> data_;

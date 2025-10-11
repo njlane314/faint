@@ -536,9 +536,9 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
         opt.beamline = beamline;
         opt.periods = periods;
         rarexsec::plot::Plotter plotter(opt);
-        std::vector<rarexsec::plot::H1Spec> hspecs;
+        std::vector<rarexsec::plot::Histogram1DSpec> hspecs;
         {
-            rarexsec::plot::H1Spec s;
+            rarexsec::plot::Histogram1DSpec s;
             s.id = "topological_score";
             s.title = ";Topological score;Events";
             s.expr = "topological_score";
@@ -547,7 +547,7 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             hspecs.push_back(s);
         }
         {
-            rarexsec::plot::H1Spec s;
+            rarexsec::plot::Histogram1DSpec s;
             s.id = "contained_fraction";
             s.title = ";Contained fraction;Events";
             s.expr = "contained_fraction";
@@ -556,7 +556,7 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             hspecs.push_back(s);
         }
         {
-            rarexsec::plot::H1Spec s;
+            rarexsec::plot::Histogram1DSpec s;
             s.id = "slice_cluster_fraction";
             s.title = ";Slice cluster fraction;Events";
             s.expr = "slice_cluster_fraction";
@@ -565,7 +565,7 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             hspecs.push_back(s);
         }
         {
-            rarexsec::plot::H1Spec s;
+            rarexsec::plot::Histogram1DSpec s;
             s.id = "reco_vtx_x";
             s.title = ";Reco vertex x [cm];Events";
             s.expr = "reco_neutrino_vertex_sce_x";
@@ -574,7 +574,7 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             hspecs.push_back(s);
         }
         {
-            rarexsec::plot::H1Spec s;
+            rarexsec::plot::Histogram1DSpec s;
             s.id = "reco_vtx_y";
             s.title = ";Reco vertex y [cm];Events";
             s.expr = "reco_neutrino_vertex_sce_y";
@@ -583,7 +583,7 @@ void plot_final_stage_kinematics(const std::string& config_path = "data/samples.
             hspecs.push_back(s);
         }
         {
-            rarexsec::plot::H1Spec s;
+            rarexsec::plot::Histogram1DSpec s;
             s.id = "reco_vtx_z";
             s.title = ";Reco vertex z [cm];Events";
             s.expr = "reco_neutrino_vertex_sce_z";

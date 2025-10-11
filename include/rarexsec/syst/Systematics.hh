@@ -7,7 +7,7 @@
 #include <TMatrixDSym.h>
 #include <TH1D.h>
 
-#include "rarexsec/plot/Plotter.hh"
+#include "rarexsec/Plotter.hh"
 #include "rarexsec/Hub.hh"
 #include "rarexsec/proc/Selection.hh"
 
@@ -20,65 +20,65 @@ TMatrixDSym mc_stat_covariance(const TH1D&);
 TMatrixDSym sample_covariance(const TH1D&, const std::vector<std::unique_ptr<TH1D>>&);
 TMatrixDSym hessian_covariance(const TH1D&, const TH1D&, const TH1D&);
 TMatrixDSym sum(const std::vector<const TMatrixDSym*>&);
-std::unique_ptr<TH1D> make_total_mc_hist(const plot::H1Spec& spec,
+std::unique_ptr<TH1D> make_total_mc_hist(const plot::Histogram1DSpec& spec,
                                         const std::vector<const Entry*>& entries,
                                         const std::string& suffix);
-std::unique_ptr<TH1D> make_total_mc_hist_detvar(const plot::H1Spec& spec,
+std::unique_ptr<TH1D> make_total_mc_hist_detvar(const plot::Histogram1DSpec& spec,
                                                const std::vector<const Entry*>& entries,
                                                const std::string& tag,
                                                const std::string& suffix);
 
 TMatrixDSym cov_from_detvar_pairs(
-    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const plot::Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
     const std::vector<std::pair<std::string,std::string>>& tag_pairs);
 
 TMatrixDSym cov_from_detvar_unisims(
-    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const plot::Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
     const std::vector<std::string>& tags);
 
 TMatrixDSym block_cov_from_detvar_pairs(
-    const plot::H1Spec& specA, const std::vector<const Entry*>& A,
-    const plot::H1Spec& specB, const std::vector<const Entry*>& B,
+    const plot::Histogram1DSpec& specA, const std::vector<const Entry*>& A,
+    const plot::Histogram1DSpec& specB, const std::vector<const Entry*>& B,
     const std::vector<std::pair<std::string,std::string>>& tag_pairs);
 
 // ---- New: unsigned-short universe vectors (+ optional CV multiplier) ----
 std::unique_ptr<TH1D> make_total_mc_hist_weight_universe_ushort(
-    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const plot::Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
     const std::string& weights_branch, int k, const std::string& suffix,
     const std::string& cv_branch = "", double us_scale = 1.0/1000.0);
 
 TMatrixDSym cov_from_weight_vector_ushort(
-    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const plot::Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
     const std::string& weights_branch, int nuniv,
     const std::string& cv_branch = "", double us_scale = 1.0/1000.0);
 
 // ---- New: map<string, vector<double>> universes ----
 std::unique_ptr<TH1D> make_total_mc_hist_weight_universe_map(
-    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const plot::Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
     const std::string& map_branch, const std::string& key, int k,
     const std::string& suffix, const std::string& cv_branch = "");
 
 TMatrixDSym cov_from_map_weight_vector(
-    const plot::H1Spec& spec, const std::vector<const Entry*>& mc,
+    const plot::Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
     const std::string& map_branch, const std::string& key, int nuniv,
     const std::string& cv_branch = "");
 
 // ---- New: block covariances for (A=beam ⊕ B=strangeness) ----
 TMatrixDSym block_cov_from_weight_vector_ushort_scaled(
-    const plot::H1Spec& specA, const std::vector<const Entry*>& A,
-    const plot::H1Spec& specB, const std::vector<const Entry*>& B,
+    const plot::Histogram1DSpec& specA, const std::vector<const Entry*>& A,
+    const plot::Histogram1DSpec& specB, const std::vector<const Entry*>& B,
     const std::string& weights_branch, int nuniv,
     const std::string& cv_branch = "", double us_scale = 1.0/1000.0);
 
 TMatrixDSym block_cov_from_map_weight_vector(
-    const plot::H1Spec& specA, const std::vector<const Entry*>& A,
-    const plot::H1Spec& specB, const std::vector<const Entry*>& B,
+    const plot::Histogram1DSpec& specA, const std::vector<const Entry*>& A,
+    const plot::Histogram1DSpec& specB, const std::vector<const Entry*>& B,
     const std::string& map_branch, const std::string& key, int nuniv,
     const std::string& cv_branch = "");
 
 TMatrixDSym block_cov_from_ud_ushort(
-    const plot::H1Spec& specA, const std::vector<const Entry*>& A,
-    const plot::H1Spec& specB, const std::vector<const Entry*>& B,
+    const plot::Histogram1DSpec& specA, const std::vector<const Entry*>& A,
+    const plot::Histogram1DSpec& specB, const std::vector<const Entry*>& B,
     const std::string& up_branch, const std::string& dn_branch, int knob_index,
     double us_scale = 1.0/1000.0, const std::string& cv_branch = "");
 

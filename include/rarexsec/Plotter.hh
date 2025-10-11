@@ -5,7 +5,7 @@
 
 #include "rarexsec/Hub.hh"
 #include "rarexsec/plot/EventDisplay.hh"
-#include "rarexsec/plot/Types.hh"
+#include "rarexsec/plot/Descriptors.hh"
 
 class TMatrixDSym;
 
@@ -21,25 +21,25 @@ public:
 
     void set_options(Options opt);
 
-    void draw_stack_by_channel(const H1Spec& spec,
+    void draw_stack_by_channel(const Histogram1DSpec& spec,
                                const std::vector<const Entry*>& mc) const;
 
-    void draw_stack_by_channel(const H1Spec& spec,
+    void draw_stack_by_channel(const Histogram1DSpec& spec,
                                const std::vector<const Entry*>& mc,
                                const std::vector<const Entry*>& data) const;
 
-    void draw_unstacked_by_channel(const H1Spec& spec,
+    void draw_unstacked_by_channel(const Histogram1DSpec& spec,
                                    const std::vector<const Entry*>& mc,
                                    bool normalize_to_pdf = true,
                                    int line_width = 3) const;
 
-    void draw_unstacked_by_channel(const H1Spec& spec,
+    void draw_unstacked_by_channel(const Histogram1DSpec& spec,
                                    const std::vector<const Entry*>& mc,
                                    const std::vector<const Entry*>& data,
                                    bool normalize_to_pdf,
                                    int line_width) const;
 
-    void draw_stack_by_channel_with_cov(const H1Spec& spec,
+    void draw_stack_by_channel_with_cov(const Histogram1DSpec& spec,
                                         const std::vector<const Entry*>& mc,
                                         const std::vector<const Entry*>& data,
                                         const TMatrixDSym& total_cov) const;

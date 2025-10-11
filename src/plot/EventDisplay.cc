@@ -18,7 +18,7 @@
 #include <ROOT/RConfig.h>
 #include <TStyle.h>
 
-#include "rarexsec/plot/Plotter.hh"
+#include "rarexsec/Plotter.hh"
 
 namespace rarexsec {
 namespace plot {

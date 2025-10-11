@@ -67,7 +67,7 @@ void make_phase_space_combined_plots() {
         else if (e->kind == sample::origin::strangeness) B_strange.push_back(e);
     }
 
-    plot::H1Spec spec;                 // fill to your liking
+    plot::Histogram1DSpec spec;                 // fill to your liking
     spec.id     = "enu";
     spec.title  = "Reconstructed E_{#nu};E_{#nu}^{reco} [GeV];Events";
     spec.nbins  = 20;

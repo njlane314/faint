@@ -13,7 +13,7 @@
 
 #include <rarexsec/Hub.hh>
 #include <rarexsec/Selection.hh>
-#include <rarexsec/Plotter.hh>               // H1Spec, Options
+#include <rarexsec/Plotter.hh>               // Histogram1DSpec, Options
 #include <rarexsec/plot/UnstackedHist.hh>    // overlay plotter
 
 // ---------- helpers ----------
@@ -86,7 +86,7 @@ void plot_unstacked_perplane_occupancy_by_channel(const char* extra_libs = "",
   const Plane planes[3] = { {"u", Uimg}, {"v", Vimg}, {"w", Wimg} };
 
   for (const auto& p : planes) {
-    rarexsec::plot::H1Spec spec{
+    rarexsec::plot::Histogram1DSpec spec{
       .id     = std::string("image_occupancy_") + p.tag,
       .title  = (std::string(";") + (char)toupper(*p.tag) + "-plane image occupancy;Events"),
       .expr   = std::string("occ_adc(") + p.col + "," + std::to_string(adc_thr) + ")",

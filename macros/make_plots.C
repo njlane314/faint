@@ -1,7 +1,7 @@
 #include <ROOT/RDataFrame.hxx>
 #include <TSystem.h>
 #include <rarexsec/Hub.hh>
-#include <rarexsec/plot/Plotter.hh>
+#include <rarexsec/Plotter.hh>
 #include <stdexcept>
 
 void make_plots() {
@@ -31,7 +31,7 @@ void make_plots() {
         .periods          = periods
     });
 
-    rarexsec::plot::Hist1D h_len{
+    rarexsec::plot::Histogram1DSpec h_len{
         .name   = "trk_len",
         .title  = ";L_{trk} [cm];Events",
         .expr   = "ROOT::VecOps::Max(track_length)", // any RDataFrame expression or column

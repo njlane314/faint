@@ -1,4 +1,5 @@
 #include "rarexsec/Plotter.hh"
+#include <cctype>
 #include <iomanip>
 #include <memory>
 #include <sstream>
@@ -24,13 +25,13 @@ Options& Plotter::options() noexcept { return opt_; }
 
 void Plotter::set_options(Options opt) { opt_ = std::move(opt); }
 
-void Plotter::draw_stack_by_channel(const H1Spec& spec,
+void Plotter::draw_stack_by_channel(const Histogram1DSpec& spec,
                                     const std::vector<const Entry*>& mc) const {
     static const std::vector<const Entry*> empty_data{};
     draw_stack_by_channel(spec, mc, empty_data);
 }
 
-void Plotter::draw_stack_by_channel(const H1Spec& spec,
+void Plotter::draw_stack_by_channel(const Histogram1DSpec& spec,
                                     const std::vector<const Entry*>& mc,
                                     const std::vector<const Entry*>& data) const {
     set_global_style();
@@ -38,7 +39,7 @@ void Plotter::draw_stack_by_channel(const H1Spec& spec,
     plot.draw_and_save(opt_.image_format);
 }
 
-void Plotter::draw_unstacked_by_channel(const H1Spec& spec,
+void Plotter::draw_unstacked_by_channel(const Histogram1DSpec& spec,
                                         const std::vector<const Entry*>& mc,
                                         bool normalize_to_pdf,
                                         int line_width) const {
@@ -46,7 +47,7 @@ void Plotter::draw_unstacked_by_channel(const H1Spec& spec,
     draw_unstacked_by_channel(spec, mc, empty_data, normalize_to_pdf, line_width);
 }
 
-void Plotter::draw_unstacked_by_channel(const H1Spec& spec,
+void Plotter::draw_unstacked_by_channel(const Histogram1DSpec& spec,
                                         const std::vector<const Entry*>& mc,
                                         const std::vector<const Entry*>& data,
                                         bool normalize_to_pdf,
@@ -56,7 +57,7 @@ void Plotter::draw_unstacked_by_channel(const H1Spec& spec,
     plot.draw_and_save(opt_.image_format);
 }
 
-void Plotter::draw_stack_by_channel_with_cov(const H1Spec& spec,
+void Plotter::draw_stack_by_channel_with_cov(const Histogram1DSpec& spec,
                                              const std::vector<const Entry*>& mc,
                                              const std::vector<const Entry*>& data,
                                              const TMatrixDSym& total_cov) const {
@@ -82,7 +83,21 @@ void Plotter::draw_event_display(EventDisplay::Spec spec,
 }
 
 std::string Plotter::sanitise(const std::string& name) {
-    return detail::sanitise_id(name);
+    std::string out;
+    out.reserve(name.size());
+    for (unsigned char c : name) {
+        if (std::isalnum(c) || c == '_' || c == '-') {
+            out.push_back(static_cast<char>(c));
+        } else if (c == '.' || c == ' ') {
+            out.push_back('_');
+        } else {
+            out.push_back('_');
+        }
+    }
+    if (out.empty()) {
+        return "plot";
+    }
+    return out;
 }
 
 std::string Plotter::fmt_commas(double value, int precision) {

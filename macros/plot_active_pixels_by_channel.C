@@ -14,7 +14,7 @@
 
 #include <rarexsec/Hub.hh>
 #include <rarexsec/proc/Selection.hh>
-#include <rarexsec/Plotter.hh>               // H1Spec, Options
+#include <rarexsec/Plotter.hh>               // Histogram1DSpec, Options
 #include <rarexsec/plot/UnstackedHist.hh>    // overlay-by-channel plotter
 
 // ---------------- Helpers ----------------
@@ -174,7 +174,7 @@ void plot_active_pixels_by_channel(const char* extra_libs   = "",
   base_opt.y_title        = "Events";
 
   for (const auto& cfg : plot_configs) {
-    rarexsec::plot::H1Spec spec{
+    rarexsec::plot::Histogram1DSpec spec{
       .id     = cfg.id,
       .title  = cfg.title,
       .expr   = cfg.expr,              // evaluated via RDF Define in UnstackedHist
