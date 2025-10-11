@@ -241,7 +241,7 @@ Fitter::FitResult Fitter::fit(const std::string &minimizer, const std::string &a
   min->SetMaxFunctionCalls(100000);
   min->SetMaxIterations(100000);
   min->SetTolerance(1e-4);
-  ROOT::Math::Functor f(*this, &Fitter::nll_, n_pars_);
+  ROOT::Math::Functor f(this, &Fitter::nll_, n_pars_);
   min->SetFunction(f);
   min->SetLimitedVariable(0, "mu", std::clamp(guess_mu_(), mu_lo_, mu_hi_), 0.1, mu_lo_, mu_hi_);
   for (std::size_t i = 1; i < n_pars_; ++i)
@@ -280,7 +280,7 @@ std::vector<std::pair<double, double>> Fitter::scan_delta_nll(double mu_min, dou
   min->SetMaxFunctionCalls(200000);
   min->SetMaxIterations(200000);
   min->SetTolerance(1e-4);
-  ROOT::Math::Functor f(*this, &Fitter::nll_, n_pars_);
+  ROOT::Math::Functor f(this, &Fitter::nll_, n_pars_);
   min->SetFunction(f);
   double mu0 = std::clamp(guess_mu_(), mu_lo_, mu_hi_);
   min->SetLimitedVariable(0, "mu", mu0, 0.1, mu_lo_, mu_hi_);
@@ -457,7 +457,7 @@ double Fitter::get_nll_min_free_mu_(const std::string &minimizer, const std::str
   min->SetMaxFunctionCalls(100000);
   min->SetMaxIterations(100000);
   min->SetTolerance(1e-4);
-  ROOT::Math::Functor f(*this, &Fitter::nll_, n_pars_);
+  ROOT::Math::Functor f(this, &Fitter::nll_, n_pars_);
   min->SetFunction(f);
   min->SetLimitedVariable(0, "mu", std::clamp(guess_mu_(), mu_lo_, mu_hi_), 0.1, mu_lo_, mu_hi_);
   for (std::size_t i = 1; i < n_pars_; ++i)
