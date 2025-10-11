@@ -1,92 +1,17 @@
 #!/usr/bin/env bash
-set -euo pipefail
-if [[ -z "${RAREXSEC:-}" ]]; then
-  SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-  if [[ -f "${SCRIPT_DIR}/setup_rarexsec.C" ]] || [[ -d "${SCRIPT_DIR}/build" ]]; then
-    TOPDIR="${SCRIPT_DIR}"
-  else
-    TOPDIR="$( cd "${SCRIPT_DIR}/.." && pwd )"
-  fi
-else
-  TOPDIR="${RAREXSEC}"
-fi
-export RAREXSEC="${TOPDIR}"
-LIBDIR=""
-for d in "${TOPDIR}/build/lib" "${TOPDIR}/lib"; do
-  [[ -d "$d" ]] && { LIBDIR="$d"; break; }
-done
-: "${LIBDIR:=${TOPDIR}/build/lib}"
-INCDIR=""
-for d in "${TOPDIR}/include" "${TOPDIR}/include/rarexsec"; do
-  [[ -d "$d" ]] && { INCDIR="$d"; break; }
-done
-: "${INCDIR:=${TOPDIR}/include}"
-MACRO=""
-for f in "${TOPDIR}/setup_rarexsec.C" "${TOPDIR}/scripts/setup_rarexsec.C"; do
-  [[ -f "$f" ]] && { MACRO="$f"; break; }
-done
-if [[ -z "$MACRO" ]]; then
-  echo "rarexsec-root: could not locate setup_rarexsec.C" >&2
-  exit 1
-fi
-uname_s="$(uname -s || true)"
-LIBEXT=$([[ "$uname_s" == "Darwin" ]] && echo "dylib" || echo "so")
-LIBPATH="${LIBDIR}/librarexsec.${LIBEXT}"
-if [[ ! -f "$LIBPATH" ]]; then
-  ALT=$([[ "$LIBEXT" == "so" ]] && echo "dylib" || echo "so")
-  [[ -f "${LIBDIR}/librarexsec.${ALT}" ]] && LIBPATH="${LIBDIR}/librarexsec.${ALT}"
-fi
-export LD_LIBRARY_PATH="${LIBDIR}:${LD_LIBRARY_PATH:-}"
-if [[ "$uname_s" == "Darwin" ]]; then
-  export DYLD_LIBRARY_PATH="${LIBDIR}:${DYLD_LIBRARY_PATH:-}"
-fi
-export ROOT_INCLUDE_PATH="${INCDIR}:${ROOT_INCLUDE_PATH:-}"
-JSON_INC_PATH="${JSON_INC:-${NLOHMANN_JSON_INC:-}}"
-[[ -n "${JSON_INC_PATH}" ]] && export ROOT_INCLUDE_PATH="${JSON_INC_PATH}:${ROOT_INCLUDE_PATH}"
-CALL=""
-while (( "$#" )); do
-  case "$1" in
-    -h|--help) echo "Usage: $(basename "$0") -c|--call MacroName"; exit 0 ;;
-    -c|--call) CALL="${2:-}"; shift 2 ;;
-    --) shift; break ;;
-    *) echo "Usage: $(basename "$0") -c|--call MacroName" >&2; exit 2 ;;
-  esac
-done
-if [[ -z "$CALL" ]]; then
-  echo "Usage: $(basename "$0") -c|--call MacroName" >&2
-  exit 2
-fi
-escape_cpp_string() {
-  local str="${1//\\/\\\\}"
-  printf '%s' "${str//\"/\\\"}"
-}
 
-RAREXSEC_CALL="${CALL}"
-export RAREXSEC_CALL
-ESC_MACRO="$(escape_cpp_string "${MACRO}")"
-ESC_LIB="$(escape_cpp_string "${LIBPATH}")"
-ESC_INC="$(escape_cpp_string "${INCDIR}")"
-TMP_MACRO="$(mktemp "${TMPDIR:-/tmp}/rarexsec-root-XXXX.C")"
-trap 'rm -f "${TMP_MACRO}"; unset RAREXSEC_CALL' EXIT
-BASE="$(basename "${TMP_MACRO}" .C)"
-# ROOT expects a function named after the macro filename with '-' replaced by '_'
-ENTRY="${BASE//-/_}"
-cat >"${TMP_MACRO}" <<EOF
-#include "TROOT.h"
-#include "TSystem.h"
-#include "TInterpreter.h"
-#include <cstdio>
-#include <string>
-void ${ENTRY}() {
-  gROOT->LoadMacro("${ESC_MACRO}");
-  gInterpreter->ProcessLine("setup_rarexsec(\"${ESC_LIB}\",\"${ESC_INC}\");");
-  const char* call = gSystem->Getenv("RAREXSEC_CALL");
-  if (!call || !*call) {
-    std::fprintf(stderr, "%s: RAREXSEC_CALL is not set\\n", "${ENTRY}");
-    return;
-  }
-  std::string cmd = std::string("rx_call(\"") + call + "\");";
-  gInterpreter->ProcessLine(cmd.c_str());
-}
-EOF
-root -l -b -q "${TMP_MACRO}"
+set -euo pipefail
+
+TOPDIR="${RAREXSEC:-$(cd "$(dirname "$0")"/.. && pwd)}"
+export RAREXSEC="$TOPDIR"
+
+LIBDIR="$TOPDIR/build/lib"; [[ -d "$LIBDIR" ]] || LIBDIR="$TOPDIR/lib"
+INCDIR="$TOPDIR/include"
+SETUP="$TOPDIR/setup_rarexsec.C"; [[ -f "$SETUP" ]] || SETUP="$TOPDIR/scripts/setup_rarexsec.C"
+LIB="$LIBDIR/librarexsec.so"
+MACRO="$TOPDIR/analysis/main.C"
+
+export LD_LIBRARY_PATH="$LIBDIR:${LD_LIBRARY_PATH:-}"
+export ROOT_INCLUDE_PATH="$INCDIR:${ROOT_INCLUDE_PATH:-}"
+
+root -l -b -q -e "gROOT->LoadMacro(\"$SETUP\"); setup_rarexsec(\"$LIB\",\"$INCDIR\"); gROOT->LoadMacro(\"$MACRO\"); main();"
