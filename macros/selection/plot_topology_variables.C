@@ -5,6 +5,7 @@
 
 #include <rarexsec/Hub.hh>
 #include <rarexsec/proc/Env.hh>
+#include <rarexsec/plot/Channels.hh>
 #include <rarexsec/plot/Descriptors.hh>
 #include <rarexsec/plot/Plotter.hh>
 
@@ -31,6 +32,7 @@ void plot_topology_variables() {
         opt.beamline = env.beamline;
         opt.periods = env.periods;
         opt.analysis_region_label = "Empty Selection";
+        opt.signal_channels = rarexsec::plot::Channels::signal_keys();
 
         rarexsec::plot::Plotter plotter(opt);
 
