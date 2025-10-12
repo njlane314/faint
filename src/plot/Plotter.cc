@@ -142,8 +142,8 @@ void rarexsec::plot::Plotter::set_global_style() const {
     style->SetLabelSize(0.045, "X");
     style->SetLabelSize(0.045, "Y");
     style->SetLabelSize(0.045, "Z");
-    style->SetTitleOffset(1.06, "X");
-    style->SetTitleOffset(1.06, "Y");
+    style->SetTitleOffset(0.96, "X");
+    style->SetTitleOffset(0.96, "Y");
     style->SetOptStat(0);
     style->SetOptTitle(0);
     style->SetPadTickX(1);
