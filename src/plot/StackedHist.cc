@@ -86,7 +86,6 @@ void rarexsec::plot::StackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p
 
             p_legend->SetTopMargin(0.05);
             p_legend->SetBottomMargin(0.01);
-            // Keep full width for the legend, matching the reference implementation
             p_legend->SetLeftMargin(0.00);
             p_legend->SetRightMargin(0.00);
         } else {
@@ -100,9 +99,6 @@ void rarexsec::plot::StackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p
 
             p_legend->SetTopMargin(0.05);
             p_legend->SetBottomMargin(0.01);
-            // Keep full width for the legend, matching the reference implementation
-            p_legend->SetLeftMargin(0.00);
-            p_legend->SetRightMargin(0.00);
         }
         if (opt_.use_log_y && p_main)
             p_main->SetLogy();
@@ -322,7 +318,6 @@ void rarexsec::plot::StackedHist::draw_stack_and_unc(TPad* p_main, double& max_y
         h->SetMarkerSize(0);
         h->SetLineColor(kBlack);
         h->SetLineWidth(1);
-        // Draw shaded band plus a crisp outline like the reference
         h->Draw("E2 SAME");
         h->Draw("E1 SAME");
     }
@@ -379,15 +374,8 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     if (!p)
         return;
     p->cd();
-    // Use the same box placement as the reference analysis::StackedHistogramPlot
     legend_ = std::make_unique<TLegend>(0.12, 0.0, 0.95, 0.75);
     auto* leg = legend_.get();
-    if (!opt_.legend_on_top) {
-        leg->SetX1NDC(opt_.leg_x1);
-        leg->SetY1NDC(opt_.leg_y1);
-        leg->SetX2NDC(opt_.leg_x2);
-        leg->SetY2NDC(opt_.leg_y2);
-    }
     leg->SetBorderSize(0);
     leg->SetFillStyle(0);
     leg->SetTextFont(42);
@@ -402,14 +390,6 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     if (n_entries > 0) {
         const int n_cols = (n_entries > 4) ? 3 : 2;
         leg->SetNColumns(n_cols);
-
-        // Scale the text size with the number of rows to maintain a consistent look
-        const int n_rows = (n_entries + n_cols - 1) / n_cols;
-        const double usable_h = 0.75 * 0.70;
-        double txt = usable_h / std::max(1, n_rows);
-        txt *= 0.90; // allow for line spacing
-        txt = std::clamp(txt, 0.025, 0.050);
-        leg->SetTextSize(txt);
     }
 
     legend_proxies_.clear();
@@ -418,7 +398,6 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
         int ch = chan_order_.at(i);
         double sum = mc_ch_hists_[i]->Integral();
         std::string label = rarexsec::plot::Channels::label(ch);
-        // Match the reference convention for empty set
         if (label == "#emptyset")
             label = "\xE2\x88\x85";
         if (opt_.annotate_numbers) {
@@ -449,7 +428,6 @@ void rarexsec::plot::StackedHist::draw_legend(TPad* p) {
     }
 
     if (sig_hist_) {
-        // Reference legend uses just "Signal"
         leg->AddEntry(sig_hist_.get(), "Signal", "l");
     }
 
@@ -638,20 +616,6 @@ void rarexsec::plot::StackedHist::draw_and_save(const std::string& image_format)
     draw(canvas);
     const std::string fmt = image_format.empty() ? "png" : image_format;
     const std::string out = output_directory_ + "/" + plot_name_ + "." + fmt;
-    if (fmt == "pdf") {
-        canvas.SaveAs(out.c_str());
-        return;
-    }
-
-    std::unique_ptr<TImage> image(TImage::Create());
-    if (image) {
-        image->FromPad(&canvas);
-        image->WriteImage(out.c_str());
-        return;
-    }
-
-    // Fallback to ROOT's SaveAs when TImage is unavailable (e.g. ASImage not
-    // built). This ensures we still produce an output file instead of failing
-    // silently.
+    
     canvas.SaveAs(out.c_str());
 }
