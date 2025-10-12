@@ -22,6 +22,8 @@ void plot_topology_variables() {
 
         rarexsec::plot::Options opt;
         opt.out_dir = "plots/selection";
+        opt.use_log_y = true;
+        opt.overlay_signal = true;
         opt.image_format = "png";
         opt.legend_on_top = true;
         opt.beamline = env.beamline;
