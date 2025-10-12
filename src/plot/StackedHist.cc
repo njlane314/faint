@@ -65,7 +65,6 @@ void rarexsec::plot::StackedHist::setup_pads(TCanvas& c, TPad*& p_main, TPad*& p
     p_ratio = nullptr;
     p_legend = nullptr;
 
-    // Match the reference canvas layout: legend occupies the top 15%
     const double split = 0.85;
 
     if (opt_.legend_on_top) {
@@ -445,7 +444,7 @@ void rarexsec::plot::StackedHist::draw_cuts(TPad* p, double max_y) {
     TH1* frame = stack_->GetHistogram();
     if (!frame)
         return;
-    const double y = max_y * 0.85;
+    const double y = max_y * 0.80;
     const double xmin = frame->GetXaxis()->GetXmin();
     const double xmax = frame->GetXaxis()->GetXmax();
     const double xr = xmax - xmin;
