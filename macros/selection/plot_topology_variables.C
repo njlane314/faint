@@ -1,4 +1,5 @@
 #include <ROOT/RDataFrame.hxx>
+#include <ROOT/RVec.hxx>
 #include <exception>
 #include <iostream>
 #include <vector>
@@ -36,19 +37,124 @@ void plot_topology_variables() {
 
         rarexsec::plot::Plotter plotter(opt);
 
-        rarexsec::plot::Histogram1DSpec contained;
+        rarexsec::plot::Histogram1DSpec beam_pe;
+        beam_pe.id = "optical_filter_pe_beam";
+        beam_pe.title = ";Beamline PMT PE;Events";
+        beam_pe.nbins = 100;
+        beam_pe.xmin = 0.0;
+        beam_pe.xmax = 200.0;
+        beam_pe.sel = rarexsec::selection::Preset::Empty;
+
+        rarexsec::plot::Histogram1DSpec veto_pe = beam_pe;
+        veto_pe.id = "optical_filter_pe_veto";
+        veto_pe.title = ";Veto PMT PE;Events";
+        veto_pe.xmax = 100.0;
+
+        rarexsec::plot::Histogram1DSpec software_trigger = beam_pe;
+        software_trigger.id = "software_trigger";
+        software_trigger.title = ";Software Trigger Decision;Events";
+        software_trigger.nbins = 3;
+        software_trigger.xmin = -0.5;
+        software_trigger.xmax = 2.5;
+
+        rarexsec::plot::Histogram1DSpec num_slices = beam_pe;
+        num_slices.id = "num_slices";
+        num_slices.title = ";Number of Slices;Events";
+        num_slices.nbins = 10;
+        num_slices.xmin = -0.5;
+        num_slices.xmax = 9.5;
+
+        rarexsec::plot::Histogram1DSpec topology_score = beam_pe;
+        topology_score.id = "topological_score";
+        topology_score.title = ";Topological Score;Events";
+        topology_score.nbins = 100;
+        topology_score.xmin = 0.0;
+        topology_score.xmax = 1.0;
+
+        rarexsec::plot::Histogram1DSpec fiducial = beam_pe;
+        fiducial.id = "in_reco_fiducial";
+        fiducial.title = ";In Reconstructed Fiducial Volume;Events";
+        fiducial.nbins = 2;
+        fiducial.xmin = -0.5;
+        fiducial.xmax = 1.5;
+
+        rarexsec::plot::Histogram1DSpec contained = topology_score;
         contained.id = "contained_fraction";
         contained.title = ";Contained Fraction;Events";
-        contained.nbins = 100;
-        contained.xmin = 0.0;
-        contained.xmax = 1.0;
-        contained.sel = rarexsec::selection::Preset::Empty;
 
         rarexsec::plot::Histogram1DSpec cluster = contained;
         cluster.id = "slice_cluster_fraction";
         cluster.title = ";Slice Cluster Fraction;Events";
 
-        const std::vector<rarexsec::plot::Histogram1DSpec> specs = {contained, cluster};
+        rarexsec::plot::Histogram1DSpec muon_track_score = topology_score;
+        muon_track_score.id = "muon_track_shower_score";
+        muon_track_score.title = ";Muon Candidate Track Shower Score;Events";
+        muon_track_score.expr =
+            "([](const ROOT::RVec<float>& scores) { return scores.empty() ? 0.f : ROOT::VecOps::Max(scores); })"
+            "(track_shower_scores)";
+
+        rarexsec::plot::Histogram1DSpec muon_llr = topology_score;
+        muon_llr.id = "muon_trk_llr_pid_v";
+        muon_llr.title = ";Muon Candidate Track LLR PID;Events";
+        muon_llr.xmin = -1.0;
+        muon_llr.xmax = 1.0;
+        muon_llr.expr =
+            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<float>& llrs) {"
+            " if (scores.empty()) { return -1.f; }"
+            " auto idx = ROOT::VecOps::ArgMax(scores);"
+            " return idx < llrs.size() ? llrs[idx] : -1.f; })"
+            "(track_shower_scores, trk_llr_pid_v)";
+
+        rarexsec::plot::Histogram1DSpec muon_length = topology_score;
+        muon_length.id = "muon_track_length";
+        muon_length.title = ";Muon Candidate Track Length [cm];Events";
+        muon_length.xmax = 200.0;
+        muon_length.expr =
+            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<float>& lengths) {"
+            " if (scores.empty()) { return 0.f; }"
+            " auto idx = ROOT::VecOps::ArgMax(scores);"
+            " return idx < lengths.size() ? lengths[idx] : 0.f; })"
+            "(track_shower_scores, track_length)";
+
+        rarexsec::plot::Histogram1DSpec muon_distance = topology_score;
+        muon_distance.id = "muon_track_distance_to_vertex";
+        muon_distance.title = ";Muon Candidate Track Distance to Vertex [cm];Events";
+        muon_distance.xmax = 10.0;
+        muon_distance.expr =
+            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<float>& distances) {"
+            " if (scores.empty()) { return 0.f; }"
+            " auto idx = ROOT::VecOps::ArgMax(scores);"
+            " return idx < distances.size() ? distances[idx] : 0.f; })"
+            "(track_shower_scores, track_distance_to_vertex)";
+
+        rarexsec::plot::Histogram1DSpec muon_generation = topology_score;
+        muon_generation.id = "muon_pfp_generation";
+        muon_generation.title = ";Muon Candidate PFParticle Generation;Events";
+        muon_generation.nbins = 9;
+        muon_generation.xmin = -1.5;
+        muon_generation.xmax = 7.5;
+        muon_generation.expr =
+            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<unsigned>& gens) {"
+            " if (scores.empty()) { return -1.f; }"
+            " auto idx = ROOT::VecOps::ArgMax(scores);"
+            " return idx < gens.size() ? static_cast<float>(gens[idx]) : -1.f; })"
+            "(track_shower_scores, pfp_generations)";
+
+        const std::vector<rarexsec::plot::Histogram1DSpec> specs = {
+            beam_pe,
+            veto_pe,
+            software_trigger,
+            num_slices,
+            topology_score,
+            fiducial,
+            contained,
+            cluster,
+            muon_track_score,
+            muon_llr,
+            muon_length,
+            muon_distance,
+            muon_generation,
+        };
         for (const auto& spec : specs) {
             plotter.draw_stack_by_channel(spec, mc_samples);
         }
