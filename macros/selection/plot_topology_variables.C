@@ -26,7 +26,7 @@ void plot_topology_variables() {
         opt.use_log_y = true;
         opt.overlay_signal = true;
         opt.annotate_numbers = true;
-        opt.image_format = "png";
+        opt.image_format = "pdf";
         opt.legend_on_top = true;
         opt.beamline = env.beamline;
         opt.periods = env.periods;
