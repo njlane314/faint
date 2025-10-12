@@ -470,7 +470,7 @@ void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const
         return;
     p->cd();
 
-    const std::string line1 = "#bf{#muBooNE Simulation, Preliminary}";
+    const std::string line1;
 
     const auto sum_pot = [](const std::vector<const rarexsec::Entry*>& entries) {
         constexpr double rel_tol = 1e-6;
@@ -586,11 +586,15 @@ void rarexsec::plot::StackedHist::draw_watermark(TPad* p, double total_mc) const
     watermark.SetTextSize(0.05);
     const double x = 1 - p->GetRightMargin() - 0.03;
     const double top = 1 - p->GetTopMargin();
-    watermark.DrawLatex(x, top - 0.03, line1.c_str());
+    double y = top - 0.03;
+    if (!line1.empty()) {
+        watermark.DrawLatex(x, y, line1.c_str());
+        y -= 0.06;
+    }
     watermark.SetTextFont(42);
     watermark.SetTextSize(0.05 * 0.8);
-    watermark.DrawLatex(x, top - 0.09, line2.c_str());
-    watermark.DrawLatex(x, top - 0.15, line3.c_str());
+    watermark.DrawLatex(x, y, line2.c_str());
+    watermark.DrawLatex(x, y - 0.06, line3.c_str());
 }
 
 void rarexsec::plot::StackedHist::draw(TCanvas& canvas) {
