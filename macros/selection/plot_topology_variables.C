@@ -90,7 +90,7 @@ void plot_topology_variables() {
         muon_track_score.id = "muon_track_shower_score";
         muon_track_score.title = ";Muon Candidate Track Shower Score;Events";
         muon_track_score.expr =
-            "([](const ROOT::RVec<float>& scores) { return scores.empty() ? 0.f : ROOT::VecOps::Max(scores); })"
+            "([](const ROOT::RVec<float>& scores) -> float { return scores.empty() ? 0.f : ROOT::VecOps::Max(scores); })"
             "(track_shower_scores)";
 
         rarexsec::plot::Histogram1DSpec muon_llr = topology_score;
@@ -99,7 +99,7 @@ void plot_topology_variables() {
         muon_llr.xmin = -1.0;
         muon_llr.xmax = 1.0;
         muon_llr.expr =
-            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<float>& llrs) {"
+            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<float>& llrs) -> float {"
             " if (scores.empty()) { return -1.f; }"
             " auto idx = ROOT::VecOps::ArgMax(scores);"
             " return idx < llrs.size() ? llrs[idx] : -1.f; })"
@@ -110,7 +110,7 @@ void plot_topology_variables() {
         muon_length.title = ";Muon Candidate Track Length [cm];Events";
         muon_length.xmax = 200.0;
         muon_length.expr =
-            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<float>& lengths) {"
+            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<float>& lengths) -> float {"
             " if (scores.empty()) { return 0.f; }"
             " auto idx = ROOT::VecOps::ArgMax(scores);"
             " return idx < lengths.size() ? lengths[idx] : 0.f; })"
@@ -121,7 +121,7 @@ void plot_topology_variables() {
         muon_distance.title = ";Muon Candidate Track Distance to Vertex [cm];Events";
         muon_distance.xmax = 10.0;
         muon_distance.expr =
-            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<float>& distances) {"
+            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<float>& distances) -> float {"
             " if (scores.empty()) { return 0.f; }"
             " auto idx = ROOT::VecOps::ArgMax(scores);"
             " return idx < distances.size() ? distances[idx] : 0.f; })"
@@ -134,7 +134,7 @@ void plot_topology_variables() {
         muon_generation.xmin = -1.5;
         muon_generation.xmax = 7.5;
         muon_generation.expr =
-            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<unsigned>& gens) {"
+            "([](const ROOT::RVec<float>& scores, const ROOT::RVec<unsigned>& gens) -> float {"
             " if (scores.empty()) { return -1.f; }"
             " auto idx = ROOT::VecOps::ArgMax(scores);"
             " return idx < gens.size() ? static_cast<float>(gens[idx]) : -1.f; })"
