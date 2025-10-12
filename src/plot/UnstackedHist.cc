@@ -321,7 +321,7 @@ void rarexsec::plot::UnstackedHist::draw_watermark(TPad* p_main) const {
     tl.SetTextFont(42);
     tl.SetTextSize(0.04);
     tl.DrawLatex(0.14, 0.92,
-                 (std::string("#muBooNE Simulation – ") + (opt_.analysis_region_label.empty() ? "Empty Selection" : opt_.analysis_region_label)).c_str());
+                 (opt_.analysis_region_label.empty() ? "Empty Selection" : opt_.analysis_region_label).c_str());
 }
 
 void rarexsec::plot::UnstackedHist::draw(TCanvas& canvas) {
