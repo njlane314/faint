@@ -10,6 +10,7 @@
 
 void plot_topology_variables() {
     try {
+        ROOT::EnableImplicitMT();
         const auto env = rarexsec::Env::from_env();
         auto hub = env.make_hub();
         const auto mc_samples = hub.simulation_entries(env.beamline, env.periods);
