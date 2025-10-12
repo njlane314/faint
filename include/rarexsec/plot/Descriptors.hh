@@ -35,10 +35,6 @@ struct Options {
     double legend_split = 0.75;
     double y_min = 0.0;
     double y_max = -1.0;
-    double leg_x1 = 0.60;
-    double leg_y1 = 0.60;
-    double leg_x2 = 0.88;
-    double leg_y2 = 0.88;
     std::string x_title;
     std::string y_title;
     std::vector<int> signal_channels;
