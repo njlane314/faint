@@ -17,9 +17,10 @@ std::unique_ptr<TH1D> clone_reset_like(const TH1D& templ, const std::string& nam
   h->Reset("ICES");
   return h;
 }
-
+//_______________________________________________________________________________________
 std::unique_ptr<TH1D> sum_parts(std::vector<ROOT::RDF::RResultPtr<TH1D>>& parts,
-                                const TH1D& model, const std::string& name) {
+                                const TH1D& model, const std::string& name) 
+{
   std::unique_ptr<TH1D> total;
   for (auto& rr : parts) {
     const TH1D& h = rr.GetValue();
@@ -33,12 +34,13 @@ std::unique_ptr<TH1D> sum_parts(std::vector<ROOT::RDF::RResultPtr<TH1D>>& parts,
   if (!total) return clone_reset_like(model, name);
   return total;
 }
-
+//_______________________________________________________________________________________
 std::unique_ptr<TH1D> make_total_hist(const TH1D& model,
                                       const std::string& value_col,
                                       const std::string& weight_col,
                                       const std::vector<const rarexsec::Entry*>& entries,
-                                      const std::string& name_suffix) {
+                                      const std::string& name_suffix) 
+{
   std::vector<ROOT::RDF::RResultPtr<TH1D>> parts;
   parts.reserve(entries.size());
   for (auto* e : entries) {
@@ -48,7 +50,7 @@ std::unique_ptr<TH1D> make_total_hist(const TH1D& model,
   }
   return sum_parts(parts, model, std::string(model.GetName()) + name_suffix);
 }
-
+//_______________________________________________________________________________________
 std::unique_ptr<TH1D> make_total_hist_universe_ushort(const TH1D& model,
                                                       const std::string& value_col,
                                                       const std::string& base_weight_col,
@@ -57,7 +59,8 @@ std::unique_ptr<TH1D> make_total_hist_universe_ushort(const TH1D& model,
                                                       int k,
                                                       double us_scale,
                                                       const std::string& cv_branch,
-                                                      const std::string& name_suffix) {
+                                                      const std::string& name_suffix) 
+{
   std::vector<ROOT::RDF::RResultPtr<TH1D>> parts;
   parts.reserve(entries.size());
   for (size_t ie = 0; ie < entries.size(); ++ie) {
@@ -87,13 +90,14 @@ std::unique_ptr<TH1D> make_total_hist_universe_ushort(const TH1D& model,
   }
   return sum_parts(parts, model, std::string(model.GetName()) + name_suffix);
 }
-} // namespace
-
+} 
+//_______________________________________________________________________________________
 SystematicsPack::SystematicsPack(Config cfg) : cfg_(std::move(cfg)) {}
-
+//_______________________________________________________________________________________
 Result SystematicsPack::build(const TH1D& model,
                               const std::vector<const rarexsec::Entry*>& mc_entries,
-                              const std::vector<const rarexsec::Entry*>& ext_entries) const {
+                              const std::vector<const rarexsec::Entry*>& ext_entries) const 
+{
   using rarexsec::syst::mc_stat_covariance;
   using rarexsec::syst::sample_covariance;
   using rarexsec::syst::sum;
@@ -161,5 +165,5 @@ Result SystematicsPack::build(const TH1D& model,
 
   return out;
 }
-
+//_______________________________________________________________________________________
 } // namespace rarexsec::systpack
