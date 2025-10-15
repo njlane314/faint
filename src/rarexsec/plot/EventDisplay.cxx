@@ -19,14 +19,15 @@
 #include <nlohmann/json.hpp>
 
 #include "rarexsec/plot/Plotter.h"
-
+//____________________________________________________________________________
 rarexsec::plot::EventDisplay::EventDisplay(Spec spec, Options opt, DetectorData data)
     : spec_(std::move(spec)), opt_(std::move(opt)), data_(std::move(data)), plot_name_(rarexsec::plot::Plotter::sanitise(spec_.id)), output_directory_(opt_.out_dir) {}
-
+//____________________________________________________________________________
 rarexsec::plot::EventDisplay::EventDisplay(Spec spec, Options opt, SemanticData data)
     : spec_(std::move(spec)), opt_(std::move(opt)), data_(std::move(data)), plot_name_(rarexsec::plot::Plotter::sanitise(spec_.id)), output_directory_(opt_.out_dir) {}
-
-void rarexsec::plot::EventDisplay::draw(TCanvas& canvas) {
+//____________________________________________________________________________
+void rarexsec::plot::EventDisplay::draw(TCanvas& canvas) 
+{
     setup_canvas(canvas);
     build_histogram();
 
@@ -43,8 +44,9 @@ void rarexsec::plot::EventDisplay::draw(TCanvas& canvas) {
 
     canvas.Update();
 }
-
-void rarexsec::plot::EventDisplay::draw_and_save(const std::string& image_format) {
+//____________________________________________________________________________
+void rarexsec::plot::EventDisplay::draw_and_save(const std::string& image_format) 
+{
     std::filesystem::create_directories(output_directory_);
     TCanvas canvas(plot_name_.c_str(), spec_.title.c_str(),
                    opt_.canvas_size, opt_.canvas_size);
@@ -53,9 +55,10 @@ void rarexsec::plot::EventDisplay::draw_and_save(const std::string& image_format
     const std::string fmt = image_format.empty() ? "png" : image_format;
     canvas.SaveAs((output_directory_ + "/" + plot_name_ + "." + fmt).c_str());
 }
-
+//____________________________________________________________________________
 void rarexsec::plot::EventDisplay::draw_and_save(const std::string& image_format,
-                                                 const std::string& file_override) {
+                                                 const std::string& file_override) 
+{
     std::filesystem::create_directories(output_directory_);
     TCanvas canvas(plot_name_.c_str(), spec_.title.c_str(),
                    opt_.canvas_size, opt_.canvas_size);
@@ -68,8 +71,9 @@ void rarexsec::plot::EventDisplay::draw_and_save(const std::string& image_format
         canvas.SaveAs((output_directory_ + "/" + plot_name_ + "." + fmt).c_str());
     }
 }
-
-void rarexsec::plot::EventDisplay::setup_canvas(TCanvas& c) const {
+//____________________________________________________________________________
+void rarexsec::plot::EventDisplay::setup_canvas(TCanvas& c) const 
+{
     c.SetCanvasSize(opt_.canvas_size, opt_.canvas_size);
     c.SetBorderMode(0);
     c.SetFrameBorderMode(0);
@@ -87,10 +91,11 @@ void rarexsec::plot::EventDisplay::setup_canvas(TCanvas& c) const {
     gStyle->SetTitleX(0.5);
     gStyle->SetTitleY(1 - m / 3.0);
 }
-
+//____________________________________________________________________________
 std::pair<int, int> rarexsec::plot::EventDisplay::deduce_grid(int requested_w,
                                                               int requested_h,
-                                                              std::size_t flat_size) {
+                                                              std::size_t flat_size) 
+{
     if (requested_w > 0 && requested_h > 0)
         return {requested_w, requested_h};
     if (requested_w > 0 && requested_h == 0) {
@@ -105,8 +110,9 @@ std::pair<int, int> rarexsec::plot::EventDisplay::deduce_grid(int requested_w,
     dim = std::max(1, dim);
     return {dim, dim};
 }
-
-void rarexsec::plot::EventDisplay::build_histogram() {
+//____________________________________________________________________________
+void rarexsec::plot::EventDisplay::build_histogram() 
+{
     const int bin_offset = 1;
     const auto [W, H] = std::visit([&](auto const& vec) {
         return deduce_grid(spec_.grid_w, spec_.grid_h, vec.size());
@@ -144,8 +150,9 @@ void rarexsec::plot::EventDisplay::build_histogram() {
         }
     }
 }
-
-void rarexsec::plot::EventDisplay::draw_detector(TCanvas& c) {
+//____________________________________________________________________________
+void rarexsec::plot::EventDisplay::draw_detector(TCanvas& c) 
+{
     c.SetFillColor(kWhite);
     c.SetTicks(0, 0);
 
@@ -174,8 +181,9 @@ void rarexsec::plot::EventDisplay::draw_detector(TCanvas& c) {
 
     hist_->Draw("COL");
 }
-
-void rarexsec::plot::EventDisplay::draw_semantic(TCanvas& c) {
+//____________________________________________________________________________
+void rarexsec::plot::EventDisplay::draw_semantic(TCanvas& c) 
+{
     constexpr int palette_size = 15;
     const int background = TColor::GetColor(230, 230, 230);
 
@@ -222,8 +230,9 @@ void rarexsec::plot::EventDisplay::draw_semantic(TCanvas& c) {
 
     hist_->Draw("COL");
 }
-
-void rarexsec::plot::EventDisplay::draw_semantic_legend() {
+//____________________________________________________________________________
+void rarexsec::plot::EventDisplay::draw_semantic_legend() 
+{
     constexpr int palette_size = 15;
     const int background = TColor::GetColor(230, 230, 230);
 
@@ -295,6 +304,7 @@ void rarexsec::plot::EventDisplay::draw_semantic_legend() {
 
     legend_->Draw();
 }
+//____________________________________________________________________________
 
 static std::string replace_all(std::string s, const std::string& from, const std::string& to) {
     if (from.empty())
@@ -306,15 +316,18 @@ static std::string replace_all(std::string s, const std::string& from, const std
     }
     return s;
 }
-
-static std::string format_tag(std::string pattern, const std::string& plane, int run, int sub, int evt) {
+//____________________________________________________________________________
+static std::string format_tag(std::string pattern, const std::string& plane, int run, int sub, int evt) 
+{
     pattern = replace_all(std::move(pattern), "{plane}", plane);
     pattern = replace_all(std::move(pattern), "{run}", std::to_string(run));
     pattern = replace_all(std::move(pattern), "{sub}", std::to_string(sub));
     pattern = replace_all(std::move(pattern), "{evt}", std::to_string(evt));
     return pattern;
 }
-void rarexsec::plot::EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt) {
+//____________________________________________________________________________
+void rarexsec::plot::EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const BatchOptions& opt) 
+{
     std::error_code ec;
     std::filesystem::create_directories(opt.out_dir, ec);
     if (ec) {
@@ -481,3 +494,4 @@ void rarexsec::plot::EventDisplay::render_from_rdf(ROOT::RDF::RNode df, const Ba
         std::clog << "[EventDisplay] Wrote event display manifest: " << opt.manifest_path << '\n';
     }
 }
+//____________________________________________________________________________
