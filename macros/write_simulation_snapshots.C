@@ -1,9 +1,9 @@
 #include <ROOT/RDataFrame.hxx>
 #include <TSystem.h>
 
-#include <rarexsec/Env.hh>
-#include <rarexsec/Hub.hh>
-#include <rarexsec/Snapshot.hh>
+#include <rarexsec/proc/Env.h>
+#include <rarexsec/Hub.h>
+#include <rarexsec/proc/Snapshot.h>
 
 #include <iostream>
 #include <stdexcept>

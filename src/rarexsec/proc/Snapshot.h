@@ -1,5 +1,5 @@
 #pragma once
-#include "rarexsec/Hub.hh"
+#include "rarexsec/Hub.h"
 
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>

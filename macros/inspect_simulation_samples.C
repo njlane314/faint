@@ -1,8 +1,8 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
 #include <TSystem.h>
-#include <rarexsec/proc/Env.hh>
-#include <rarexsec/Hub.hh>
+#include <rarexsec/proc/Env.h>
+#include <rarexsec/Hub.h>
 
 #include <iostream>
 #include <stdexcept>

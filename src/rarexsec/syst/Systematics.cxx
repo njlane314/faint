@@ -1,4 +1,4 @@
-#include "rarexsec/syst/Systematics.hh"
+#include "rarexsec/syst/Systematics.h"
 
 #include <algorithm>
 #include <cmath>

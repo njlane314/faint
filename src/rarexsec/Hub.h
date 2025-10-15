@@ -1,7 +1,7 @@
 #pragma once
 
-#include "rarexsec/proc/DataModel.hh"
-#include "rarexsec/Processor.hh"
+#include "rarexsec/proc/DataModel.h"
+#include "rarexsec/Processor.h"
 #include <string>
 #include <unordered_map>
 #include <vector>

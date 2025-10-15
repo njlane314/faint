@@ -5,10 +5,10 @@
 #include <string>
 #include <vector>
 
-#include <rarexsec/Hub.hh>
-#include <rarexsec/proc/DataModel.hh>
-#include <rarexsec/proc/Env.hh>
-#include <rarexsec/proc/Selection.hh>
+#include <rarexsec/Hub.h>
+#include <rarexsec/proc/DataModel.h>
+#include <rarexsec/proc/Env.h>
+#include <rarexsec/proc/Selection.h>
 
 void evaluate_cutflow() {
     const auto env = rarexsec::Env::from_env();

@@ -1,12 +1,12 @@
-#include "rarexsec/syst/SystematicsPack.hh"
+#include "rarexsec/syst/SystematicsPack.h"
 
 #include <ROOT/RDataFrame.hxx>
 #include <ROOT/RVec.hxx>
 #include <cmath>
 #include <stdexcept>
 
-#include "rarexsec/proc/DataModel.hh"
-#include "rarexsec/syst/Systematics.hh"
+#include "rarexsec/proc/DataModel.h"
+#include "rarexsec/syst/Systematics.h"
 
 namespace rarexsec::systpack {
 

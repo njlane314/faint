@@ -9,7 +9,7 @@
 #include <ROOT/RDFHelpers.hxx>
 #include <TMatrixDSym.h>
 
-#include "rarexsec/proc/Selection.hh"
+#include "rarexsec/proc/Selection.h"
 
 namespace rarexsec {
 namespace plot {
