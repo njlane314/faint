@@ -1,6 +1,6 @@
-#include "rarexsec/Hub.hh"
-#include "rarexsec/Processor.hh"
-#include "rarexsec/proc/Volume.hh"
+#include "rarexsec/Hub.h"
+#include "rarexsec/Processor.h"
+#include "rarexsec/proc/Volume.h"
 
 #include <algorithm>
 #include <cctype>

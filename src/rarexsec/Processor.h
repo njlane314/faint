@@ -1,5 +1,5 @@
 #pragma once
-#include "rarexsec/proc/DataModel.hh"
+#include "rarexsec/proc/DataModel.h"
 #include <ROOT/RDataFrame.hxx>
 
 namespace rarexsec {

@@ -4,11 +4,11 @@
 #include <iostream>
 #include <vector>
 
-#include <rarexsec/Hub.hh>
-#include <rarexsec/proc/Env.hh>
-#include <rarexsec/plot/Channels.hh>
-#include <rarexsec/plot/Descriptors.hh>
-#include <rarexsec/plot/Plotter.hh>
+#include <rarexsec/Hub.h>
+#include <rarexsec/proc/Env.h>
+#include <rarexsec/plot/Channels.h>
+#include <rarexsec/plot/Descriptors.h>
+#include <rarexsec/plot/Plotter.h>
 
 void plot_topology_variables() {
     try {

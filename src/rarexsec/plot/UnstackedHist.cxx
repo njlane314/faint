@@ -1,4 +1,4 @@
-#include "rarexsec/plot/UnstackedHist.hh"
+#include "rarexsec/plot/UnstackedHist.h"
 
 #include <ROOT/RDFHelpers.hxx>
 #include <ROOT/RDataFrame.hxx>
@@ -20,10 +20,10 @@
 #include <utility>
 #include <vector>
 
-#include "rarexsec/Hub.hh"
-#include "rarexsec/plot/Plotter.hh"
-#include "rarexsec/plot/Channels.hh"
-#include "rarexsec/proc/Selection.hh"
+#include "rarexsec/Hub.h"
+#include "rarexsec/plot/Plotter.h"
+#include "rarexsec/plot/Channels.h"
+#include "rarexsec/proc/Selection.h"
 
 static void normalise_pdf(TH1D& h) {
     const double area = h.Integral("width");

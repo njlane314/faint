@@ -4,9 +4,9 @@
 #include <vector>
 
 #include "TMatrixDSym.h"
-#include "rarexsec/Hub.hh"
-#include "rarexsec/plot/Descriptors.hh"
-#include "rarexsec/plot/EventDisplay.hh"
+#include "rarexsec/Hub.h"
+#include "rarexsec/plot/Descriptors.h"
+#include "rarexsec/plot/EventDisplay.h"
 
 namespace rarexsec::plot {
 

@@ -10,8 +10,8 @@
 #include <string>
 #include <vector>
 
-#include "rarexsec/Hub.hh"
-#include "rarexsec/plot/Descriptors.hh"
+#include "rarexsec/Hub.h"
+#include "rarexsec/plot/Descriptors.h"
 
 namespace rarexsec {
 namespace plot {

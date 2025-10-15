@@ -7,8 +7,8 @@
 #include <string>
 #include <vector>
 
-#include "rarexsec/Hub.hh"
-#include "rarexsec/proc/Volume.hh"
+#include "rarexsec/Hub.h"
+#include "rarexsec/proc/Volume.h"
 
 namespace rarexsec {
 namespace selection {

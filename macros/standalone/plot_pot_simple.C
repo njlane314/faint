@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-#include "rarexsec/plot/Plotter.hh"
+#include "rarexsec/plot/Plotter.h"
 
 namespace {
 std::string db_root() {

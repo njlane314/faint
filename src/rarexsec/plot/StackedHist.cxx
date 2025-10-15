@@ -1,4 +1,4 @@
-#include "rarexsec/plot/StackedHist.hh"
+#include "rarexsec/plot/StackedHist.h"
 #include "ROOT/RDFHelpers.hxx"
 #include "TArrow.h"
 #include "TCanvas.h"
@@ -7,8 +7,8 @@
 #include "TLine.h"
 #include "TList.h"
 #include "TMatrixDSym.h"
-#include "rarexsec/plot/Plotter.hh"
-#include "rarexsec/plot/Channels.hh"
+#include "rarexsec/plot/Plotter.h"
+#include "rarexsec/plot/Channels.h"
 #include <algorithm>
 #include <cmath>
 #include <filesystem>

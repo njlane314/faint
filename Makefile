@@ -1,6 +1,5 @@
 TOP := $(abspath .)
 SRC := $(TOP)/src
-INC := $(TOP)/include
 BUILD := $(TOP)/build
 OBJ := $(BUILD)/obj
 LIB := $(BUILD)/lib
@@ -11,24 +10,19 @@ SHAREDFLAGS := -shared
 
 CXX ?= $(shell root-config --cxx)
 NLOHMANN_JSON_CFLAGS ?= -isystem $(NLOHMANN_JSON_INC)
-CPPFLAGS += -I$(INC) $(shell root-config --cflags) $(NLOHMANN_JSON_CFLAGS)
+CPPFLAGS += -I$(SRC) $(shell root-config --cflags) $(NLOHMANN_JSON_CFLAGS)
 CXXFLAGS += -O3 -std=c++17 -Wall -Wextra -Wpedantic -fPIC
 LDFLAGS  += $(shell root-config --ldflags)
 LDLIBS   += $(shell root-config --libs)
 
-SRCS := $(shell find $(SRC) -type f \( -name '*.cc' -o -name '*.cpp' \) 2>/dev/null)
-OBJS := $(patsubst $(SRC)/%.cc,$(OBJ)/%.o,$(filter %.cc,$(SRCS))) \
-        $(patsubst $(SRC)/%.cpp,$(OBJ)/%.o,$(filter %.cpp,$(SRCS)))
+SRCS := $(shell find $(SRC) -type f -name '*.cxx' 2>/dev/null)
+OBJS := $(patsubst $(SRC)/%.cxx,$(OBJ)/%.o,$(SRCS))
 
 SHARED := $(LIB)/lib$(NAME).$(SOEXT)
 
 all: $(SHARED)
 
-$(OBJ)/%.o: $(SRC)/%.cc
-	@mkdir -p $(dir $@)
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
-
-$(OBJ)/%.o: $(SRC)/%.cpp
+$(OBJ)/%.o: $(SRC)/%.cxx
 	@mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -MMD -MP -c $< -o $@
 

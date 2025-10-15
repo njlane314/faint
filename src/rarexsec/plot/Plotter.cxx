@@ -1,7 +1,7 @@
-#include "rarexsec/plot/Plotter.hh"
-#include "rarexsec/plot/EventDisplay.hh"
-#include "rarexsec/plot/StackedHist.hh"
-#include "rarexsec/plot/UnstackedHist.hh"
+#include "rarexsec/plot/Plotter.h"
+#include "rarexsec/plot/EventDisplay.h"
+#include "rarexsec/plot/StackedHist.h"
+#include "rarexsec/plot/UnstackedHist.h"
 #include <TGaxis.h>
 #include <TMatrixDSym.h>
 #include <TROOT.h>

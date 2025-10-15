@@ -1,4 +1,4 @@
-#include "rarexsec/fit/Fitter.hh"
+#include "rarexsec/fit/Fitter.h"
 
 #include "Math/Factory.h"
 #include "Math/Functor.h"

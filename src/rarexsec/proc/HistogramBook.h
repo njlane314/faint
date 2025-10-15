@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rarexsec/DataModel.hh"
+#include "rarexsec/DataModel.h"
 #include <TH1D.h>
 #include <string>
 #include <string_view>

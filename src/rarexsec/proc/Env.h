@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include "rarexsec/Hub.hh"
+#include "rarexsec/Hub.h"
 
 namespace rarexsec {
 struct Env {

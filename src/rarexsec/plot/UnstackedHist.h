@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include "rarexsec/plot/Descriptors.hh"
+#include "rarexsec/plot/Descriptors.h"
 
 class TCanvas;
 class TLegend;
