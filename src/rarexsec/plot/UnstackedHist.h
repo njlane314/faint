@@ -16,7 +16,7 @@ namespace plot {
 
 class UnstackedHist {
   public:
-    UnstackedHist(Histogram1DSpec spec,
+    UnstackedHist(TH1DModel spec,
                   Options opt,
                   std::vector<const Entry*> mc,
                   std::vector<const Entry*> data = {},
@@ -33,7 +33,7 @@ class UnstackedHist {
     void draw_legend(TPad* p_legend);
     void draw_watermark(TPad* p_main) const;
 
-    Histogram1DSpec spec_;
+    TH1DModel spec_;
     Options opt_;
     std::vector<const Entry*> mc_;
     std::vector<const Entry*> data_;

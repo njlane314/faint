@@ -97,7 +97,5 @@ struct TH1DModel {
     }
 };
 
-using Histogram1DSpec = TH1DModel;
-
 }
 }

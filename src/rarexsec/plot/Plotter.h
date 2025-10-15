@@ -20,25 +20,25 @@ class Plotter {
 
     void set_options(Options opt);
 
-    void draw_stack_by_channel(const Histogram1DSpec& spec,
+    void draw_stack_by_channel(const TH1DModel& spec,
                                const std::vector<const Entry*>& mc) const;
 
-    void draw_stack_by_channel(const Histogram1DSpec& spec,
+    void draw_stack_by_channel(const TH1DModel& spec,
                                const std::vector<const Entry*>& mc,
                                const std::vector<const Entry*>& data) const;
 
-    void draw_unstacked_by_channel(const Histogram1DSpec& spec,
+    void draw_unstacked_by_channel(const TH1DModel& spec,
                                    const std::vector<const Entry*>& mc,
                                    bool normalize_to_pdf = true,
                                    int line_width = 3) const;
 
-    void draw_unstacked_by_channel(const Histogram1DSpec& spec,
+    void draw_unstacked_by_channel(const TH1DModel& spec,
                                    const std::vector<const Entry*>& mc,
                                    const std::vector<const Entry*>& data,
                                    bool normalize_to_pdf,
                                    int line_width) const;
 
-    void draw_stack_by_channel_with_cov(const Histogram1DSpec& spec,
+    void draw_stack_by_channel_with_cov(const TH1DModel& spec,
                                         const std::vector<const Entry*>& mc,
                                         const std::vector<const Entry*>& data,
                                         const TMatrixDSym& total_cov) const;

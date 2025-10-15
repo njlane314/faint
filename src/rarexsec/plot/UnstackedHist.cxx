@@ -72,7 +72,7 @@ static std::vector<double> make_log_edges(double xmin, double xmax, int bins_per
     }
     return edges;
 }
-rarexsec::plot::UnstackedHist::UnstackedHist(Histogram1DSpec spec,
+rarexsec::plot::UnstackedHist::UnstackedHist(TH1DModel spec,
                                              Options opt,
                                              std::vector<const Entry*> mc,
                                              std::vector<const Entry*> data,
