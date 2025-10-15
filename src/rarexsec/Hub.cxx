@@ -22,8 +22,6 @@ static std::string to_lower(std::string s)
     return s;
 }
 //____________________________________________________________________________
-
-//____________________________________________________________________________
 static rarexsec::Slice parse_slice_opt(const json& j)
 {
     if (!j.contains("slice"))
@@ -35,8 +33,6 @@ static rarexsec::Slice parse_slice_opt(const json& j)
         return rarexsec::Slice::StrangenessInclusive;
     throw std::runtime_error("unknown slice: " + s);
 }
-//____________________________________________________________________________
-
 //____________________________________________________________________________
 static std::pair<rarexsec::Source, rarexsec::Slice>
 parse_kind_slice(const std::string& kind, const json& s)
@@ -56,8 +52,6 @@ parse_kind_slice(const std::string& kind, const json& s)
     throw std::runtime_error("unknown kind: " + kind);
 }
 //____________________________________________________________________________
-
-//____________________________________________________________________________
 rarexsec::Frame rarexsec::Hub::sample(const Entry& rec) const
 {
     static const std::string tree = "nuselection/EventSelectionFilter";
@@ -69,8 +63,6 @@ rarexsec::Frame rarexsec::Hub::sample(const Entry& rec) const
 
     return Frame{df_ptr, std::move(node)};
 }
-//____________________________________________________________________________
-
 //____________________________________________________________________________
 rarexsec::Hub::Hub(const std::string& path)
 {
@@ -148,8 +140,6 @@ rarexsec::Hub::Hub(const std::string& path)
     }
 }
 //____________________________________________________________________________
-
-//____________________________________________________________________________
 ROOT::RDF::RNode rarexsec::Hub::apply_slice(ROOT::RDF::RNode node, const Entry& rec)
 {
     using rarexsec::Slice;
@@ -167,8 +157,6 @@ ROOT::RDF::RNode rarexsec::Hub::apply_slice(ROOT::RDF::RNode node, const Entry& 
     }
     return node;
 }
-//____________________________________________________________________________
-
 //____________________________________________________________________________
 std::vector<const rarexsec::Entry*>
 rarexsec::Hub::simulation_entries(const std::string& beamline,
@@ -189,8 +177,6 @@ rarexsec::Hub::simulation_entries(const std::string& beamline,
     }
     return out;
 }
-//____________________________________________________________________________
-
 //____________________________________________________________________________
 std::vector<const rarexsec::Entry*>
 rarexsec::Hub::data_entries(const std::string& beamline,
