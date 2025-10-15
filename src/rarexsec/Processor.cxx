@@ -11,8 +11,10 @@ constexpr double kRecognisedPurityMin = 0.5;
 constexpr double kRecognisedCompletenessMin = 0.1;
 }
 
+//____________________________________________________________________________
 ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node,
-                                          const rarexsec::Entry& rec) const {
+                                          const rarexsec::Entry& rec) const
+{
     const bool is_data = (rec.source == Source::Data);
     const bool is_ext = (rec.source == Source::Ext);
     const bool is_mc = (rec.source == Source::MC);
@@ -149,8 +151,12 @@ ROOT::RDF::RNode rarexsec::Processor::run(ROOT::RDF::RNode node,
 
     return node;
 }
+//____________________________________________________________________________
 
-const rarexsec::Processor& rarexsec::processor() {
+//____________________________________________________________________________
+const rarexsec::Processor& rarexsec::processor()
+{
     static const Processor ep{};
     return ep;
 }
+//____________________________________________________________________________
