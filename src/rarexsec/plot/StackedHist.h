@@ -18,7 +18,7 @@ namespace plot {
 
 class StackedHist {
   public:
-    StackedHist(Histogram1DSpec spec,
+    StackedHist(TH1DModel spec,
                 Options opt,
                 std::vector<const Entry*> mc,
                 std::vector<const Entry*> data);
@@ -39,7 +39,7 @@ class StackedHist {
     void draw_cuts(TPad* p, double max_y);
     void draw_watermark(TPad* p, double total_mc) const;
 
-    Histogram1DSpec spec_;
+    TH1DModel spec_;
     Options opt_;
     std::vector<const Entry*> mc_;
     std::vector<const Entry*> data_;

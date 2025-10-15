@@ -24,13 +24,13 @@ rarexsec::plot::Options& rarexsec::plot::Plotter::options() noexcept { return op
 
 void rarexsec::plot::Plotter::set_options(rarexsec::plot::Options opt) { opt_ = std::move(opt); }
 
-void rarexsec::plot::Plotter::draw_stack_by_channel(const Histogram1DSpec& spec,
+void rarexsec::plot::Plotter::draw_stack_by_channel(const TH1DModel& spec,
                                                     const std::vector<const Entry*>& mc) const {
     static const std::vector<const Entry*> empty_data{};
     draw_stack_by_channel(spec, mc, empty_data);
 }
 
-void rarexsec::plot::Plotter::draw_stack_by_channel(const Histogram1DSpec& spec,
+void rarexsec::plot::Plotter::draw_stack_by_channel(const TH1DModel& spec,
                                                     const std::vector<const Entry*>& mc,
                                                     const std::vector<const Entry*>& data) const {
     set_global_style();
@@ -38,7 +38,7 @@ void rarexsec::plot::Plotter::draw_stack_by_channel(const Histogram1DSpec& spec,
     plot.draw_and_save(opt_.image_format);
 }
 
-void rarexsec::plot::Plotter::draw_unstacked_by_channel(const Histogram1DSpec& spec,
+void rarexsec::plot::Plotter::draw_unstacked_by_channel(const TH1DModel& spec,
                                                         const std::vector<const Entry*>& mc,
                                                         bool normalize_to_pdf,
                                                         int line_width) const {
@@ -46,7 +46,7 @@ void rarexsec::plot::Plotter::draw_unstacked_by_channel(const Histogram1DSpec& s
     draw_unstacked_by_channel(spec, mc, empty_data, normalize_to_pdf, line_width);
 }
 
-void rarexsec::plot::Plotter::draw_unstacked_by_channel(const Histogram1DSpec& spec,
+void rarexsec::plot::Plotter::draw_unstacked_by_channel(const TH1DModel& spec,
                                                         const std::vector<const Entry*>& mc,
                                                         const std::vector<const Entry*>& data,
                                                         bool normalize_to_pdf,
@@ -56,7 +56,7 @@ void rarexsec::plot::Plotter::draw_unstacked_by_channel(const Histogram1DSpec& s
     plot.draw_and_save(opt_.image_format);
 }
 
-void rarexsec::plot::Plotter::draw_stack_by_channel_with_cov(const Histogram1DSpec& spec,
+void rarexsec::plot::Plotter::draw_stack_by_channel_with_cov(const TH1DModel& spec,
                                                              const std::vector<const Entry*>& mc,
                                                              const std::vector<const Entry*>& data,
                                                              const TMatrixDSym& total_cov) const {

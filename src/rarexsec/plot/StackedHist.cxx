@@ -53,7 +53,7 @@ static std::string selection_label(rarexsec::selection::Preset preset) {
     }
 }
 
-rarexsec::plot::StackedHist::StackedHist(Histogram1DSpec spec,
+rarexsec::plot::StackedHist::StackedHist(TH1DModel spec,
                                          Options opt,
                                          std::vector<const Entry*> mc,
                                          std::vector<const Entry*> data)

@@ -11,23 +11,23 @@
 #include <vector>
 
 using MapSD = std::map<std::string, std::vector<double>>;
-using Histogram1DSpec = rarexsec::plot::Histogram1DSpec;
+using rarexsec::plot::TH1DModel;
 
-static std::string expr_column_name(const rarexsec::plot::Histogram1DSpec& spec) {
+static std::string expr_column_name(const rarexsec::plot::TH1DModel& spec) {
     const std::string base = !spec.id.empty()
                                  ? spec.id
                                  : (!spec.name.empty() ? spec.name : std::string{"expr"});
     return "_rx_expr_" + rarexsec::plot::Plotter::sanitise(base);
 }
 
-ROOT::RDF::RNode with_expr(ROOT::RDF::RNode node, const rarexsec::plot::Histogram1DSpec& spec) {
+ROOT::RDF::RNode with_expr(ROOT::RDF::RNode node, const rarexsec::plot::TH1DModel& spec) {
     if (spec.expr.empty())
         return node;
     const std::string col = expr_column_name(spec);
     return node.Define(col, spec.expr);
 }
 
-static std::string expr_var(const rarexsec::plot::Histogram1DSpec& spec) {
+static std::string expr_var(const rarexsec::plot::TH1DModel& spec) {
     if (spec.expr.empty()) {
         if (!spec.id.empty())
             return spec.id;
@@ -54,7 +54,7 @@ static std::unique_ptr<TH1D> sum_hists(std::vector<ROOT::RDF::RResultPtr<TH1D>> 
     return total;
 }
 
-std::unique_ptr<TH1D> rarexsec::syst::make_total_mc_hist(const rarexsec::plot::Histogram1DSpec& spec,
+std::unique_ptr<TH1D> rarexsec::syst::make_total_mc_hist(const rarexsec::plot::TH1DModel& spec,
                                                          const std::vector<const Entry*>& entries,
                                                          const std::string& suffix) {
     TH1::SetDefaultSumw2(true);
@@ -80,7 +80,7 @@ std::unique_ptr<TH1D> rarexsec::syst::make_total_mc_hist(const rarexsec::plot::H
     return hist;
 }
 
-std::unique_ptr<TH1D> rarexsec::syst::make_total_mc_hist_detvar(const rarexsec::plot::Histogram1DSpec& spec,
+std::unique_ptr<TH1D> rarexsec::syst::make_total_mc_hist_detvar(const rarexsec::plot::TH1DModel& spec,
                                                                 const std::vector<const Entry*>& entries,
                                                                 const std::string& tag,
                                                                 const std::string& suffix) {
@@ -192,7 +192,7 @@ TMatrixDSym rarexsec::syst::sum(const std::vector<const TMatrixDSym*>& pieces) {
 }
 
 std::unique_ptr<TH1D> rarexsec::syst::make_total_mc_hist_weight_universe_ushort(
-    const Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
+    const TH1DModel& spec, const std::vector<const Entry*>& mc,
     const std::string& weights_branch, int k, const std::string& suffix,
     const std::string& cv_branch, double us_scale) {
 
@@ -242,7 +242,7 @@ std::unique_ptr<TH1D> rarexsec::syst::make_total_mc_hist_weight_universe_ushort(
 }
 
 TMatrixDSym rarexsec::syst::cov_from_weight_vector_ushort(
-    const Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
+    const TH1DModel& spec, const std::vector<const Entry*>& mc,
     const std::string& weights_branch, int nuniv,
     const std::string& cv_branch, double us_scale) {
 
@@ -261,7 +261,7 @@ TMatrixDSym rarexsec::syst::cov_from_weight_vector_ushort(
 }
 
 std::unique_ptr<TH1D> rarexsec::syst::make_total_mc_hist_weight_universe_map(
-    const Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
+    const TH1DModel& spec, const std::vector<const Entry*>& mc,
     const std::string& map_branch, const std::string& key, int k,
     const std::string& suffix, const std::string& cv_branch) {
 
@@ -313,7 +313,7 @@ std::unique_ptr<TH1D> rarexsec::syst::make_total_mc_hist_weight_universe_map(
 }
 
 TMatrixDSym rarexsec::syst::cov_from_map_weight_vector(
-    const Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
+    const TH1DModel& spec, const std::vector<const Entry*>& mc,
     const std::string& map_branch, const std::string& key, int nuniv,
     const std::string& cv_branch) {
 
@@ -331,7 +331,7 @@ TMatrixDSym rarexsec::syst::cov_from_map_weight_vector(
 }
 
 TMatrixDSym rarexsec::syst::cov_from_detvar_pairs(
-    const Histogram1DSpec& spec,
+    const TH1DModel& spec,
     const std::vector<const Entry*>& mc,
     const std::vector<std::pair<std::string, std::string>>& tag_pairs) {
 
@@ -359,7 +359,7 @@ TMatrixDSym rarexsec::syst::cov_from_detvar_pairs(
 }
 
 TMatrixDSym rarexsec::syst::cov_from_detvar_unisims(
-    const Histogram1DSpec& spec,
+    const TH1DModel& spec,
     const std::vector<const Entry*>& mc,
     const std::vector<std::string>& tags) {
 
@@ -383,8 +383,8 @@ TMatrixDSym rarexsec::syst::cov_from_detvar_unisims(
 }
 
 TMatrixDSym rarexsec::syst::block_cov_from_weight_vector_ushort_scaled(
-    const Histogram1DSpec& specA, const std::vector<const Entry*>& A,
-    const Histogram1DSpec& specB, const std::vector<const Entry*>& B,
+    const TH1DModel& specA, const std::vector<const Entry*>& A,
+    const TH1DModel& specB, const std::vector<const Entry*>& B,
     const std::string& weights_branch, int nuniv,
     const std::string& cv_branch, double us_scale) {
 
@@ -419,8 +419,8 @@ TMatrixDSym rarexsec::syst::block_cov_from_weight_vector_ushort_scaled(
 }
 
 TMatrixDSym rarexsec::syst::block_cov_from_map_weight_vector(
-    const Histogram1DSpec& specA, const std::vector<const Entry*>& A,
-    const Histogram1DSpec& specB, const std::vector<const Entry*>& B,
+    const TH1DModel& specA, const std::vector<const Entry*>& A,
+    const TH1DModel& specB, const std::vector<const Entry*>& B,
     const std::string& map_branch, const std::string& key, int nuniv,
     const std::string& cv_branch) {
 
@@ -455,8 +455,8 @@ TMatrixDSym rarexsec::syst::block_cov_from_map_weight_vector(
 }
 
 TMatrixDSym rarexsec::syst::block_cov_from_ud_ushort(
-    const Histogram1DSpec& specA, const std::vector<const Entry*>& A,
-    const Histogram1DSpec& specB, const std::vector<const Entry*>& B,
+    const TH1DModel& specA, const std::vector<const Entry*>& A,
+    const TH1DModel& specB, const std::vector<const Entry*>& B,
     const std::string& up_branch, const std::string& dn_branch, int knob_index,
     double us_scale, const std::string& cv_branch) {
 
@@ -465,7 +465,7 @@ TMatrixDSym rarexsec::syst::block_cov_from_ud_ushort(
     if (!H0A || !H0B)
         return TMatrixDSym(0);
 
-    auto apply_ud = [&](const Histogram1DSpec& spec, const std::vector<const Entry*>& mc,
+    auto apply_ud = [&](const TH1DModel& spec, const std::vector<const Entry*>& mc,
                         const std::string& branch, const char* tag) {
         std::vector<ROOT::RDF::RResultPtr<TH1D>> parts;
         for (size_t ie = 0; ie < mc.size(); ++ie) {
@@ -534,8 +534,8 @@ TMatrixDSym rarexsec::syst::block_cov_from_ud_ushort(
 }
 
 TMatrixDSym rarexsec::syst::block_cov_from_detvar_pairs(
-    const Histogram1DSpec& specA, const std::vector<const Entry*>& A,
-    const Histogram1DSpec& specB, const std::vector<const Entry*>& B,
+    const TH1DModel& specA, const std::vector<const Entry*>& A,
+    const TH1DModel& specB, const std::vector<const Entry*>& B,
     const std::vector<std::pair<std::string, std::string>>& tag_pairs) {
 
     if (tag_pairs.empty())
