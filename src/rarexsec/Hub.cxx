@@ -15,12 +15,17 @@
 
 using json = nlohmann::json;
 
-static std::string to_lower(std::string s) {
+//____________________________________________________________________________
+static std::string to_lower(std::string s)
+{
     std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
     return s;
 }
+//____________________________________________________________________________
 
-static rarexsec::Slice parse_slice_opt(const json& j) {
+//____________________________________________________________________________
+static rarexsec::Slice parse_slice_opt(const json& j)
+{
     if (!j.contains("slice"))
         return rarexsec::Slice::None;
     const auto s = to_lower(j.at("slice").get<std::string>());
@@ -30,9 +35,12 @@ static rarexsec::Slice parse_slice_opt(const json& j) {
         return rarexsec::Slice::StrangenessInclusive;
     throw std::runtime_error("unknown slice: " + s);
 }
+//____________________________________________________________________________
 
+//____________________________________________________________________________
 static std::pair<rarexsec::Source, rarexsec::Slice>
-parse_kind_slice(const std::string& kind, const json& s) {
+parse_kind_slice(const std::string& kind, const json& s)
+{
     if (kind == "data")
         return {rarexsec::Source::Data, rarexsec::Slice::None};
     if (kind == "ext" || kind == "external")
@@ -47,7 +55,11 @@ parse_kind_slice(const std::string& kind, const json& s) {
         return {rarexsec::Source::MC, rarexsec::Slice::None};
     throw std::runtime_error("unknown kind: " + kind);
 }
-rarexsec::Frame rarexsec::Hub::sample(const Entry& rec) const {
+//____________________________________________________________________________
+
+//____________________________________________________________________________
+rarexsec::Frame rarexsec::Hub::sample(const Entry& rec) const
+{
     static const std::string tree = "nuselection/EventSelectionFilter";
     auto df_ptr = std::make_shared<ROOT::RDataFrame>(tree, rec.files);
     ROOT::RDF::RNode node = *df_ptr;
@@ -57,8 +69,11 @@ rarexsec::Frame rarexsec::Hub::sample(const Entry& rec) const {
 
     return Frame{df_ptr, std::move(node)};
 }
+//____________________________________________________________________________
 
-rarexsec::Hub::Hub(const std::string& path) {
+//____________________________________________________________________________
+rarexsec::Hub::Hub(const std::string& path)
+{
     std::ifstream cfg(path);
     if (!cfg)
         throw std::runtime_error("cannot open " + path);
@@ -132,8 +147,11 @@ rarexsec::Hub::Hub(const std::string& path) {
         }
     }
 }
+//____________________________________________________________________________
 
-ROOT::RDF::RNode rarexsec::Hub::apply_slice(ROOT::RDF::RNode node, const Entry& rec) {
+//____________________________________________________________________________
+ROOT::RDF::RNode rarexsec::Hub::apply_slice(ROOT::RDF::RNode node, const Entry& rec)
+{
     using rarexsec::Slice;
     using rarexsec::Source;
 
@@ -149,10 +167,13 @@ ROOT::RDF::RNode rarexsec::Hub::apply_slice(ROOT::RDF::RNode node, const Entry& 
     }
     return node;
 }
+//____________________________________________________________________________
 
+//____________________________________________________________________________
 std::vector<const rarexsec::Entry*>
 rarexsec::Hub::simulation_entries(const std::string& beamline,
-                                  const std::vector<std::string>& periods) const {
+                                  const std::vector<std::string>& periods) const
+{
     std::vector<const Entry*> out;
     auto it_bl = db_.find(beamline);
     if (it_bl == db_.end())
@@ -168,10 +189,13 @@ rarexsec::Hub::simulation_entries(const std::string& beamline,
     }
     return out;
 }
+//____________________________________________________________________________
 
+//____________________________________________________________________________
 std::vector<const rarexsec::Entry*>
 rarexsec::Hub::data_entries(const std::string& beamline,
-                            const std::vector<std::string>& periods) const {
+                            const std::vector<std::string>& periods) const
+{
     std::vector<const Entry*> out;
     auto it_bl = db_.find(beamline);
     if (it_bl == db_.end())
@@ -186,3 +210,4 @@ rarexsec::Hub::data_entries(const std::string& beamline,
     }
     return out;
 }
+//____________________________________________________________________________
