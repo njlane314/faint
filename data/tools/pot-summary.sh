@@ -3,6 +3,7 @@
 
 source /cvmfs/uboone.opensciencegrid.org/products/setup_uboone.sh
 setup sam_web_client
+
 command -v sqlite3 >/dev/null || { echo "sqlite3 not found"; exit 1; }
 
 DBROOT="/exp/uboone/data/uboonebeam/beamdb"
@@ -31,18 +32,48 @@ bnb_totals_sql() {
   local S="$1" E="$2"
   sqlite3 -noheader -list "$RUN_DB" <<SQL
 ATTACH '$BNB_DB' AS bnb;
+
+WITH rset AS (
+  SELECT run, subrun
+  FROM runinfo
+  WHERE begin_time >= '$S' AND end_time <= '$E'
+),
+rinfo_sums AS (
+  SELECT
+    IFNULL(SUM(EXTTrig), 0.0) AS ext_sum,
+    IFNULL(SUM(Gate2Trig), 0.0) AS gate2_sum,
+    IFNULL(SUM(E1DCNT), 0.0) AS e1dcnt_sum,
+    IFNULL(SUM(tor860)*1e12, 0.0) AS tor860_sum,
+    IFNULL(SUM(tor875)*1e12, 0.0) AS tor875_sum
+  FROM runinfo
+  WHERE begin_time >= '$S' AND end_time <= '$E'
+),
+bnb_dedup AS (
+  SELECT run, subrun,
+         MAX(E1DCNT) AS E1DCNT,
+         MAX(tor860) AS tor860,
+         MAX(tor875) AS tor875
+  FROM bnb.bnb
+  GROUP BY run, subrun
+),
+bnb_sums AS (
+  SELECT
+    IFNULL(SUM(d.E1DCNT), 0.0) AS e1dcnt_w,
+    IFNULL(SUM(d.tor860)*1e12, 0.0) AS tor860_w,
+    IFNULL(SUM(d.tor875)*1e12, 0.0) AS tor875_w
+  FROM bnb_dedup d
+  JOIN rset r USING(run, subrun)
+)
 SELECT
-  IFNULL(SUM(r.EXTTrig),0.0),
-  IFNULL(SUM(r.Gate2Trig),0.0),
-  IFNULL(SUM(r.E1DCNT),0.0),
-  IFNULL(SUM(r.tor860)*1e12,0.0),
-  IFNULL(SUM(r.tor875)*1e12,0.0),
-  IFNULL(SUM(b.E1DCNT),0.0),
-  IFNULL(SUM(b.tor860)*1e12,0.0),
-  IFNULL(SUM(b.tor875)*1e12,0.0)
-FROM runinfo AS r
-LEFT OUTER JOIN bnb.bnb AS b ON r.run=b.run AND r.subrun=b.subrun
-WHERE r.begin_time >= '$S' AND r.end_time <= '$E';
+  rinfo_sums.ext_sum,
+  rinfo_sums.gate2_sum,
+  rinfo_sums.e1dcnt_sum,
+  rinfo_sums.tor860_sum,
+  rinfo_sums.tor875_sum,
+  bnb_sums.e1dcnt_w,
+  bnb_sums.tor860_w,
+  bnb_sums.tor875_w
+FROM rinfo_sums, bnb_sums;
 SQL
 }
 
@@ -50,18 +81,48 @@ numi_totals_sql() {
   local S="$1" E="$2"
   sqlite3 -noheader -list "$RUN_DB" <<SQL
 ATTACH '$NUMI_DB' AS numi;
+
+WITH rset AS (
+  SELECT run, subrun
+  FROM runinfo
+  WHERE begin_time >= '$S' AND end_time <= '$E'
+),
+rinfo_sums AS (
+  SELECT
+    IFNULL(SUM(EXTTrig), 0.0) AS ext_sum,
+    IFNULL(SUM(Gate1Trig), 0.0) AS gate1_sum,
+    IFNULL(SUM(EA9CNT), 0.0) AS ea9_sum,
+    IFNULL(SUM(tor101)*1e12, 0.0) AS tor101_sum,
+    IFNULL(SUM(tortgt)*1e12, 0.0) AS tortgt_sum
+  FROM runinfo
+  WHERE begin_time >= '$S' AND end_time <= '$E'
+),
+numi_dedup AS (
+  SELECT run, subrun,
+         MAX(EA9CNT) AS EA9CNT,
+         MAX(tor101) AS tor101,
+         MAX(tortgt) AS tortgt
+  FROM numi.numi
+  GROUP BY run, subrun
+),
+numi_sums AS (
+  SELECT
+    IFNULL(SUM(d.EA9CNT), 0.0) AS ea9_w,
+    IFNULL(SUM(d.tor101)*1e12, 0.0) AS tor101_w,
+    IFNULL(SUM(d.tortgt)*1e12, 0.0) AS tortgt_w
+  FROM numi_dedup d
+  JOIN rset r USING(run, subrun)
+)
 SELECT
-  IFNULL(SUM(r.EXTTrig),0.0),
-  IFNULL(SUM(r.Gate1Trig),0.0),
-  IFNULL(SUM(r.EA9CNT),0.0),
-  IFNULL(SUM(r.tor101)*1e12,0.0),
-  IFNULL(SUM(r.tortgt)*1e12,0.0),
-  IFNULL(SUM(n.EA9CNT),0.0),
-  IFNULL(SUM(n.tor101)*1e12,0.0),
-  IFNULL(SUM(n.tortgt)*1e12,0.0)
-FROM runinfo AS r
-LEFT OUTER JOIN numi.numi AS n ON r.run=n.run AND r.subrun=n.subrun
-WHERE r.begin_time >= '$S' AND r.end_time <= '$E';
+  rinfo_sums.ext_sum,
+  rinfo_sums.gate1_sum,
+  rinfo_sums.ea9_sum,
+  rinfo_sums.tor101_sum,
+  rinfo_sums.tortgt_sum,
+  numi_sums.ea9_w,
+  numi_sums.tor101_w,
+  numi_sums.tortgt_w
+FROM rinfo_sums, numi_sums;
 SQL
 }
 
@@ -70,13 +131,26 @@ numi_horns_sql() {
   local col_sfx; [[ "$which" == "FHC" ]] && col_sfx="fhc" || col_sfx="rhc"
   sqlite3 -noheader -list "$RUN_DB" <<SQL
 ATTACH '$NUMI_V4_DB' AS n4;
+
+WITH rset AS (
+  SELECT run, subrun
+  FROM runinfo
+  WHERE begin_time >= '$S' AND end_time <= '$E'
+),
+n4_dedup AS (
+  SELECT run, subrun,
+         MAX(EA9CNT_${col_sfx}) AS EA9CNT_${col_sfx},
+         MAX(tor101_${col_sfx}) AS tor101_${col_sfx},
+         MAX(tortgt_${col_sfx}) AS tortgt_${col_sfx}
+  FROM n4.numi
+  GROUP BY run, subrun
+)
 SELECT
-  IFNULL(SUM(n.EA9CNT_${col_sfx}),0.0),
-  IFNULL(SUM(n.tor101_${col_sfx})*1e12,0.0),
-  IFNULL(SUM(n.tortgt_${col_sfx})*1e12,0.0)
-FROM runinfo AS r
-LEFT OUTER JOIN n4.numi AS n ON r.run=n.run AND r.subrun=n.subrun
-WHERE r.begin_time >= '$S' AND r.end_time <= '$E';
+  IFNULL(SUM(d.EA9CNT_${col_sfx}), 0.0),
+  IFNULL(SUM(d.tor101_${col_sfx})*1e12, 0.0),
+  IFNULL(SUM(d.tortgt_${col_sfx})*1e12, 0.0)
+FROM n4_dedup d
+JOIN rset r USING(run, subrun);
 SQL
 }
 
@@ -85,11 +159,21 @@ numi_ext_split_sql() {
   local col_sfx; [[ "$which" == "FHC" ]] && col_sfx="fhc" || col_sfx="rhc"
   sqlite3 -noheader -list "$RUN_DB" <<SQL
 ATTACH '$NUMI_V4_DB' AS n4;
-SELECT IFNULL(SUM(r.EXTTrig),0.0)
-FROM runinfo AS r
-JOIN n4.numi AS n ON r.run=n.run AND r.subrun=n.subrun
-WHERE r.begin_time >= '$S' AND r.end_time <= '$E'
-  AND IFNULL(n.EA9CNT_${col_sfx},0) > 0;
+
+WITH rset AS (
+  SELECT run, subrun, EXTTrig
+  FROM runinfo
+  WHERE begin_time >= '$S' AND end_time <= '$E'
+),
+n4_tag AS (
+  SELECT run, subrun
+  FROM n4.numi
+  WHERE IFNULL(EA9CNT_${col_sfx},0) > 0
+  GROUP BY run, subrun
+)
+SELECT IFNULL(SUM(r.EXTTrig), 0.0)
+FROM rset r
+JOIN n4_tag t USING(run, subrun);
 SQL
 }
 
@@ -98,21 +182,31 @@ numi_runinfo_split_sql() {
   local col_sfx; [[ "$which" == "FHC" ]] && col_sfx="fhc" || col_sfx="rhc"
   sqlite3 -noheader -list "$RUN_DB" <<SQL
 ATTACH '$NUMI_V4_DB' AS n4;
+
+WITH rset AS (
+  SELECT run, subrun, Gate1Trig, EA9CNT, tor101, tortgt
+  FROM runinfo
+  WHERE begin_time >= '$S' AND end_time <= '$E'
+),
+n4_tag AS (
+  SELECT run, subrun
+  FROM n4.numi
+  WHERE IFNULL(EA9CNT_${col_sfx},0) > 0
+  GROUP BY run, subrun
+)
 SELECT
-  IFNULL(SUM(r.Gate1Trig),0.0),
-  IFNULL(SUM(r.EA9CNT),0.0),
-  IFNULL(SUM(r.tor101)*1e12,0.0),
-  IFNULL(SUM(r.tortgt)*1e12,0.0)
-FROM runinfo AS r
-JOIN n4.numi AS n ON r.run=n.run AND r.subrun=n.subrun
-WHERE r.begin_time >= '$S' AND r.end_time <= '$E'
-  AND IFNULL(n.EA9CNT_${col_sfx},0) > 0;
+  IFNULL(SUM(r.Gate1Trig), 0.0),
+  IFNULL(SUM(r.EA9CNT), 0.0),
+  IFNULL(SUM(r.tor101)*1e12, 0.0),
+  IFNULL(SUM(r.tortgt)*1e12, 0.0)
+FROM rset r
+JOIN n4_tag t USING(run, subrun);
 SQL
 }
 
 bar
 echo "BNB & NuMI POT / Toroid by run period"
-echo "FAST SQL path (sqlite3); DBROOT: $DBROOT"
+echo "FAST SQL path (sqlite3, duplicate-safe); DBROOT: $DBROOT"
 $have_numi_v4 && echo "NuMI FHC/RHC splits from $NUMI_V4_DB" || echo "NuMI FHC/RHC splits disabled (numi_v4.db not found)"
 bar
 
@@ -148,4 +242,3 @@ for r in 1 2 3 4 5; do
   echo
   bar
 done
-
